@@ -200,11 +200,19 @@ namespace ICQ2000 {
 	b << (unsigned short) (*curr)->getServerSideID();
 	b << (unsigned short) 0x0000;
 
-	b << (unsigned short) (4 + alias.size());
+	int tlvlen = 4 + alias.size();
+	if((*curr)->getAuthAwait()) tlvlen += 4;
 
-	b << (unsigned short) TLV_ContactNickname;
+	b << (unsigned short) tlvlen;
+
+	b << TLV_ContactNickname;
 	b << (unsigned short) alias.size();
 	b.Pack(alias);
+
+	if((*curr)->getAuthAwait()) {
+	    b << TLV_AuthAwaited;
+	    b << (unsigned short) 0x0000;
+	}
 
 	++curr;
       }
