@@ -851,15 +851,22 @@ namespace ICQ2000 {
    *
    * @param s your status
    */
-  MyStatusChangeEvent::MyStatusChangeEvent(Status s)
-    : m_status(s) { }
+  MyStatusChangeEvent::MyStatusChangeEvent(Status s, bool inv)
+    : m_status(s), m_invisible(inv) { }
 
   /**
    *  get your status
    *
-   * @return s your status
+   * @return your status
    */
   Status MyStatusChangeEvent::getStatus() const { return m_status; }
+
+  /**
+   *  get your invisibility
+   *
+   * @return your invisibility
+   */
+  bool MyStatusChangeEvent::getInvisible() const { return m_invisible; }
 
   // ---------------- New UIN ----------------------------
 

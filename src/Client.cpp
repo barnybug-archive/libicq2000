@@ -1499,7 +1499,7 @@ namespace ICQ2000 {
       if( m_status != newstat  ||  m_invisible != newinvis ) {
         m_status = newstat;
         m_invisible = newinvis;
-        MyStatusChangeEvent ev(m_status);
+        MyStatusChangeEvent ev(m_status, m_invisible);
         statuschanged.emit( &ev );
       }
     }
@@ -1798,6 +1798,26 @@ namespace ICQ2000 {
    */
   Status Client::getStatus() const {
     return m_status;
+  }
+
+  /**
+   *  Set your invisible status
+   * @param i Invisible boolean
+   *
+   */
+  void Client::setInvisible(bool b)
+  {
+    setStatus(m_status, b);
+  }
+  
+  /**
+   *  Get your invisible status
+   * @return Invisible boolean
+   *
+   */
+  bool Client::getInvisible() const
+  {
+    return m_invisible;
   }
 
   /**

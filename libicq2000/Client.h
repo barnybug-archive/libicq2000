@@ -218,20 +218,6 @@ namespace ICQ2000 {
     ~Client();
    
     /**
-     *  Get the invisible status.
-     * @return whether you are invisible or not
-     */
-    bool getInvisible() const { return m_invisible; }
-
-    /**
-     *  Set the invisible status
-     * @param i Invisible boolean
-     *
-     * @todo Need to send new status to server, and invisible/visible lists
-     */
-    void setInvisible(bool i) { m_invisible = i; }
-
-    /**
      *  Set your uin.
      *  Use to set what the uin you would like to log in as, before connecting.
      * @param uin your UIN
@@ -374,6 +360,8 @@ namespace ICQ2000 {
     // -- Set Status --
     void setStatus(const Status st, bool inv = false);
     Status getStatus() const;
+    bool getInvisible() const;
+    void setInvisible(bool i);
 
     // -- Contact List --
     void addContact(Contact& c);

@@ -511,11 +511,13 @@ namespace ICQ2000 {
   class MyStatusChangeEvent : public Event {
    private:
     Status m_status;
+    bool m_invisible;
 
    public:
-    MyStatusChangeEvent(Status s);
+    MyStatusChangeEvent(Status s, bool inv = false);
 
     Status getStatus() const;
+    bool getInvisible() const;
   };
 
   // --------------------- NewUIN Event -----------------------------
