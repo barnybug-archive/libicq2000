@@ -166,14 +166,14 @@ namespace ICQ2000 {
 
   void Capabilities::Parse(Buffer& b, unsigned short len)
   {
-    int i = len / 16;
-    unsigned char cap[16];
+    int i = len / sizeof_cap;
+    unsigned char cap[sizeof_cap];
     for (int j = 0; j < i; ++j) {
-      b.Unpack(cap, 16);
+      b.Unpack(cap, sizeof_cap);
 
       // search for capability in list
       for (int k = 0; k < sizeof(caps) / sizeof(Block); ++k)
-	if ( memcmp( caps[k].data, cap, 16 ) == 0 ) {
+	if ( memcmp( caps[k].data, cap, sizeof_cap ) == 0 ) {
 	  set_capability_flag( caps[k].flag );
 	  break;
 	}
@@ -181,7 +181,7 @@ namespace ICQ2000 {
     }
 
     // any remainder (there shouldn't be any, but..)
-    b.advance( len - i * 16 );
+    b.advance( len - i * sizeof_cap );
   }
 
   void Capabilities::Output(Buffer& b) const
@@ -190,7 +190,7 @@ namespace ICQ2000 {
 	 curr != m_flags.end(); ++curr)
       for (int i = 0; i < sizeof(caps) / sizeof(Block); ++i)
 	if ( caps[i].flag == *curr ) {
-	  b.Pack( caps[i].data, 16 );
+	  b.Pack( caps[i].data, sizeof_cap );
 	  break;
 	}
     

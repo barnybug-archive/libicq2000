@@ -59,9 +59,11 @@ namespace ICQ2000 {
     };
 
    private:
+    static const unsigned int sizeof_cap(16);
+
     struct Block {
       Flag flag;
-      unsigned char data[16];
+      unsigned char data[sizeof_cap];
     };
     static const Block caps[];
 
