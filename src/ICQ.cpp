@@ -36,7 +36,7 @@ namespace ICQ2000 {
   ICQSubType::ICQSubType()
     : m_flags(0x0000) { }
 
-  ICQSubType* ICQSubType::ParseICQSubType(Buffer& b, bool adv) {
+  ICQSubType* ICQSubType::ParseICQSubType(Buffer& b, bool adv, bool ack) {
     unsigned char type, flags;
     b >> type
       >> flags;
@@ -87,6 +87,11 @@ namespace ICQ2000 {
     if (dynamic_cast<UINICQSubType*>(ist) != NULL) {
       UINICQSubType *ust = dynamic_cast<UINICQSubType*>(ist);
       ust->setAdvanced(adv);
+      ust->setACK(ack);
+      /* There is nothing in the encoding of the ICQ subtype that
+	 distinguishes whether it is an ack or not - this is implied
+	 by the protocol layer above this. As such it has to be passed
+	 as an argument and set body the rest of parsing continues */
     }
     ist->setFlags(flags);
     ist->ParseBody(b);

@@ -447,7 +447,7 @@ namespace ICQ2000 {
 
     b.advance(12); // unknown 3 ints
 
-    ICQSubType *i = ICQSubType::ParseICQSubType(b, true);
+    ICQSubType *i = ICQSubType::ParseICQSubType(b, true, (command == V6_TCP_ACK));
     if (dynamic_cast<UINICQSubType*>(i) == NULL) throw ParseException("Unknown ICQ subtype");
     UINICQSubType *icqsubtype = dynamic_cast<UINICQSubType*>(i);
 

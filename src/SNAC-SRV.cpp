@@ -454,7 +454,8 @@ namespace ICQ2000 {
     m_time = mktime(&timetm);
 
     m_type = OfflineMessage;
-    m_icqsubtype = ICQSubType::ParseICQSubType(b, false);
+    m_icqsubtype = ICQSubType::ParseICQSubType(b, false, false);
+    /* offline message is non-advanced, and not an ack */
     b.advance(2); // unknown
   }
 

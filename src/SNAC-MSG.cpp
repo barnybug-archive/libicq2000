@@ -361,7 +361,7 @@ namespace ICQ2000 {
       >> seqnum;
 
     b.advance(12);
-    ICQSubType *t = ICQSubType::ParseICQSubType(b, true);
+    ICQSubType *t = ICQSubType::ParseICQSubType(b, true, true);
     if (t != NULL) {
       m_icqsubtype = dynamic_cast<UINICQSubType*>(t);
       if (m_icqsubtype != NULL) {

@@ -485,7 +485,11 @@ namespace ICQ2000 {
 
     b.advance(12); // unknown - all zeroes
 
-    m_icqsubtype = ICQSubType::ParseICQSubType(b, true);
+    m_icqsubtype = ICQSubType::ParseICQSubType(b, true, false);
+    /* this TLV occurs in the MessageSNAC
+       it is in advanced form and is not an ack
+       (otherwise it'd be in MessageACKSNAC) */
+    
     if (m_icqsubtype != NULL) m_icqsubtype->setSeqNum(seqnum);
     
     if (unknown == 0x0012) {
@@ -529,8 +533,8 @@ namespace ICQ2000 {
     unsigned int uin;
     b >> uin;
 
-    m_icqsubtype = ICQSubType::ParseICQSubType(b, false);
-    
+    m_icqsubtype = ICQSubType::ParseICQSubType(b, false, false);
+    /* non-advanced, non-ack message */
   }
 
   // ----------------- TLV List -------------------

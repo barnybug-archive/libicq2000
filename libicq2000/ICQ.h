@@ -90,7 +90,7 @@ namespace ICQ2000 {
     ICQSubType();
     virtual ~ICQSubType() { }
 
-    static ICQSubType* ParseICQSubType(Buffer& b, bool adv);
+    static ICQSubType* ParseICQSubType(Buffer& b, bool adv, bool ack);
     void Output(Buffer& b) const;
 
     virtual void ParseBody(Buffer& b) = 0;
