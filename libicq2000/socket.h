@@ -115,6 +115,7 @@ class TCPServer {
   int getSocketHandle();
   
   void StartServer();
+  void StartServer(unsigned short lower, unsigned short upper);
   void Disconnect();
 
   bool isStarted() const;

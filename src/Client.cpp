@@ -93,6 +93,9 @@ namespace ICQ2000 {
     m_invisible_wanted = false;
 
     m_ext_ip = 0;
+    m_use_portrange = false;
+    m_lower_port = 0;
+    m_upper_port = 0;
 
     m_cookiecache.setDefaultTimeout(30);
     // 30 seconds is hopefully enough for even the slowest connections
@@ -938,7 +941,11 @@ namespace ICQ2000 {
     // startup listening server at this point, so we
     // know the listening port and ip
     if (m_in_dc) {
-      m_listenServer.StartServer();
+      if (m_use_portrange) {
+        m_listenServer.StartServer(m_lower_port, m_upper_port);
+      } else {
+        m_listenServer.StartServer();
+      }
       SignalAddSocket( m_listenServer.getSocketHandle(), SocketEvent::READ );
       ostringstream ostr;
       ostr << "Server listening on " << IPtoString( m_serverSocket.getLocalIP() ) << ":" << m_listenServer.getPort();
@@ -2489,4 +2496,64 @@ namespace ICQ2000 {
     return m_out_dc;
   }
   
+  /** 
+   *  set the upper bound of the portrange for incoming connections (esp. behind a firewall)
+   *  you have to restart the TCPServer(s) for this to take effect
+   *  
+   * @param upper upper bound
+   */
+  void Client::setPortRangeUpperBound(unsigned short upper) {
+    m_upper_port=upper;
+  }
+
+  /** 
+   *  set the lower bound of the portrange for incoming connections (esp. behind a firewall)
+   *  you have to restart the TCPServer(s) for this to take effect
+   *  
+   * @param lower lower bound
+   */
+  void Client::setPortRangeLowerBound(unsigned short lower) {
+    m_lower_port=lower;
+  }
+
+  /**
+   *  get upper bound of the portrange used for incoming connections
+   *
+   * @return upper bound
+   */
+  unsigned short Client::getPortRangeUpperBound() const
+  {
+    return m_upper_port;
+  }
+
+  /**
+   *  get lower bound of the portrange used for incoming connections
+   *
+   * @return lower bound
+   */
+  unsigned short Client::getPortRangeLowerBound() const 
+  {
+    return m_lower_port;
+  }
+
+  /**
+   *  set whether a portrange should be used for incoming connections
+   *
+   * @param b whether to use a portrange
+   */ 
+  void Client::setUsePortRange(bool b) {
+    m_use_portrange=b;
+  }
+  
+  /**
+   *  get whether a portrange should be used for incoming connections
+   *
+   * @return whether to use a portrange
+   */ 
+  bool Client::getUsePortRange() const 
+  {
+    return m_use_portrange;
+  }
+
 }
+

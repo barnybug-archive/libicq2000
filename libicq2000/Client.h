@@ -110,6 +110,8 @@ namespace ICQ2000 {
     unsigned short m_cookie_length;
 
     unsigned int m_ext_ip;
+    bool m_use_portrange;
+    unsigned short m_upper_port, m_lower_port;
     TCPSocket m_serverSocket;
     TCPServer m_listenServer;
 
@@ -452,6 +454,14 @@ namespace ICQ2000 {
 
     void setUseOutDC(bool d);
     bool getUseOutDC() const;
+
+    void setPortRangeLowerBound(unsigned short lower);
+    void setPortRangeUpperBound(unsigned short upper);
+    unsigned short getPortRangeLowerBound() const;
+    unsigned short getPortRangeUpperBound() const;
+
+    void setUsePortRange(bool b);
+    bool getUsePortRange() const;
 
     void Poll();
     void socket_cb(int fd, SocketEvent::Mode m);

@@ -266,24 +266,39 @@ TCPServer::~TCPServer() {
 }
 
 void TCPServer::StartServer() {
+  StartServer(0, 0);
+}
+
+void TCPServer::StartServer(unsigned short lower, unsigned short upper) {
   if (m_socketDescriptor_valid) throw SocketException("Already listening");
   
   m_socketDescriptor = socket( AF_INET, SOCK_STREAM, 0 );
   if (m_socketDescriptor < 0) throw SocketException("Couldn't create socket");
   m_socketDescriptor_valid = true;
   
-  /*
-   * don't bother with bind, we don't care which port
-   * it picks to listen on, just so long as we can find
-   * out which it is
-   *   localAddr.sin_family = AF_INET;
-   *   localAddr.sin_addr.s_addr = INADDR_ANY;
-   *   localAddr.sin_port = 0;
-   *
-   *   if ( bind( m_socketDescriptor,
-   *   (struct sockaddr *)&localAddr,
-   *   sizeof(struct sockaddr) ) < 0 ) throw SocketException("Couldn't bind socket");
-   */
+  localAddr.sin_family = AF_INET;
+  localAddr.sin_addr.s_addr = INADDR_ANY;
+
+  bool bound = false;
+  if (lower && upper) {
+    unsigned short port;
+    // attempt to bind to a port within the range
+    for (port=lower;port<=upper;port++) {
+      localAddr.sin_port = htons(port);
+      if ( bind( m_socketDescriptor,(struct sockaddr *)&localAddr,sizeof(struct sockaddr) ) >= 0 ) {
+	bound = true;
+	break;
+      }
+      
+    }
+  }
+  
+  if (!bound) {
+    // bind to a random port
+    localAddr.sin_port = 0;
+    if ( bind( m_socketDescriptor,(struct sockaddr *)&localAddr,sizeof(struct sockaddr) ) < 0 )
+      throw SocketException("Couldn't bind socket");
+  }
 
   listen( m_socketDescriptor, 5 );
   // queue size of 5 should be sufficient

@@ -131,8 +131,18 @@ do
       fi
       echo "Running automake --gnu $am_opt ..."
       automake --add-missing --gnu $am_opt
-      echo "Running autoconf ..."
-      autoconf
+
+      # run autoconf2.50 instead of autoconf when it's available -
+      # this is for my debian system which has a dumb wrapper that
+      # will always end up using autoconf 2.13 when I want autoconf
+      # 2.50 to be used
+      if (autoconf2.50 --version) < /dev/null > /dev/null 2>&1; then
+	  echo "Running autoconf 2.50 ..."
+	  autoconf2.50
+      else
+	  echo "Running autoconf ..."
+	  autoconf
+      fi
     )
   fi
 done
