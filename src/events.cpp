@@ -699,28 +699,8 @@ namespace ICQ2000 {
    * @param c the contact
    * @param msg authorisation message
    */
-  AuthReqEvent::AuthReqEvent(Contact* c, const string& nick, 
-                             const string& firstname, 
-                             const string& lastname,
-                             const string& email, const string& msg)
-    : MessageEvent(c), m_nick(nick), m_firstname(firstname),
-      m_lastname(lastname), m_email(email), m_message(msg), 
-      m_offline(false) {}
-
-  /**
-   *  Constructor for the Authorisation Request
-   *
-   * @param c the contact
-   * @param msg authorisation message
-   */
-  AuthReqEvent::AuthReqEvent(Contact* c, const string& nick, 
-                             const string& firstname, 
-                             const string& lastname,
-                             const string& email, 
-                             const string& msg,time_t t)
-    : MessageEvent(c), m_nick(nick), m_firstname(firstname),
-      m_lastname(lastname), m_email(email), m_message(msg), 
-      m_offline(true) {
+  AuthReqEvent::AuthReqEvent(Contact* c, const string& msg, time_t t)
+    : MessageEvent(c), m_message(msg), m_offline(true) {
     m_time=t;  
   }
 
@@ -734,34 +714,6 @@ namespace ICQ2000 {
    * @return authorisation message
    */
   string AuthReqEvent::getMessage() const { return m_message; }
-
-  /**
-   *  get the nickname
-   *
-   * @return the nickname
-   */
-  string AuthReqEvent::getNick() const { return m_nick; }
-
-  /**
-   *  get the first name
-   *
-   * @return the first name
-   */
-  string AuthReqEvent::getFirstName() const { return m_firstname; }
-
-  /**
-   *  get the last name
-   *
-   * @return the last name
-   */
-  string AuthReqEvent::getLastName() const { return m_lastname; }
-
-  /**
-   *  get the email address
-   *
-   * @return the email address
-   */
-  string AuthReqEvent::getEmail() const { return m_email; }
 
   /**
    *  get if this was an offline message

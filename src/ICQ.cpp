@@ -459,19 +459,14 @@ namespace ICQ2000 {
     : UINICQSubType(source, destination), m_message(msg)  { }
 
   string AuthReqICQSubType::getMessage() const { return m_message; }
-  string AuthReqICQSubType::getNick() const { return m_nick; }
-  string AuthReqICQSubType::getFirstName() const { return m_firstname; }
-  string AuthReqICQSubType::getLastName() const { return m_lastname; }
-  string AuthReqICQSubType::getEmail() const { return m_email; }
   
   void AuthReqICQSubType::ParseBodyUIN(Buffer& b) {
     unsigned char skip;
 
-    m_nick = m_firstname = m_lastname = m_email = "";
     /*
     *
-    * This info is better to obtain with user info request,
-    * for it's not there in the packet in fact. (konst)
+    * Dunno what the hell is there in the
+    * first 6 bytes (konst).
     *
     */
 
@@ -482,27 +477,15 @@ namespace ICQ2000 {
     b>>skip;
     b>>skip;
 
-    b.UnpackUint16StringNull(m_message);
-    b.ServerToClient(m_message);
-
     /*
-    b.UnpackUint16StringNull(m_nick);
-    b.ServerToClient(m_nick);
-    b>>skip;
-    b.UnpackUint16StringNull(m_firstname);
-    b.ServerToClient(m_firstname);
-    b>>skip;
-    b.UnpackUint16StringNull(m_lastname);
-    b.ServerToClient(m_lastname);
-    b>>skip;
-    b.UnpackUint16StringNull(m_email);
-    b.ServerToClient(m_email);
-    b>>skip;
-    b>>skip;
-    b>>skip;
+    *
+    * .. but the authorization request message
+    * follows here for sure.
+    *
+    */
+
     b.UnpackUint16StringNull(m_message);
     b.ServerToClient(m_message);
-    */
   }
 
   void AuthReqICQSubType::OutputBodyUIN(Buffer& b) const {

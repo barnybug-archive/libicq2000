@@ -444,27 +444,14 @@ namespace ICQ2000 {
    */
   class AuthReqEvent : public MessageEvent {
    private:
-    string m_nick;
-    string m_firstname;
-    string m_lastname;
-    string m_email;
     string m_message;
     bool m_offline;
 
    public:
     AuthReqEvent(Contact* c, const string& msg);
-    AuthReqEvent(Contact* c, const string& nick, const string& firstname, 
-                 const string& lastname, const string& email,
-                 const string& msg);
-    AuthReqEvent(Contact* c, const string& nick, const string& firstname, 
-                 const string& lastname, const string& email,
-                 const string& msg,time_t time);
+    AuthReqEvent(Contact* c, const string& msg, time_t time);
 
     string getMessage() const;
-    string getNick() const;
-    string getFirstName() const;
-    string getLastName() const;
-    string getEmail() const;
     MessageType getType() const;
     bool isOfflineMessage() const;
     unsigned int getSenderUIN() const;

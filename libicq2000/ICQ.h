@@ -232,10 +232,6 @@ namespace ICQ2000 {
 
   class AuthReqICQSubType : public UINICQSubType {
    private:
-    string m_nick;
-    string m_firstname;
-    string m_lastname;
-    string m_email;
     string m_message;
 
    public:
@@ -244,10 +240,6 @@ namespace ICQ2000 {
                       unsigned int destination);
 
     string getMessage() const;
-    string getNick() const;
-    string getFirstName() const;
-    string getLastName() const;
-    string getEmail() const;
 
     void ParseBodyUIN(Buffer& b);
     void OutputBodyUIN(Buffer& b) const;

@@ -282,9 +282,7 @@ namespace ICQ2000 {
       AuthReqICQSubType *ust = static_cast<AuthReqICQSubType*>(st);
       
       contact = lookupICQ( ust->getSource() );
-      e = new AuthReqEvent(contact,ust->getNick(),ust->getFirstName(),
-			       ust->getLastName(),ust->getEmail(),
-                               ust->getMessage());
+      e = new AuthReqEvent(contact, ust->getMessage());
 
     } else if (type == MSG_Type_AuthRej) {
       AuthRejICQSubType *ust = static_cast<AuthRejICQSubType*>(st);
@@ -455,9 +453,7 @@ namespace ICQ2000 {
 				snac->getTime());
       } else if (st->getType() == MSG_Type_AuthReq) {
         AuthReqICQSubType *ust = static_cast<AuthReqICQSubType*>(st);
-        e = new AuthReqEvent(contact,ust->getNick(),ust->getFirstName(),
-			     ust->getLastName(),ust->getEmail(),
-                             ust->getMessage(), snac->getTime());
+	e = new AuthReqEvent(contact, ust->getMessage(), snac->getTime());
       } else if (st->getType() == MSG_Type_AuthRej) {
         AuthRejICQSubType *ust = static_cast<AuthRejICQSubType*>(st);
         e = new AuthAckEvent(contact, ust->getMessage(), false, 
