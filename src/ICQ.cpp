@@ -172,6 +172,9 @@ namespace ICQ2000 {
 	>> priority;
       m_urgent = priority & Priority_Urgent;
       m_tocontactlist = priority & Priority_ToContactList;
+      if (!m_urgent && priority != Priority_Normal && priority != 0)
+	m_tocontactlist = true;
+      // the official clients seem fairly lenient on what they'll accept in status flags
     }
 
     if (!m_ack) {
