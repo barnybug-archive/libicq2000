@@ -83,6 +83,7 @@ namespace ICQ2000 {
     Status m_status_wanted;
     bool m_invisible_wanted;
     bool m_web_aware;
+    unsigned short m_random_group;
 
     std::string m_authorizerHostname;
     unsigned short m_authorizerPort;
@@ -384,6 +385,7 @@ namespace ICQ2000 {
     void setStatus(const Status st, bool inv);
     void setInvisible(bool inv);
     void setWebAware(bool wa);
+    void setRandomChatGroup(unsigned short group);
     
     Status getStatus() const;
     bool getInvisible() const;

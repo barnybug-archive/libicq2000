@@ -229,6 +229,19 @@ namespace ICQ2000 {
       unsigned short Subtype() const { return SNAC_SRV_Send; }
  };
 
+  class SrvSetRandomChatGroup : public SrvFamilySNAC, public OutSNAC {
+    private:
+      unsigned int m_my_uin;
+      unsigned short m_random_group;
+
+    protected:
+      void OutputBody(Buffer& b) const;
+
+    public:
+      SrvSetRandomChatGroup(unsigned int my_uin, unsigned short random_group);
+      unsigned short Subtype() const { return SNAC_SRV_Send; }
+ };
+
   const unsigned short SrvResponse_Error          = 0x0001;
   const unsigned short SrvResponse_AckMainHomeInfoChange = 0x0064; // used to be SrvResponse_SMS
   const unsigned short SrvResponse_AckWorkInfoChange	 = 0x006E;

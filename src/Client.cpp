@@ -1807,6 +1807,18 @@ namespace ICQ2000 {
     }
   }
 
+  void Client::setRandomChatGroup(unsigned short group) {
+    if(m_random_group != group && m_state != NOT_CONNECTED) {
+      m_random_group = group;
+
+      unsigned int reqid = NextRequestID();
+      SrvSetRandomChatGroup ssnac( m_self->getUIN(), group );
+
+      SignalLog(LogEvent::INFO, "Setting random chat group");
+      FLAPwrapSNACandSend( ssnac );
+    }
+  }
+
   /**
    *  Get your current status.
    *

@@ -432,6 +432,40 @@ namespace ICQ2000 {
 	b.setAutoSizeMarker(m2);
     }
     
+  SrvSetRandomChatGroup::SrvSetRandomChatGroup(unsigned int my_uin, unsigned short random_group)
+    : m_my_uin(my_uin), m_random_group(random_group) { }
+    
+  void SrvSetRandomChatGroup::OutputBody(Buffer& b) const {
+	int i;
+	b << (unsigned short)0x0001;
+
+	Buffer::marker m1 = b.getAutoSizeShortMarker();
+    
+	b.setLittleEndian();
+	Buffer::marker m2 = b.getAutoSizeShortMarker();
+
+	b << m_my_uin;
+
+	b << (unsigned short)2000   /* type 9808 */
+	    << (unsigned short)m_requestID /* low word of the request ID */
+	    << (unsigned short)0x0758; /* subtype */
+
+	b << (unsigned short)m_random_group;
+
+	b << (unsigned short) 0x0000;
+	b << (unsigned short) 0x0220;
+	for(i = 0; i < 6; i++) b << (unsigned short) 0x0000;
+	b << (char) 0x0;
+	for(i = 0; i < 3; i++) b << (unsigned short) 0x0000;
+	b << (char) 0x50;
+	for(i = 0; i < 3; i++) b << (char) 0x0;
+	b << (char) 0x03;
+	for(i = 0; i < 3; i++) b << (char) 0x0;
+
+	b.setAutoSizeMarker(m1);
+	b.setAutoSizeMarker(m2);
+    }
+    
   SrvResponseSNAC::SrvResponseSNAC() : m_icqsubtype(NULL) { }
 
   SrvResponseSNAC::~SrvResponseSNAC() {
