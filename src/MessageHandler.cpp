@@ -183,25 +183,20 @@ namespace ICQ2000 {
       break;
     case AcceptStatus_Away:
       aev->setDelivered(true);
-      aev->getContact()->setStatus(STATUS_AWAY);
       break;
     case AcceptStatus_Occupied:
       aev->setDelivered(false);
       aev->setDeliveryFailureReason(MessageEvent::Failed_Occupied);
-      aev->getContact()->setStatus(STATUS_OCCUPIED);
       break;
     case AcceptStatus_DND:
       aev->setDelivered(false);
       aev->setDeliveryFailureReason(MessageEvent::Failed_DND);
-      aev->getContact()->setStatus(STATUS_DND);
       break;
     case AcceptStatus_Occ_Accept:
       aev->setDelivered(true);
-      aev->getContact()->setStatus(STATUS_OCCUPIED);
       break;
     case AcceptStatus_NA:
       aev->setDelivered(true);
-      aev->getContact()->setStatus(STATUS_NA);
       break;
     default:
       {
