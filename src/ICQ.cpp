@@ -455,7 +455,7 @@ namespace ICQ2000 {
   string AuthReqICQSubType::getEmail() const { return m_email; }
   
   void AuthReqICQSubType::Parse(Buffer& b) {
-    unsigned char skip;
+/*    unsigned char skip;
     b.UnpackUint16StringNull(m_nick);
     b.ServerToClient(m_nick);
     b>>skip;
@@ -472,6 +472,15 @@ namespace ICQ2000 {
     b>>skip;
     b.UnpackUint16StringNull(m_message);
     b.ServerToClient(m_message);
+*/
+    unsigned short len;
+    b >> len;
+    b.advance(6);
+    b.Unpack(m_message, len-6);
+    b.advance(1);
+
+    if (m_advanced) 
+        b.advance(8);
   }
 
   void AuthReqICQSubType::OutputBody(Buffer& b) const {
