@@ -27,6 +27,8 @@
 #include <libicq2000/TLV.h>
 #include <libicq2000/Xml.h>
 
+#include <libicq2000/time_extra.h>
+
 using std::auto_ptr;
 using std::istringstream;
 
@@ -450,8 +452,9 @@ namespace ICQ2000 {
     timetm.tm_mday = day;
     timetm.tm_mon = month-1;
     timetm.tm_year = year-1900;
-    
-    m_time = mktime(&timetm);
+    timetm.tm_isdst = 0;
+
+    m_time = gmt_mktime(&timetm);
 
     m_type = OfflineMessage;
     m_icqsubtype = ICQSubType::ParseICQSubType(b, false, false);
