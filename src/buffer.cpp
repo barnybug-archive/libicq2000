@@ -315,7 +315,8 @@ void Buffer::dump(ostream& out) {
     if (a % 16 == 0) out << std::setw(4) << a << "  ";
     if (a < m_data.size()) {
       out << std::setw(2) << (int)m_data[a] << " ";
-      d[a%16] = isprint(m_data[a]) ? m_data[a] : '.';
+      d[a%16] = isprint(m_data[a]) ? (m_data[a] < 0x80 ? m_data[a] : '.') : '.';
+      // restrict output to a definitely non UTF-8 character set
     } else {
       out << "   ";
       d[a%16] = ' ';
