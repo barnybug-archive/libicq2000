@@ -814,6 +814,14 @@ namespace ICQ2000 {
       FLAPFooter(b,d);
     }
 
+    if (m_invisible) {
+        // offline -> invisible
+        d = FLAPHeader(b,0x02);
+        AddVisibleSNAC avs;
+        b << avs;
+        FLAPFooter(b,d);
+    }
+        
     d = FLAPHeader(b,0x02);
     SetStatusSNAC sss(MapStatusToICQStatus(m_status, m_invisible));
 
@@ -1459,8 +1467,10 @@ namespace ICQ2000 {
 
       // Check for status change
       Status newstat = MapICQStatusToStatus( ub.getStatus() );
-      if( m_status != newstat ) {
+      bool newinvis = MapICQStatusToInvisible( ub.getStatus() );
+      if( m_status != newstat  ||  m_invisible != newinvis ) {
         m_status = newstat;
+        m_invisible = newinvis;
         MyStatusChangeEvent ev(m_status);
         statuschanged.emit( &ev );
       }
@@ -1746,6 +1756,7 @@ namespace ICQ2000 {
     } else {
       // We'll set this as the initial status upon Connect()
       m_status = st;
+      m_invisible = inv;  
       if (st != STATUS_OFFLINE) Connect();
       if (m_state != NOT_CONNECTED && st == STATUS_OFFLINE) Disconnect(DisconnectedEvent::REQUESTED);
     }
