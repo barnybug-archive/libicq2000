@@ -447,15 +447,12 @@ namespace ICQ2000 {
 
     if (command == 0) throw ParseException("Invalid TCP Packet");
 
-    unsigned short type = icqsubtype->getType();
-
     switch(command) {
 
     case V6_TCP_START:
     {
       bool ack = m_message_handler->handleIncoming( icqsubtype );
-      if (ack) SendPacketAck(ist);
-
+      if (ack) SendPacketAck(icqsubtype);
       break;
     }
 
@@ -630,7 +627,7 @@ namespace ICQ2000 {
     Send(b);
   }
 
-  void DirectClient::SendPacketAck(UINICQSubType *icqsubtype) {
+  void DirectClient::SendPacketAck(ICQSubType *icqsubtype) {
     Buffer b(m_translator);
 
     b.setLittleEndian();

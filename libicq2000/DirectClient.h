@@ -88,7 +88,7 @@ namespace ICQ2000 {
     void SendInitPacket();
     void SendInit2();
     void SendPacketEvent(MessageEvent *ev);
-    void SendPacketAck(UINICQSubType *i);
+    void SendPacketAck(ICQSubType *i);
     void Send(Buffer &b);
     
     bool Decrypt(Buffer& in, Buffer& out);
