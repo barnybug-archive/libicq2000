@@ -8,7 +8,7 @@ LDFLAGS = @SIGC_LIBS@
 INCLUDES = -I$(top_srcdir)/src/ \
            @SIGC_CFLAGS@
 
-ickle_shell_SOURCES = shell.cpp PipeExec.cpp Select.cpp
+ickle_shell_SOURCES = shell.cpp shell.h PipeExec.cpp PipeExec.h Select.cpp Select.h
 ickle_shell_LDADD = $(top_srcdir)/src/libicq2000.la
 ickle_shell_DEPENDENCIES = $(top_srcdir)/src/libicq2000.la
 
