@@ -279,6 +279,13 @@ namespace ICQ2000 {
       break;
     }
 
+    case MSG_Type_Contact:
+    {
+      ContactICQSubType *cst = static_cast<ContactICQSubType*>(st);
+      e = new ContactMessageEvent(contact, cst->getContacts());
+      break;
+    }
+
     default:
       break;
 
@@ -313,6 +320,7 @@ namespace ICQ2000 {
     case MSG_Type_AutoReq_DND:
     case MSG_Type_AutoReq_FFC:
     case MSG_Type_UserAdd:
+    case MSG_Type_Contact:
     {
       UINICQSubType *ist = static_cast<UINICQSubType*>(st);
       adv = ist->isAdvanced();
@@ -415,6 +423,11 @@ namespace ICQ2000 {
 				  m_self_contact->getLastName(),
 				  m_self_contact->getEmail(),
 				  m_self_contact->getAuthReq());
+    } else if (ev->getType() == MessageEvent::Contacts) {
+
+      ContactMessageEvent *cv = static_cast<ContactMessageEvent*>(ev);
+      ist = new ContactICQSubType(cv->getContacts());
+
     }
     
     ICQMessageEvent *iev;

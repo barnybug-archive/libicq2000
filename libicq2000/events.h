@@ -352,7 +352,8 @@ namespace ICQ2000 {
       EmailEx,
       UserAdd,
       Email,
-      WebPager
+      WebPager,
+      Contacts
     };
 
     enum DeliveryFailureReason {
@@ -636,6 +637,24 @@ namespace ICQ2000 {
     std::string getMessage() const;
 
     MessageType getType() const;
+  };
+
+  /**
+   *  A contacts message
+   */
+  class ContactMessageEvent : public ICQMessageEvent {
+   private:
+    std::list<ContactRef> m_content;
+
+   public:
+    ContactMessageEvent(ContactRef c, std::list<ContactRef> content);
+
+    MessageType getType() const;
+    unsigned int getSenderUIN() const;
+
+    std::list<ContactRef> getContacts() const;
+
+    ICQMessageEvent* copy() const;
   };
 
   // ============================================================================

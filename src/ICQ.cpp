@@ -72,6 +72,9 @@ namespace ICQ2000 {
     case MSG_Type_UserAdd:
       ist = new UserAddICQSubType();
       break;
+    case MSG_Type_Contact:
+      ist = new ContactICQSubType();
+      break;
     case MSG_Type_AutoReq_Away:
     case MSG_Type_AutoReq_Occ:
     case MSG_Type_AutoReq_NA:
@@ -773,6 +776,53 @@ namespace ICQ2000 {
   unsigned short UserAddICQSubType::Length() const { return 0; }
 
   unsigned char UserAddICQSubType::getType() const { return MSG_Type_UserAdd; }
+
+  ContactICQSubType::ContactICQSubType() { }
+
+  ContactICQSubType::ContactICQSubType(const std::list<ContactRef> &content)
+  : m_content(content) { }
+
+  void ContactICQSubType::ParseBodyUIN(Buffer& b) {
+    int pos, n;
+    string text;
+
+    b.UnpackUint16StringNull(text);
+
+    if((pos = text.find("\xfe")) != -1) {
+      n = atoi(text.substr(0, pos).c_str());
+      text.erase(0, pos+1);
+
+      list<string> fields;
+      string_split(text, string("\xfe"), n, fields);
+
+      list<string>::iterator iter = fields.begin();
+      while(iter != fields.end()) {
+	ContactRef ct(new Contact(atoi((iter++)->c_str())));
+	ct->setAlias(b.ServerToClientCC(*(iter++)));
+	m_content.push_back(ct);
+      }
+    }
+  }
+
+  void ContactICQSubType::OutputBodyUIN(Buffer& b) const {
+    ostringstream ostr;
+    ostr << m_content.size() << (unsigned char)0xfe;
+
+    list<ContactRef>::const_iterator curr = m_content.begin();
+    while(curr != m_content.end()) {
+	ostr << (*curr)->getUIN() << (unsigned char)0xfe
+	     << (*curr)->getAlias() << (unsigned char)0xfe;
+	++curr;
+    }
+
+    b.PackUint16StringNull( ostr.str() );
+  }
+
+  unsigned short ContactICQSubType::Length() const { return 0; }
+
+  unsigned char ContactICQSubType::getType() const { return MSG_Type_Contact; }
+
+  std::list<ContactRef> ContactICQSubType::getContacts() const { return m_content; }
 
   void string_split(const string& in, const string& sep, int count, std::list<string>& fields)
   {

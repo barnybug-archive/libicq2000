@@ -1575,6 +1575,7 @@ namespace ICQ2000 {
       case MessageEvent::Normal:
       case MessageEvent::URL:
       case MessageEvent::AwayMessage:
+      case MessageEvent::Contacts:
       if (!SendDirect(ev)) SendViaServer(ev);
 	break;
 
@@ -1641,7 +1642,8 @@ namespace ICQ2000 {
     ContactRef c = ev->getContact();
 
     if (ev->getType() == MessageEvent::Normal
-	|| ev->getType() == MessageEvent::URL) {
+	|| ev->getType() == MessageEvent::URL
+	|| ev->getType() == MessageEvent::Contacts) {
       
       /*
        * Normal messages and URL messages sent via the server

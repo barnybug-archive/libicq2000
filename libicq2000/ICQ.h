@@ -50,6 +50,7 @@ namespace ICQ2000 {
   const unsigned char MSG_Type_WebPager= 0x0d;
   const unsigned char MSG_Type_EmailEx = 0x0e;
   const unsigned char MSG_Type_SMS     = 0x1a;
+  const unsigned char MSG_Type_Contact = 0x13;
 
   const unsigned char MSG_Type_AutoReq_Away = 0xe8;
   const unsigned char MSG_Type_AutoReq_Occ  = 0xe9;
@@ -356,6 +357,22 @@ namespace ICQ2000 {
     void OutputBodyUIN(Buffer& b) const;
     unsigned short Length() const;
     unsigned char getType() const;
+  };
+
+  class ContactICQSubType : public UINICQSubType {
+   private:
+    std::list<ContactRef> m_content;
+
+   public:
+    ContactICQSubType();
+    ContactICQSubType(const std::list<ContactRef> &content);
+
+    void ParseBodyUIN(Buffer& b);
+    void OutputBodyUIN(Buffer& b) const;
+    unsigned short Length() const;
+    unsigned char getType() const;
+
+    std::list<ContactRef> getContacts() const;
   };
 
   // helper functions

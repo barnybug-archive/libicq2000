@@ -1038,6 +1038,21 @@ namespace ICQ2000 {
 
   EmailMessageEvent::MessageType EmailMessageEvent::getType() const { return MessageEvent::Email; }
 
+  ContactMessageEvent::ContactMessageEvent(ContactRef c, std::list<ContactRef> content)
+  : ICQMessageEvent(c), m_content(content) {
+  }
+
+  MessageEvent::MessageType ContactMessageEvent::getType() const { return MessageEvent::Contacts; }
+
+  unsigned int ContactMessageEvent::getSenderUIN() const { return m_contact->getUIN(); }
+
+  std::list<ContactRef> ContactMessageEvent::getContacts() const { return m_content; }
+
+  ICQMessageEvent* ContactMessageEvent::copy() const
+  {
+    return new ContactMessageEvent(*this);
+  }
+
   // ============================================================================
   //  New UIN
   // ============================================================================
