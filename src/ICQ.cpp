@@ -907,6 +907,10 @@ namespace ICQ2000 {
       list<string> fields;
       string_split(text, string("\xfe"), n, fields);
 
+	  // handle odd number of fields (last one is 0) in offline contact messages (possibly only when sent from Mac ICQ)
+	  if ( 0!=fields.size()%2 )
+		fields.pop_back();
+		
       list<string>::iterator iter = fields.begin();
       while(iter != fields.end()) {
 	ContactRef ct(new Contact(atoi((iter++)->c_str())));
