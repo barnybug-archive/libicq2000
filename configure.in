@@ -98,9 +98,6 @@ AC_STRUCT_TM
 AC_C_INLINE
 AC_HEADER_TIME
 
-# Checks for libraries.
-AM_PATH_SIGC(1.0.0, [], [AC_MSG_ERROR([You need to have the libsigc++ libraries installed - see the README for more information])])
-
 # Checks for library functions.
 AC_CHECK_LIB(socket, socket)
 AC_CHECK_FUNC(gethostbyname, ,

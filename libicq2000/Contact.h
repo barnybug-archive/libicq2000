@@ -26,7 +26,7 @@
 #include <list>
 #include <string>
 
-#include <sigc++/signal_system.h>
+#include "libicq2000/sigslot.h"
 
 #include <libicq2000/constants.h>
 #include <libicq2000/ref_ptr.h>
@@ -257,8 +257,8 @@ namespace ICQ2000 {
 
     unsigned short nextSeqNum();
 
-    SigC::Signal1<void,StatusChangeEvent*> status_change_signal;
-    SigC::Signal1<void,UserInfoChangeEvent*> userinfo_change_signal;
+    sigslot::signal1<StatusChangeEvent*> status_change_signal;
+    sigslot::signal1<UserInfoChangeEvent*> userinfo_change_signal;
 
     void userinfo_change_emit();
     void userinfo_change_emit(bool is_transient_detail);

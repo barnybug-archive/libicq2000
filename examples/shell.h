@@ -59,7 +59,7 @@ bool respond;
 //  Simple Client declaration
 // ------------------------------------------------------------------
 
-class SimpleClient : public SigC::Object {
+class SimpleClient : public sigslot::has_slots<> {
  private:
   ICQ2000::Client icqclient;
   Select input;

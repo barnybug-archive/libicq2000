@@ -28,7 +28,7 @@
 #include <map>
 
 #include <libicq2000/Contact.h>
-#include <sigc++/signal_system.h>
+#include "libicq2000/sigslot.h"
 
 namespace ICQ2000 {
 
@@ -112,10 +112,10 @@ namespace ICQ2000 {
     const_iterator end() const;
 
     // aggregation of contact's
-    SigC::Signal1<void,StatusChangeEvent*> contact_status_change_signal;
-    SigC::Signal1<void,UserInfoChangeEvent*> contact_userinfo_change_signal;
+    sigslot::signal1<StatusChangeEvent*> contact_status_change_signal;
+    sigslot::signal1<UserInfoChangeEvent*> contact_userinfo_change_signal;
 
-    SigC::Signal1<void,ContactListEvent*> contactlist_signal;
+    sigslot::signal1<ContactListEvent*> contactlist_signal;
   };
 
   // ---------------------------------------------------------------------------
@@ -168,10 +168,10 @@ namespace ICQ2000 {
     const_iterator end() const;
 
     // aggregation of contact's
-    SigC::Signal1<void,StatusChangeEvent*> contact_status_change_signal;
-    SigC::Signal1<void,UserInfoChangeEvent*> contact_userinfo_change_signal;
+    sigslot::signal1<StatusChangeEvent*> contact_status_change_signal;
+    sigslot::signal1<UserInfoChangeEvent*> contact_userinfo_change_signal;
 
-    SigC::Signal1<void,ContactListEvent*> contactlist_signal;
+    sigslot::signal1<ContactListEvent*> contactlist_signal;
   };
 
 }

@@ -24,14 +24,14 @@
 
 #include <string>
 
-#include <sigc++/signal_system.h>
+#include "libicq2000/sigslot.h"
 
 #include <libicq2000/socket.h>
 #include <libicq2000/events.h>
 
 namespace ICQ2000 {
 
-  class SocketClient : public SigC::Object {
+  class SocketClient : public sigslot::has_slots<> {
    protected:
     void SignalAddSocket(int fd, SocketEvent::Mode m);
     void SignalRemoveSocket(int fd);
@@ -47,10 +47,10 @@ namespace ICQ2000 {
     void SignalLog(LogEvent::LogType type, const std::string& msg);
 
     // ------------------  Signals ---------------------------
-    SigC::Signal1<void,LogEvent*> logger;
-    SigC::Signal1<void,MessageEvent*> messageack;
-    SigC::Signal1<void,SocketEvent*> socket;
-    SigC::Signal0<void> connected;
+    sigslot::signal1<LogEvent*> logger;
+    sigslot::signal1<MessageEvent*> messageack;
+    sigslot::signal1<SocketEvent*> socket;
+    sigslot::signal1<SocketClient*> connected;
 
     int getfd() const;
     TCPSocket* getSocket() const;

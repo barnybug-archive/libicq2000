@@ -24,7 +24,7 @@
 
 #include <list>
 
-#include <sigc++/signal_system.h>
+#include "libicq2000/sigslot.h"
 
 #include <stdlib.h>
 

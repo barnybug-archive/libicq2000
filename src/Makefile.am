@@ -2,9 +2,6 @@
 ## Process with automake to produce Makefile.in
 ##
 
-INCLUDES = @SIGC_CFLAGS@
-LDFLAGS = @SIGC_LIBS@
-
 lib_LTLIBRARIES = libicq2000.la
 
 libicq2000_la_SOURCES = Client.cpp buffer.cpp socket.cpp TLV.cpp	\

@@ -27,7 +27,7 @@
 
 #include <map>
 
-#include <sigc++/signal_system.h>
+#include "libicq2000/sigslot.h"
 
 #include <time.h>
 
@@ -67,7 +67,7 @@ namespace ICQ2000 {
    *  instantiates for a connection, hooks up to signal on and has the
    *  methods to connect, disconnect and send events from.
    */
-  class Client : public SigC::Object {
+  class Client : public sigslot::has_slots<> {
    private:
     enum State { NOT_CONNECTED,
 		 AUTH_AWAITING_CONN_ACK,
@@ -220,7 +220,7 @@ namespace ICQ2000 {
     void ICBMCookieCache_expired_cb(MessageEvent *ev);
     void dccache_expired_cb(DirectClient *dc);
     void reqidcache_expired_cb(	RequestIDCacheValue *v );
-    void dc_connected_cb(DirectClient *dc);
+    void dc_connected_cb(SocketClient *dc);
     void dc_log_cb(LogEvent *ev);
     void dc_socket_cb(SocketEvent *ev);
     void dc_messageack_cb(MessageEvent *ev);
@@ -256,14 +256,14 @@ namespace ICQ2000 {
      *  A ConnectingEvent is signalled when the client is trying to go online.
      * @see connected, ConnectingEvent
      */
-    SigC::Signal1<void,ConnectingEvent*> connecting;
+    sigslot::signal1<ConnectingEvent*> connecting;
 
     /**
      *  The signal to connect to for listening to ConnectedEvent's.
      *  A ConnectedEvent is signalled when the client is online proper.
      * @see disconnected, ConnectedEvent
      */
-    SigC::Signal1<void,ConnectedEvent*> connected;
+    sigslot::signal1<ConnectedEvent*> connected;
 
     /**
      *  The signal to connect to for listening to DisconnectedEvent's.
@@ -278,14 +278,14 @@ namespace ICQ2000 {
      *  signalling incorrect password.
      * @see connected, DisconnectedEvent
      */
-    SigC::Signal1<void,DisconnectedEvent*> disconnected;
+    sigslot::signal1<DisconnectedEvent*> disconnected;
 
     /**
      *  The signal to connect to for listening to incoming
      *  MessageEvent. This includes far more than just messages.
      * @see MessageEvent
      */
-    SigC::Signal1<void,MessageEvent*> messaged;
+    sigslot::signal1<MessageEvent*> messaged;
 
     /**
      *  The signal to connect to for listening to the acknowledgements
@@ -295,39 +295,39 @@ namespace ICQ2000 {
      *  messages are being reattempted to be send through the server.
      * @see messaged, MessageEvent
      */
-    SigC::Signal1<void,MessageEvent*> messageack;
+    sigslot::signal1<MessageEvent*> messageack;
 
     /**
      *  The signal to connect to for listening to Contact list events.
      * @see ContactListEvent
      */
-    SigC::Signal1<void,ContactListEvent*> contactlist;
+    sigslot::signal1<ContactListEvent*> contactlist;
 
     /**
      *  The signal to connect to for listening for Contact Userinfo events.
      * @see UserInfoChangeEvent
      */
-    SigC::Signal1<void,UserInfoChangeEvent*> contact_userinfo_change_signal;
+    sigslot::signal1<UserInfoChangeEvent*> contact_userinfo_change_signal;
 
     /**
      *  The signal to connect to for listening for Contact Status change events.
      * @see StatusChangeEvent
      */
-    SigC::Signal1<void,StatusChangeEvent*> contact_status_change_signal;
+    sigslot::signal1<StatusChangeEvent*> contact_status_change_signal;
 
     /**
      *  The signal for when registering a new UIN has succeeded or
      *  failed after a call to RegisterUIN().
      * @see NewUINEvent, RegisterUIN
      */
-    SigC::Signal1<void,NewUINEvent*> newuin;
+    sigslot::signal1<NewUINEvent*> newuin;
 
     /**
      *  The signal for when the server signals the rate at which the client
      *  is sending has been changed.
      * @see RateInfoChangeEvent
      */
-    SigC::Signal1<void,RateInfoChangeEvent*> rate;
+    sigslot::signal1<RateInfoChangeEvent*> rate;
 
     /**
      *  The signal for all logging messages that are passed back to
@@ -337,7 +337,7 @@ namespace ICQ2000 {
      *  of log messages to display and which to ignore.
      * @see LogEvent
      */
-    SigC::Signal1<void,LogEvent*> logger;
+    sigslot::signal1<LogEvent*> logger;
 
     /**
      *  The signal for socket events. All clients must listen to this
@@ -348,19 +348,19 @@ namespace ICQ2000 {
      *
      * @see SocketEvent
      */
-    SigC::Signal1<void,SocketEvent*> socket;
+    sigslot::signal1<SocketEvent*> socket;
 
     /**
      *  The signal to connect to for listening for Self Contact Userinfo events.
      * @see UserInfoChangeEvent
      */
-    SigC::Signal1<void,UserInfoChangeEvent*> self_contact_userinfo_change_signal;
+    sigslot::signal1<UserInfoChangeEvent*> self_contact_userinfo_change_signal;
 
     /**
      *  The signal to connect to for listening for Self Contact Status change events.
      * @see StatusChangeEvent
      */
-    SigC::Signal1<void,StatusChangeEvent*> self_contact_status_change_signal;
+    sigslot::signal1<StatusChangeEvent*> self_contact_status_change_signal;
 
     /**
      *  Signal when someone requests your away message. The client
@@ -368,7 +368,7 @@ namespace ICQ2000 {
      *  message is. This allows dynamic away messages for different
      *  people.
      */
-    SigC::Signal1<void,ICQMessageEvent*> want_auto_resp;
+    sigslot::signal1<ICQMessageEvent*> want_auto_resp;
 
     /**
      *  Signal when a Search Result has been updated.  The last signal
@@ -376,7 +376,7 @@ namespace ICQ2000 {
      *  SearchResultEvent::isFinished() set to true. After this the
      *  event is finished and deleted from memory by the library.
      */
-    SigC::Signal1<void,SearchResultEvent*> search_result;
+    sigslot::signal1<SearchResultEvent*> search_result;
     
     // -------------
 

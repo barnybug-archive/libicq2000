@@ -25,7 +25,7 @@
 #include <libicq2000/Cache.h>
 #include <libicq2000/events.h>
 
-#include <sigc++/signal_system.h>
+#include "libicq2000/sigslot.h"
 
 namespace ICQ2000 {
 
@@ -42,7 +42,7 @@ namespace ICQ2000 {
       Cache<unsigned short, MessageEvent*>::expireItem(l);
     }
 
-    SigC::Signal1<void,MessageEvent*> expired;
+    sigslot::signal1<MessageEvent*> expired;
   };
   
 }

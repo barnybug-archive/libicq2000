@@ -80,26 +80,14 @@ libicq2000 is in no way affiliated with 'ICQ' or 'Mirabilis'.
    ------------------------------------------------------------------
 
 You will need:
-* libstdc++ library
-* libsigc++ library
+* libstdc++ library (the standard C++ library)
 
 Distribution   Packages required
 ------------   -----------------
 Redhat 7.1     libstdc++-2.96-81.i386.rpm, libstdc++-devel-2.96-81.i386.rpm
-               There are no rpms provided by Redhat for libsigc++,
-	       but there are contributed ones, see the link to the
-	       sources page for libsigc++ below.
 
 Other          I'd appreciate any input from people on success/failures.
 Redhats
-
-SuSE 7.0       The rpms for sigc++ are very out of date on SuSE 7.0, you'll
-	       either have to compile libsigc++ from sources or try
-	       fudging it with newer rpms for 7.2.
-
-SuSE 7.1       sigc++.rpm
-
-SuSE 7.2       libsigc++.rpm, libsigc++-devel.rpm
 
 For RPM distributions (Redhat, SuSE, etc..) - make sure you install
 the 'development' RPMs for all these libraries as well. Usually these
@@ -108,14 +96,12 @@ of the names of the rpms that are required, so send me info about what
 you needed for your distribution if it's not already here.
 
 Debian         libstdc++2.10 and libstdc++2.10-dev
-(+ Progeny,    libsigc++0 and libsigc++-dev
+(+ Progeny,
  etc..)        
 
 Sources for these libraries can be found at the following addresses:
 libstdc++: http://www.gnu.org/software/gcc/libstdc++/ 
            (should have come with your version of gcc)
-libsigc++: http://libsigc.sourceforge.net/
-           http://libsigc.sourceforge.net/stable.html
 
    ------------------------------------------------------------------
    - Compiling                                                      -

@@ -25,7 +25,7 @@
  */
 
 #include <map>
-#include <sigc++/signal_system.h>
+#include "libicq2000/sigslot.h"
 
 #ifndef EXAMPLE_SOCKET_H
 #define EXAMPLE_SOCKET_H

@@ -121,8 +121,8 @@ namespace ICQ2000 {
     contactlist_signal.emit( &uev );
 
     // connect up contact's status signals to propagate up group
-    ct->status_change_signal.connect( contact_status_change_signal.slot() );
-    ct->userinfo_change_signal.connect( contact_userinfo_change_signal.slot() );
+    ct->status_change_signal.connect( contact_status_change_signal );
+    ct->userinfo_change_signal.connect( contact_userinfo_change_signal );
 
     return ct;
   }
@@ -252,9 +252,9 @@ namespace ICQ2000 {
     m_groups.push_back(gp);
 
     // propagate signals up to ContactTree object
-    m_groups.back().contactlist_signal.connect( contactlist_signal.slot() );
-    m_groups.back().contact_status_change_signal.connect( contact_status_change_signal.slot() );
-    m_groups.back().contact_userinfo_change_signal.connect( contact_userinfo_change_signal.slot() );
+    m_groups.back().contactlist_signal.connect( contactlist_signal );
+    m_groups.back().contact_status_change_signal.connect( contact_status_change_signal );
+    m_groups.back().contact_userinfo_change_signal.connect( contact_userinfo_change_signal );
 
     // fireoff event
     GroupAddedEvent ev(m_groups.back());

@@ -24,7 +24,7 @@
 
 #include <time.h>
 
-#include <sigc++/signal_system.h>
+#include "libicq2000/sigslot.h"
 
 #include <libicq2000/Contact.h>
 #include <libicq2000/events.h>
@@ -43,7 +43,7 @@ namespace ICQ2000 {
    *  through the server, 2. A SrvResponseSNAC - offline message, 3. a
    *  direct message
    */
-  class MessageHandler : public SigC::Object {
+  class MessageHandler : public sigslot::has_slots<> {
    private:
     ContactRef m_self_contact;
     ContactTree *m_contact_list;
@@ -71,10 +71,10 @@ namespace ICQ2000 {
     // incoming ACKs
     void handleIncomingACK(MessageEvent *ev, UINICQSubType* icq);
 
-    SigC::Signal1<void,MessageEvent*> messaged;
-    SigC::Signal1<void,MessageEvent*> messageack;
-    SigC::Signal1<void,ICQMessageEvent*> want_auto_resp;
-    SigC::Signal1<void,LogEvent*> logger;
+    sigslot::signal1<MessageEvent*> messaged;
+    sigslot::signal1<MessageEvent*> messageack;
+    sigslot::signal1<ICQMessageEvent*> want_auto_resp;
+    sigslot::signal1<LogEvent*> logger;
   };
 }
 

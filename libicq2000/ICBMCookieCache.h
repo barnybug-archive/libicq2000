@@ -26,7 +26,7 @@
 #include <libicq2000/ICBMCookie.h>
 #include <libicq2000/events.h>
 
-#include <sigc++/signal_system.h>
+#include "libicq2000/sigslot.h"
 
 namespace ICQ2000 {
 
@@ -55,7 +55,7 @@ namespace ICQ2000 {
       return c;
     }
 
-    SigC::Signal1<void,MessageEvent*> expired;
+    sigslot::signal1<MessageEvent*> expired;
 
   };
 }

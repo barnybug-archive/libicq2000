@@ -24,7 +24,7 @@
 
 #include <libicq2000/Cache.h>
 
-#include <sigc++/signal_system.h>
+#include "libicq2000/sigslot.h"
 
 namespace ICQ2000 {
 
@@ -105,7 +105,7 @@ namespace ICQ2000 {
       }
     }
 
-    SigC::Signal1<void,DirectClient*> expired;
+    sigslot::signal1<DirectClient*> expired;
   };
   
 }

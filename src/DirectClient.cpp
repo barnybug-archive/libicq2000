@@ -31,7 +31,6 @@
 using std::string;
 using std::ostringstream;
 using std::endl;
-using SigC::slot;
 
 namespace ICQ2000 {
 
@@ -90,7 +89,7 @@ namespace ICQ2000 {
   void DirectClient::Init() {
     m_seqnum = 0xFFFF;
     m_msgcache.setDefaultTimeout(30);
-    m_msgcache.expired.connect( slot(this, &DirectClient::expired_cb) );
+    m_msgcache.expired.connect( this, &DirectClient::expired_cb) ;
   }
 
   void DirectClient::Connect() {
@@ -179,7 +178,7 @@ namespace ICQ2000 {
 	  } else {
 	    m_state = CONNECTED;
 	    flush_queue();
-	    connected.emit();
+	    connected.emit(this);
 	  }
 	}
 
@@ -194,7 +193,7 @@ namespace ICQ2000 {
 	    ConfirmUIN();
 	    m_state = CONNECTED;          // v5 is done handshaking now
 	    flush_queue();
-	    connected.emit();
+	    connected.emit(this);
 	  }
 
 	} else {
@@ -213,7 +212,7 @@ namespace ICQ2000 {
 
 	m_state = CONNECTED;
 	flush_queue();
-	connected.emit();
+	connected.emit(this);
 
       } else if (m_state == CONNECTED) {
 	ParsePacket(sb);

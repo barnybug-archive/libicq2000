@@ -24,7 +24,7 @@
 
 #include <libicq2000/Cache.h>
 
-#include <sigc++/signal_system.h>
+#include "libicq2000/sigslot.h"
 
 namespace ICQ2000 {
 
@@ -96,7 +96,7 @@ namespace ICQ2000 {
       removeAll();
     }
 
-    SigC::Signal1<void,RequestIDCacheValue*> expired;
+    sigslot::signal1<RequestIDCacheValue*> expired;
     
     void expireItem(const RequestIDCache::literator& l) {
       expired.emit( (*l).getValue() );

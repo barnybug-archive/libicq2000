@@ -59,12 +59,12 @@ SimpleClient::SimpleClient(unsigned int uin, const string& pass)
    * register callbacks for methods to be called, which in turn will
    * be called when the relevant event happens
    */
-  icqclient.connected.connect(slot(this,&SimpleClient::connected_cb));
-  icqclient.disconnected.connect(slot(this,&SimpleClient::disconnected_cb));
-  icqclient.messaged.connect(slot(this,&SimpleClient::message_cb));
-  icqclient.logger.connect(slot(this,&SimpleClient::logger_cb));
-  icqclient.contact_status_change_signal.connect(slot(this,&SimpleClient::contact_status_change_cb));
-  icqclient.socket.connect(slot(this,&SimpleClient::socket_cb));
+  icqclient.connected.connect(this,&SimpleClient::connected_cb);
+  icqclient.disconnected.connect(this,&SimpleClient::disconnected_cb);
+  icqclient.messaged.connect(this,&SimpleClient::message_cb);
+  icqclient.logger.connect(this,&SimpleClient::logger_cb);
+  icqclient.contact_status_change_signal.connect(this,&SimpleClient::contact_status_change_cb);
+  icqclient.socket.connect(this,&SimpleClient::socket_cb);
 
 }
 
@@ -109,7 +109,7 @@ void SimpleClient::socket_cb(SocketEvent *ev) {
 
     // register this socket with our Select object
     m_sockets[fd] =
-    input.connect( slot(this,&SimpleClient::select_socket_cb),
+    input.connect( this,&SimpleClient::select_socket_cb,
 		   // the slot that the Select object will callback
 		   fd,
 		   // the socket file descriptor to add

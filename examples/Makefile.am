@@ -4,9 +4,7 @@
 
 noinst_PROGRAMS = ickle-shell
 
-LDFLAGS = @SIGC_LIBS@
-INCLUDES = -I$(top_srcdir)/src/ \
-           @SIGC_CFLAGS@
+INCLUDES = -I$(top_srcdir)/src/
 
 ickle_shell_SOURCES = shell.cpp shell.h PipeExec.cpp PipeExec.h Select.cpp Select.h
 ickle_shell_LDADD = $(top_srcdir)/src/libicq2000.la

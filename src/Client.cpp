@@ -27,8 +27,6 @@
 
 #include "sstream_fix.h"
 
-#include <sigc++/bind.h>
-
 #include <vector>
 
 using std::string;
@@ -108,39 +106,39 @@ namespace ICQ2000 {
 
     m_cookiecache.setDefaultTimeout(30);
     // 30 seconds is hopefully enough for even the slowest connections
-    m_cookiecache.expired.connect( slot(this,&Client::ICBMCookieCache_expired_cb) );
+    m_cookiecache.expired.connect( this,&Client::ICBMCookieCache_expired_cb) ;
 
     m_dccache.setDefaultTimeout(30);
     // set timeout on direct connections to 30 seconds
     // this will be increased once they are established
-    m_dccache.expired.connect( slot(this,&Client::dccache_expired_cb) );
+    m_dccache.expired.connect( this,&Client::dccache_expired_cb) ;
 
-    m_reqidcache.expired.connect( slot(this, &Client::reqidcache_expired_cb) );
+    m_reqidcache.expired.connect( this, &Client::reqidcache_expired_cb) ;
     
-    m_smtp.logger.connect( slot(this, &Client::dc_log_cb) );
-    m_smtp.messageack.connect( slot(this, &Client::dc_messageack_cb) );
-    m_smtp.socket.connect( slot(this, &Client::dc_socket_cb) );
+    m_smtp.logger.connect( this, &Client::dc_log_cb) ;
+    m_smtp.messageack.connect( this, &Client::dc_messageack_cb) ;
+    m_smtp.socket.connect( this, &Client::dc_socket_cb) ;
 
     /* contact list callbacks */
-    m_contact_tree.contactlist_signal.connect( slot(this, &Client::contactlist_cb) );
+    m_contact_tree.contactlist_signal.connect( this, &Client::contactlist_cb) ;
     
     /* contact callbacks */
-    m_contact_tree.contact_status_change_signal.connect( contact_status_change_signal.slot() );
-    m_contact_tree.contact_userinfo_change_signal.connect( contact_userinfo_change_signal.slot() );
+    m_contact_tree.contact_status_change_signal.connect( contact_status_change_signal );
+    m_contact_tree.contact_userinfo_change_signal.connect( contact_userinfo_change_signal );
 
     /* visible, invisible lists callbacks */
-    //    m_visible_list.contactlist_signal.connect( slot(this, &Client::visiblelist_cb) );
-    //    m_invisible_list.contactlist_signal.connect( slot(this, &Client::invisiblelist_cb) );
+    //    m_visible_list.contactlist_signal.connect( this, &Client::visiblelist_cb) ;
+    //    m_invisible_list.contactlist_signal.connect( this, &Client::invisiblelist_cb) ;
 
     /* self contact callbacks */
-    m_self->status_change_signal.connect( self_contact_status_change_signal.slot() );
-    m_self->userinfo_change_signal.connect( self_contact_userinfo_change_signal.slot() );
+    m_self->status_change_signal.connect( self_contact_status_change_signal );
+    m_self->userinfo_change_signal.connect( self_contact_userinfo_change_signal );
     
     /* message handler callbacks */
-    m_message_handler.messaged.connect( messaged.slot() );
-    m_message_handler.messageack.connect( messageack.slot() );
-    m_message_handler.want_auto_resp.connect( want_auto_resp.slot() );
-    m_message_handler.logger.connect( logger.slot() );
+    m_message_handler.messaged.connect( messaged );
+    m_message_handler.messageack.connect( messageack );
+    m_message_handler.want_auto_resp.connect( want_auto_resp );
+    m_message_handler.logger.connect( logger );
   }
 
   unsigned short Client::NextSeqNum() {
@@ -701,7 +699,7 @@ namespace ICQ2000 {
     SignalLog(LogEvent::WARN, "Direct connection timeout reached");
   }
 
-  void Client::dc_connected_cb(DirectClient *dc) {
+  void Client::dc_connected_cb(SocketClient *dc) {
     m_dccache.setTimeout(dc->getfd(), 600);
     // once we are properly connected a direct
     // connection will only timeout after 10 mins
@@ -1509,10 +1507,10 @@ namespace ICQ2000 {
       DirectClient *dc = new DirectClient(m_self, sock, &m_message_handler, &m_contact_tree,
 					  m_ext_ip, m_listenServer.getPort(), &m_translator);
       m_dccache[ sock->getSocketHandle() ] = dc;
-      dc->logger.connect( slot(this, &Client::dc_log_cb) );
-      dc->messageack.connect( slot(this, &Client::dc_messageack_cb) );
-      dc->connected.connect( SigC::bind<DirectClient*>( slot(this, &Client::dc_connected_cb), dc ) );
-      dc->socket.connect( slot(this, &Client::dc_socket_cb) );
+      dc->logger.connect( this, &Client::dc_log_cb );
+      dc->messageack.connect( this, &Client::dc_messageack_cb );
+      dc->connected.connect( this, &Client::dc_connected_cb );
+      dc->socket.connect( this, &Client::dc_socket_cb );
       SignalAddSocket( sock->getSocketHandle(), SocketEvent::READ );
 
     } else {
@@ -1662,10 +1660,10 @@ namespace ICQ2000 {
       SignalLog(LogEvent::INFO, "Establishing direct connection");
       dc = new DirectClient(m_self, c, &m_message_handler,
 			    m_ext_ip, (m_in_dc ? m_listenServer.getPort() : 0), &m_translator);
-      dc->logger.connect( slot(this, &Client::dc_log_cb) );
-      dc->messageack.connect( slot(this, &Client::dc_messageack_cb) );
-      dc->connected.connect( SigC::bind<DirectClient*>( slot(this, &Client::dc_connected_cb), dc ) );
-      dc->socket.connect( slot(this, &Client::dc_socket_cb) );
+      dc->logger.connect( this, &Client::dc_log_cb) ;
+      dc->messageack.connect( this, &Client::dc_messageack_cb) ;
+      dc->connected.connect( this, &Client::dc_connected_cb ) ;
+      dc->socket.connect( this, &Client::dc_socket_cb) ;
 
       try {
 	dc->Connect();

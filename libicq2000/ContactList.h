@@ -26,7 +26,7 @@
 #include <map>
 
 #include <libicq2000/Contact.h>
-#include <sigc++/signal_system.h>
+#include "libicq2000/sigslot.h"
 
 namespace ICQ2000 {
 
