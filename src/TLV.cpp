@@ -24,7 +24,8 @@
 using std::string;
 using std::map;
 
-namespace ICQ2000 {
+namespace ICQ2000
+{
 
   static const unsigned char XORtable[] = { 0xf3, 0x26, 0x81, 0xc4,
 					    0x39, 0x86, 0xdb, 0x92,
@@ -34,7 +35,8 @@ namespace ICQ2000 {
   // ------------------ Generic TLV ---------------
 
 
-  InTLV* InTLV::ParseTLV(Buffer& b, TLV_ParseMode parsemode) {
+  InTLV* InTLV::ParseTLV(Buffer& b, TLV_ParseMode parsemode)
+  {
     unsigned short type;
     b >> type;
 
@@ -189,7 +191,7 @@ namespace ICQ2000 {
       }
       break;
 
-    case TLV_ParseMode_SBL:
+    case TLV_ParseMode_SBL_Rights:
       // TODO
       break;
     }

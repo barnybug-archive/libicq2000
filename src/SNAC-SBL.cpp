@@ -49,8 +49,9 @@ namespace ICQ2000 {
   SBLRightsReplySNAC::SBLRightsReplySNAC() { }
   
   void SBLRightsReplySNAC::ParseBody(Buffer& b) 
-  {    // several unknown TLVs, skip
-    b.advance(68);
+  {
+    TLVList tlvlist;
+    tlvlist.Parse(b, TLV_ParseMode_SBL_Rights, (unsigned short)-1);
   }
   
   // ============================================================================
