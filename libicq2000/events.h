@@ -295,12 +295,14 @@ namespace ICQ2000 {
       AuthAck,
       AwayMessage,
       EmailEx,
-      UserAdd
+      UserAdd,
+      Email
     };
 
     enum DeliveryFailureReason {
       Failed_Denied,
-      Failed_SendAsUrgentOrToContactList
+      Failed_SendAsUrgentOrToContactList,
+      Failed_SMTP
     };
 
    protected:
@@ -404,6 +406,7 @@ namespace ICQ2000 {
   class SMSMessageEvent : public MessageEvent {
    private:
     string m_message, m_source, m_sender, m_senders_network;
+    string m_smtp_from, m_smtp_to, m_smtp_subject;
     bool m_rcpt;
 
    public:
@@ -417,6 +420,15 @@ namespace ICQ2000 {
     string getSender() const;
     string getSenders_network() const;
     bool getRcpt() const;
+
+    void setSMTPFrom(const string& from);
+    string getSMTPFrom() const;
+
+    void setSMTPTo(const string& to);
+    string getSMTPTo() const;
+
+    void setSMTPSubject(const string& subj);
+    string getSMTPSubject() const;
   };
 
   /**
@@ -521,6 +533,21 @@ namespace ICQ2000 {
 
     MessageType getType() const;
     unsigned int getSenderUIN() const;
+  };
+
+  /**
+   *  An E-mail message, sent with SMTP
+   */
+  class EmailMessageEvent : public MessageEvent {
+   private:
+    string m_message;
+
+   public:
+    EmailMessageEvent(Contact *c, const string &msg);
+
+    string getMessage() const;
+
+    MessageType getType() const;
   };
 
   // --------------------- Self Events ----------------------

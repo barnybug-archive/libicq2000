@@ -655,6 +655,18 @@ namespace ICQ2000 {
    */
   bool SMSMessageEvent::getRcpt() const { return m_rcpt; }
 
+  void SMSMessageEvent::setSMTPFrom(const string& from) { m_smtp_from = from; }
+
+  string SMSMessageEvent::getSMTPFrom() const { return m_smtp_from; }
+
+  void SMSMessageEvent::setSMTPTo(const string& to) { m_smtp_to = to; }
+
+  string SMSMessageEvent::getSMTPTo() const { return m_smtp_to; }
+
+  void SMSMessageEvent::setSMTPSubject(const string& subj) { m_smtp_subject = subj; }
+
+  string SMSMessageEvent::getSMTPSubject() const { return m_smtp_subject; }
+
   // ---------------- SMS Receipt ------------------------
 
   /**
@@ -883,6 +895,15 @@ namespace ICQ2000 {
 
   unsigned int UserAddEvent::getSenderUIN() const { return m_contact->getUIN(); }
 
+  // ---------------- E-mail message -----------------------------
+
+  EmailMessageEvent::EmailMessageEvent(Contact *c, const string &msg)
+  : MessageEvent(c), m_message(msg) {
+  }
+
+  string EmailMessageEvent::getMessage() const { return m_message; }
+
+  EmailMessageEvent::MessageType EmailMessageEvent::getType() const { return MessageEvent::Email; }
 
   // ---------------- Self Event -------------------------
 

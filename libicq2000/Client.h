@@ -43,6 +43,7 @@
 #include <libicq2000/ICBMCookieCache.h>
 #include <libicq2000/DirectClient.h>
 #include <libicq2000/DCCache.h>
+#include <libicq2000/SMTPClient.h>
 #include <libicq2000/userinfoconstants.h>
 
 using std::string;
@@ -104,6 +105,8 @@ namespace ICQ2000 {
     unsigned int m_ext_ip;
     TCPSocket m_serverSocket;
     TCPServer m_listenServer;
+
+    SMTPClient m_smtp;
 
     DCCache m_dccache;   // this is for established connections
     map<unsigned int, DirectClient*> m_uinmap;
@@ -410,6 +413,12 @@ namespace ICQ2000 {
 
     void setBOSServerPort(const unsigned short& port);
     unsigned short getBOSServerPort() const;
+
+    void setSMTPServerHost(const string& host);
+    string getSMTPServerHost() const;
+
+    void setSMTPServerPort(const unsigned short& port);
+    unsigned short getSMTPServerPort() const;
 
     void setAcceptInDC(bool d);
     bool getAcceptInDC() const;

@@ -49,11 +49,12 @@ namespace ICQ2000 {
   DirectClient::DirectClient(Contact& self, TCPSocket *sock, ContactList *cl,
 			     unsigned int ext_ip, unsigned short server_port,
 			     Translator* translator)
-    : m_state(WAITING_FOR_INIT), m_socket(sock), m_recv(translator),
+    : m_state(WAITING_FOR_INIT), m_recv(translator),
       m_self_contact(self), m_contact(NULL), m_contact_list(cl),
       m_incoming(true), m_local_ext_ip(ext_ip),
       m_local_server_port(server_port), m_translator(translator)
   {
+    m_socket = sock;
     Init();
   }
 
@@ -82,16 +83,6 @@ namespace ICQ2000 {
 
     if ( m_socket->getSocketHandle() > -1) SignalRemoveSocket( m_socket->getSocketHandle() );
     delete m_socket;
-  }
-
-  void DirectClient::SignalAddSocket(int fd, SocketEvent::Mode m) {
-    AddSocketHandleEvent ev( fd, m );
-    socket.emit(&ev);
-  }
-
-  void DirectClient::SignalRemoveSocket(int fd) {
-    RemoveSocketHandleEvent ev(fd);
-    socket.emit(&ev);
   }
 
   void DirectClient::Init() {
@@ -153,11 +144,6 @@ namespace ICQ2000 {
       ostr << "Failed parsing: " << e.what();
       throw DisconnectedException( ostr.str() );
     }
-  }
-
-  void DirectClient::SignalLog(LogEvent::LogType type, const string& msg) {
-    LogEvent ev(type,msg);
-    logger.emit(&ev);
   }
 
   void DirectClient::SignalMessageEvent(MessageEvent *ev) {
@@ -792,11 +778,34 @@ namespace ICQ2000 {
 
   Contact* DirectClient::getContact() const { return m_contact; }
 
+  // -- exceptions ------------------------------------------------------------
+
   DirectClientException::DirectClientException() { }
   DirectClientException::DirectClientException(const string& text) : m_errortext(text) { }
 
   const char* DirectClientException::what() const throw() { return m_errortext.c_str(); }
 
   DisconnectedException::DisconnectedException(const string& text) : DirectClientException(text) { }
+  
+  // -- DirectClientBase ------------------------------------------------------
+
+  void DirectClientBase::SignalAddSocket(int fd, SocketEvent::Mode m) {
+    AddSocketHandleEvent ev( fd, m );
+    socket.emit(&ev);
+  }
+
+  void DirectClientBase::SignalRemoveSocket(int fd) {
+    RemoveSocketHandleEvent ev(fd);
+    socket.emit(&ev);
+  }
+
+  void DirectClientBase::SignalLog(LogEvent::LogType type, const string& msg) {
+    LogEvent ev(type,msg);
+    logger.emit(&ev);
+  }
+
+  int DirectClientBase::getfd() const { return m_socket->getSocketHandle(); }
+
+  TCPSocket* DirectClientBase::getSocket() const { return m_socket; }
   
 }

@@ -39,7 +39,10 @@ namespace ICQ2000 {
    *  uin/password are unavailable at time of creation, they can
    *  always be set later.
    */
-  Client::Client() : m_recv(&m_translator) {
+  Client::Client()
+    : m_recv(&m_translator),
+      m_smtp(m_self, "localhost", 25, &m_translator)
+  {
     Init();
   }
 
@@ -52,7 +55,9 @@ namespace ICQ2000 {
    *  @param password the owner's password
    */
   Client::Client(const unsigned int uin, const string& password)
-    : m_self(uin), m_password(password), m_recv(&m_translator) {
+    : m_self(uin), m_password(password), m_recv(&m_translator),
+      m_smtp(m_self, "localhost", 25, &m_translator)
+  {
     Init();
   }
 
@@ -96,6 +101,10 @@ namespace ICQ2000 {
 
     m_reqidcache.expired.connect( slot(this, &Client::reqidcache_expired_cb) );
     
+    m_smtp.logger.connect( slot(this, &Client::dc_log_cb) );
+    m_smtp.messageack.connect( slot(this, &Client::dc_messageack_cb) );
+    m_smtp.socket.connect( slot(this, &Client::dc_socket_cb) );
+
   }
 
   unsigned short Client::NextSeqNum() {
@@ -188,6 +197,8 @@ namespace ICQ2000 {
       unsigned int uin = dc->getUIN();
       if ( m_uinmap.count(uin) > 0 && m_uinmap[uin] == dc) m_uinmap.erase(uin);
       m_dccache.remove(fd);
+    } else if (m_smtp.getfd() == fd) {
+      SignalRemoveSocket( m_smtp.getfd() );
     }
   }
 
@@ -474,6 +485,13 @@ namespace ICQ2000 {
 	  } else if (snac->smtp_deliverable()) {
 
 	    // todo - konst have volunteered :-)
+	    //                  yeah I did.. <konst> ;)
+
+	    ev->setSMTPFrom(snac->getSMTPFrom());
+	    ev->setSMTPTo(snac->getSMTPTo());
+	    ev->setSMTPSubject(snac->getSMTPSubject());
+
+	    m_smtp.SendEvent(ev);
 	    
 	  } else {
 	    if (snac->getErrorParam() != "DUPLEX RESPONSE") {
@@ -1434,6 +1452,7 @@ namespace ICQ2000 {
     m_cookiecache.clearoutPoll();
     m_dccache.clearoutPoll();
     m_dccache.clearoutMessagesPoll();
+    m_smtp.clearoutMessagesPoll();
   }
 
   /**
@@ -1515,9 +1534,11 @@ namespace ICQ2000 {
        *
        */
 
-      DirectClient *dc;
+      DirectClientBase *dc;
       if (m_dccache.exists(fd)) {
 	dc = m_dccache[fd];
+      } else if(m_smtp.getfd() == fd) {
+	dc = &m_smtp;
       } else {
 	SignalLog(LogEvent::ERROR, "Problem: Unassociated socket");
 	return;
@@ -1620,12 +1641,21 @@ namespace ICQ2000 {
    *  match messages it has sent up to their acks.
    */
   void Client::SendEvent(MessageEvent *ev) {
-    if (ev->getType() == MessageEvent::Normal
-	|| ev->getType() == MessageEvent::URL
-	|| ev->getType() == MessageEvent::AwayMessage) {
+    switch (ev->getType()) {
+
+      case MessageEvent::Normal:
+      case MessageEvent::URL:
+      case MessageEvent::AwayMessage:
       if (!SendDirect(ev)) SendViaServer(ev);
-    } else {
+	break;
+
+      case MessageEvent::Email:
+	m_smtp.SendEvent(ev);
+	break;
+
+      default:
       SendViaServer(ev);
+	break;
     }
   }
   
@@ -2346,6 +2376,22 @@ namespace ICQ2000 {
    */
   unsigned short Client::getBOSServerPort() const {
     return m_bosPort;
+  }
+
+  void Client::setSMTPServerHost(const string& host) {
+    m_smtp.setServerHost(host);
+  }
+
+  string Client::getSMTPServerHost() const {
+    return m_smtp.getServerHost();
+  }
+
+  void Client::setSMTPServerPort(const unsigned short& port) {
+    m_smtp.setServerPort(port);
+  }
+
+  unsigned short Client::getSMTPServerPort() const {
+    return m_smtp.getServerPort();
   }
 
   /**

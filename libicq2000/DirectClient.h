@@ -48,7 +48,34 @@ namespace ICQ2000 {
 
   class UINICQSubType;
   
-  class DirectClient : public SigC::Object {
+  class DirectClientBase : public SigC::Object {
+   protected:
+    void SignalAddSocket(int fd, SocketEvent::Mode m);
+    void SignalRemoveSocket(int fd);
+
+    TCPSocket *m_socket;
+
+   public:
+    virtual void Connect() = 0;
+    virtual void FinishNonBlockingConnect() = 0;
+    virtual void Recv() = 0;
+
+    // ------------------ Signal dispatchers -----------------
+    void SignalLog(LogEvent::LogType type, const string& msg);
+    // ------------------  Signals ---------------------------
+    Signal1<void,LogEvent*> logger;
+    Signal1<void,MessageEvent*> messageack;
+    Signal1<void,SocketEvent*> socket;
+    Signal0<void> connected;
+
+    int getfd() const;
+    TCPSocket* getSocket() const;
+    virtual void clearoutMessagesPoll() = 0;
+
+    virtual void SendEvent(MessageEvent* ev) = 0;
+  };
+
+  class DirectClient : public DirectClientBase {
    private:
     enum State { NOT_CONNECTED,
 		 WAITING_FOR_INIT,
@@ -58,7 +85,6 @@ namespace ICQ2000 {
 
     State m_state;
 
-    TCPSocket *m_socket;
     Buffer m_recv;
 
     Contact& m_self_contact;
@@ -105,9 +131,6 @@ namespace ICQ2000 {
 
     void Init();
 
-    void SignalAddSocket(int fd, SocketEvent::Mode m);
-    void SignalRemoveSocket(int fd);
-
    public:
     DirectClient(Contact& self, TCPSocket *sock, ContactList *cl, unsigned int ext_ip,
 		 unsigned short server_port, Translator* translator);
@@ -120,14 +143,9 @@ namespace ICQ2000 {
     void Recv();
 
     // ------------------ Signal dispatchers -----------------
-    void SignalLog(LogEvent::LogType type, const string& msg);
     void SignalMessageEvent(MessageEvent *ev);
     // ------------------  Signals ---------------------------
-    Signal1<void,LogEvent*> logger;
     Signal1<void,MessageEvent*> messaged;
-    Signal1<void,MessageEvent*> messageack;
-    Signal1<void,SocketEvent*> socket;
-    Signal0<void> connected;
     Signal1<void,AwayMessageEvent*> want_auto_resp;
 
     unsigned int getUIN() const;
