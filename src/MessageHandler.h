@@ -29,13 +29,15 @@
 #include "Contact.h"
 #include "events.h"
 
-namespace ICQ2000 {
+namespace ICQ2000
+{
   
   class ContactTree;
   class ICQSubType;
   class UINICQSubType;
   class MessageEvent;
   class ICQMessageEvent;
+  class Translator;
 
   /**
    *  This is the central place all message signalling to the client
@@ -43,10 +45,13 @@ namespace ICQ2000 {
    *  through the server, 2. A SrvResponseSNAC - offline message, 3. a
    *  direct message
    */
-  class MessageHandler : public sigslot::has_slots<> {
+  class MessageHandler : public sigslot::has_slots<>
+  {
    private:
     ContactRef m_self_contact;
     ContactTree *m_contact_list;
+    Translator * & m_translator;
+    /* a reference to the pointer in Client */
     
     MessageEvent* ICQSubTypeToEvent(ICQSubType *st, ContactRef& contact, bool& adv);
     ICQMessageEvent* UINICQSubTypeToEvent(UINICQSubType *st, const ContactRef& contact);
@@ -60,7 +65,7 @@ namespace ICQ2000 {
     void SignalLog(LogEvent::LogType type, const std::string& msg);
     
   public:
-    MessageHandler(ContactRef self, ContactTree *cl);
+    MessageHandler(ContactRef self, ContactTree *cl, Translator * & tr);
 
     // incoming messages
     bool handleIncoming(ICQSubType* icq, time_t t = 0);

@@ -37,45 +37,25 @@ enum Status
   STATUS_OFFLINE,
 };
 
-static const char* const Status_text[] = { "Online",
-				     "Away",
-				     "N/A",
-				     "Occupied",
-				     "DND",
-				     "Free for chat",
-				     "Offline" };
-
 static const unsigned int SMS_Max_Length = 160;
 
 static const unsigned int String_Limit = 16384; // A sensible limit
 static const unsigned int Incoming_Packet_Limit = 65535;
  
-enum RandomChatGroup {
-  group_GeneralChat = 1,
-  group_Romance,
-  group_Games,
-  group_Students,
-  group_20,
-  group_30,
-  group_40,
-  group_50Plus,
-  group_SeekingWomen,
-  group_SeekingMen
+enum RandomChatGroup
+ {
+  GROUP_GENERALCHAT  = 1,
+  GROUP_ROMANCE      = 2,
+  GROUP_GAMES        = 3,
+  GROUP_STUDENTS     = 4,
+  GROUP_20           = 5,
+  GROUP_30           = 6,
+  GROUP_40           = 7,
+  GROUP_50PLUS       = 8,
+  GROUP_SEEKINGWOMEN = 9,
+  GROUP_SEEKINGMEN   = 10
 };
 
-static const char* const RandomChatGroup_text[] = {
-  "General Chat",
-  "Romance",
-  "Games",
-  "Students",
-  "20 Something",
-  "30 Something",
-  "40 Something",
-  "50 Plus",
-  "Seeking Women",
-  "Seeking Men"
-};
- 
 }
 
 #endif

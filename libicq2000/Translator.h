@@ -1,13 +1,7 @@
 /*
  * Translate class
  *
- * Many parts of this source code were 'inspired' by the ircII4.4 translat.c source.
- * RIPPED FROM KVirc: http://www.kvirc.org
- * Original by Szymon Stefanek (kvirc@tin.it).
- * Modified by Andrew Frolov (dron@linuxer.net)
- * Further modified by Graham Roff
- *
- * 'Borrowed' from licq - thanks Barnaby
+ * Copyright (C) 2003 Barnaby Gray <barnaby@beedesign.co.uk>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -29,46 +23,105 @@
 #define TRANSLATOR_H
 
 #include <string>
-#include <exception>
+
+#include <libicq2000/Contact.h>
 
 namespace ICQ2000
 {
-  class TranslatorException : public std::exception
+  /**
+   *  The encoding type the string is expected in. For example - most
+   *  messages are in the encoding of the locale on the contact's
+   *  computer. However, server-based lists are all stored in
+   *  UTF-8. Lastly, email/pager messages from the ICQ website are
+   *  sent to you are in ISO-8859-1. It is up to the translator how to
+   *  do these conversions to provide a consistent character set to
+   *  the client.
+   */
+  enum Encoding
   {
-   private:
-    std::string m_errortext;
-    
-   public:
-    TranslatorException(const std::string& text);
-    ~TranslatorException() throw() { }
-    
-    const char* what() const throw();
+    ENCODING_CONTACT_LOCALE,
+    ENCODING_UTF8,
+    ENCODING_ISO_8859_1
   };
-
+  
+  /**
+   *  Abstract base class for the character set translation which
+   *  clients can implement and plug into the library.
+   */
   class Translator
   {
    public:
     Translator();
-    void setDefaultTranslationMap();
-    void setTranslationMap(const std::string& szMapFileName);
-    void ServerToClient(std::string& szString);
-    void ClientToServer(std::string& szString);
-    std::string ServerToClientCC(const std::string& szString);
-    std::string ClientToServerCC(const std::string& szString);
-    void ServerToClient(char &_cChar);
-    void ClientToServer(char &_cChar);
-    static void CRLFtoLF(std::string& s);
-    static void LFtoCRLF(std::string& s);
-    bool usingDefaultMap() const { return m_bDefault; }
-    const std::string& getMapFileName() const { return m_szMapFileName; }
-    const std::string& getMapName() const { return m_szMapName; }
+    virtual ~Translator();
 
-   protected:
-    unsigned char serverToClientTab[256];
-    unsigned char clientToServerTab[256];
-    std::string m_szMapFileName, m_szMapName;
-    bool m_bDefault;
+    /**
+     *  Translate the string from the client-side encoding to a
+     *  server-side encoding.
+     *
+     * @param str the string to translate
+     * @param en  the expected encoding on the server-side
+     * @param c   the contact relevant to the string
+     * @return the translated string
+     */
+    virtual std::string client_to_server(const std::string& str,
+					 Encoding en,
+					 const ICQ2000::ContactRef& c) = 0;
+
+    /**
+     *  Translate the string from the server-side encoding to a client-side encoding.
+     *
+     * @param str the string to translate
+     * @param en  the expected encoding from the server-side
+     * @param c   the contact relevant to the string
+     * @return the translated string
+     */
+    virtual std::string server_to_client(const std::string& str,
+					 Encoding en,
+					 const ICQ2000::ContactRef& c) = 0;
+
+    virtual void client_to_server_inplace(std::string& str,
+					  Encoding en,
+					  const ICQ2000::ContactRef& c);
+    
+    virtual void server_to_client_inplace(std::string& str,
+					  Encoding en,
+					  const ICQ2000::ContactRef& c);
+  };
+
+  /**
+   *  Null translator - a noop (the default).
+   */
+  class NULLTranslator : public Translator
+  {
+   public:
+    NULLTranslator();
+
+    virtual std::string client_to_server(const std::string& str,
+					 Encoding en,
+					 const ICQ2000::ContactRef& c);
+    
+    virtual std::string server_to_client(const std::string& str,
+					 Encoding en,
+					 const ICQ2000::ContactRef& c);
+  };
+  
+  /**
+   *  Simple implementation of a translator that does the standard
+   *  unix LF -> windows CRLF format.
+   */
+  class CRLFTranslator : public Translator
+  {
+   public:
+    CRLFTranslator();
+    
+    virtual std::string client_to_server(const std::string& str,
+					 Encoding en,
+					 const ICQ2000::ContactRef& c);
+    
+    virtual std::string server_to_client(const std::string& str,
+					 Encoding en,
+					 const ICQ2000::ContactRef& c);
   };
 }
 
-#endif
+#endif /* TRANSLATOR_H */

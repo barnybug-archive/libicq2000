@@ -119,8 +119,6 @@ namespace ICQ2000 {
 
   Status Contact::getStatus() const { return m_status; }
 
-  string Contact::getStatusStr() const { return Status_text[m_status]; }
-
   string Contact::getMobileNo() const { return m_main_home_info.getMobileNo(); }
 
   string Contact::getNormalisedMobileNo() const { return m_main_home_info.getNormalisedMobileNo(); }
@@ -556,7 +554,7 @@ namespace ICQ2000 {
   Contact::EmailInfo::EmailInfo() { }
 
   void Contact::EmailInfo::addEmailAddress(const string& e) {
-    email_list.push_back(e);
+    emails.push_back(e);
   }
 
   Contact::WorkInfo::WorkInfo()

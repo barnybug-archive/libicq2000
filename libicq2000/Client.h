@@ -36,7 +36,6 @@
 #include <libicq2000/Contact.h>
 #include <libicq2000/ContactTree.h>
 #include <libicq2000/ContactList.h>
-#include <libicq2000/Translator.h>
 #include <libicq2000/userinfoconstants.h>
 
 namespace ICQ2000
@@ -64,6 +63,7 @@ namespace ICQ2000
   class Buffer;
   class TCPSocket;
   class TCPServer;
+  class Translator;
 
   /**
    *  The main library object.  This is the object the user interface
@@ -102,7 +102,7 @@ namespace ICQ2000
     unsigned short m_client_seq_num;
     unsigned int m_requestid;
     
-    Translator m_translator;
+    Translator * m_translator;
 
     ContactTree m_contact_tree;
     
@@ -496,7 +496,8 @@ namespace ICQ2000
      * & DisconnectedEvents the client gets
      */
     bool isConnected() const;
-    
+
+    void set_translator(Translator * t);
   };
 }
 

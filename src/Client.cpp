@@ -1,7 +1,7 @@
 /*
  * libICQ2000 Client
  *
- * Copyright (C) 2001 Barnaby Gray <barnaby@beedesign.co.uk>
+ * Copyright (C) 2001-2003 Barnaby Gray <barnaby@beedesign.co.uk>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -32,6 +32,7 @@
 #include "RequestIDCache.h"
 #include "ICBMCookieCache.h"
 #include "SMTPClient.h"
+#include "Translator.h"
 
 #include "sstream_fix.h"
 
@@ -44,14 +45,24 @@ using std::vector;
 
 namespace ICQ2000
 {
+  static const char* const Status_text[] =
+    { "Online",
+      "Away",
+      "N/A",
+      "Occupied",
+      "DND",
+      "Free for chat",
+      "Offline"
+    };
+
   /**
    *  Constructor for creating the Client object.  Use this when
    *  uin/password are unavailable at time of creation, they can
    *  always be set later.
    */
   Client::Client()
-    : m_self( new Contact(0) ),
-      m_message_handler( new MessageHandler(m_self, &m_contact_tree) ),
+    : m_self( new Contact(0) ), m_translator( new NULLTranslator() ),
+      m_message_handler( new MessageHandler(m_self, &m_contact_tree, m_translator) ),
       m_serverSocket( new TCPSocket() ), m_listenServer( new TCPServer() ),
       m_smtp( new SMTPClient( m_self, "localhost", 25 ) ),
       m_dccache( new DCCache() ), m_reqidcache( new RequestIDCache() ),
@@ -70,8 +81,8 @@ namespace ICQ2000
    *  @param password the owner's password
    */
   Client::Client(const unsigned int uin, const string& password)
-    : m_self( new Contact(uin) ), m_password(password),
-      m_message_handler( new MessageHandler( m_self, &m_contact_tree ) ),
+    : m_self( new Contact(uin) ), m_password(password), m_translator( new NULLTranslator() ),
+      m_message_handler( new MessageHandler( m_self, &m_contact_tree, m_translator ) ),
       m_serverSocket( new TCPSocket() ), m_listenServer( new TCPServer() ),
       m_smtp( new SMTPClient( m_self, "localhost", 25 ) ),
       m_dccache( new DCCache() ), m_reqidcache( new RequestIDCache() ),
@@ -100,9 +111,11 @@ namespace ICQ2000
     delete m_reqidcache;
     delete m_cookiecache;
     delete m_recv;
+    delete m_translator;
   }
 
-  void Client::Init() {
+  void Client::Init()
+  {
     m_authorizerHostname = "login.icq.com";
     m_authorizerPort = 5190;
     m_bosOverridePort = false;
@@ -289,44 +302,58 @@ namespace ICQ2000
 
     // ensure all contacts return to Offline
     ContactTree::iterator curr = m_contact_tree.begin();
-    while(curr != m_contact_tree.end()) {
+    while(curr != m_contact_tree.end())
+    {
       ContactTree::Group::iterator gcurr = (*curr).begin();
-      while (gcurr != (*curr).end()) {
+
+      while (gcurr != (*curr).end())
+      {
 	Status old_st = (*gcurr)->getStatus();
+
 	if ( old_st != STATUS_OFFLINE )
 	  (*gcurr)->setStatus(STATUS_OFFLINE, false);
+
 	++gcurr;
       }
+
       ++curr;
     }
   }
 
-  void Client::SignalAddSocket(int fd, SocketEvent::Mode m) {
+  void Client::SignalAddSocket(int fd, SocketEvent::Mode m)
+  {
     AddSocketHandleEvent ev( fd, m );
     socket.emit(&ev);
   }
 
-  void Client::SignalRemoveSocket(int fd) {
+  void Client::SignalRemoveSocket(int fd)
+  {
     RemoveSocketHandleEvent ev(fd);
     socket.emit(&ev);
   }
 
-  void Client::SignalMessage(MessageSNAC *snac) {
+  void Client::SignalMessage(MessageSNAC *snac)
+  {
     ContactRef contact;
     ICQSubType *st = snac->getICQSubType();
+
     if (st == NULL) return;
 
     bool ack = m_message_handler->handleIncoming( st );
-    if (ack) SendAdvancedACK(snac);
+    if (ack)
+      SendAdvancedACK(snac);
   }
 
 
-  void Client::SignalMessageACK(MessageACKSNAC *snac) {
+  void Client::SignalMessageACK(MessageACKSNAC *snac)
+  {
     UINICQSubType *st = snac->getICQSubType();
+
     if (st == NULL) return;
 
     unsigned char type = st->getType();
-    switch(type) {
+    switch(type)
+    {
     case MSG_Type_Normal:
     case MSG_Type_URL:
     case MSG_Type_AutoReq_Away:
@@ -355,7 +382,8 @@ namespace ICQ2000
 
   }
 
-  void Client::SignalMessageOfflineUser(MessageOfflineUserSNAC *snac) {
+  void Client::SignalMessageOfflineUser(MessageOfflineUserSNAC *snac)
+  {
     /**
      *  Mmm.. it'd be nice to use this as an ack for messages but it's
      *  not consistently sent for all messages through the server
@@ -364,8 +392,8 @@ namespace ICQ2000
      */
     ICBMCookie c = snac->getICBMCookie();
 
-    if ( m_cookiecache->exists( c ) ) {
-
+    if ( m_cookiecache->exists( c ) )
+    {
       /* indicate sending through server */
       MessageEvent *ev = (*m_cookiecache)[c];
       ev->setFinished(false);
@@ -373,24 +401,29 @@ namespace ICQ2000
       ev->setDirect(false);
       messageack.emit(ev);
 
-    } else {
+    }
+    else
+    {
       SignalLog(LogEvent::WARN, "Received Offline ACK for unknown message");
     }
   }
 
-  void Client::dc_messageack_cb(MessageEvent *ev) {
+  void Client::dc_messageack_cb(MessageEvent *ev)
+  {
     messageack.emit(ev);
 
-    if (!ev->isFinished()) {
+    if (!ev->isFinished())
+    {
       ev->getContact()->setDirect(false);
       // attempt to deliver via server instead
       SendViaServer(ev);
     }
   }
 
-  void Client::SignalSrvResponse(SrvResponseSNAC *snac) {
-    if (snac->getType() == SrvResponseSNAC::OfflineMessagesComplete) {
-
+  void Client::SignalSrvResponse(SrvResponseSNAC *snac)
+  {
+    if (snac->getType() == SrvResponseSNAC::OfflineMessagesComplete)
+    {
       /* We are now meant to ACK this to say
        * the we have got the offline messages
        * and the server can dispose of storing
@@ -398,31 +431,40 @@ namespace ICQ2000
        */
       SendOfflineMessagesACK();
 
-    } else if (snac->getType() == SrvResponseSNAC::OfflineMessage) {
-
+    }
+    else if (snac->getType() == SrvResponseSNAC::OfflineMessage)
+    {
       // wow.. this is so much simpler now :-)
       m_message_handler->handleIncoming(snac->getICQSubType(), snac->getTime());
       
-    } else if (snac->getType() == SrvResponseSNAC::SMS_Error) {
+    }
+    else if (snac->getType() == SrvResponseSNAC::SMS_Error)
+    {
       // mmm
-    } else if (snac->getType() == SrvResponseSNAC::SMS_Response) {
-      
+    }
+    else if (snac->getType() == SrvResponseSNAC::SMS_Response)
+    {
       unsigned int reqid = snac->RequestID();
-      if ( m_reqidcache->exists( reqid ) ) {
+
+      if ( m_reqidcache->exists( reqid ) )
+      {
 	RequestIDCacheValue *v = (*m_reqidcache)[ reqid ];
 	
-	if ( v->getType() == RequestIDCacheValue::SMSMessage ) {
+	if ( v->getType() == RequestIDCacheValue::SMSMessage )
+	{
 	  SMSEventCacheValue *uv = static_cast<SMSEventCacheValue*>(v);
 	  SMSMessageEvent *ev = uv->getEvent();
 
-	  if (snac->deliverable()) {
+	  if (snac->deliverable())
+	  {
 	    ev->setFinished(true);
 	    ev->setDelivered(true);
 	    ev->setDirect(false);
 	    messageack.emit(ev);
 	    m_reqidcache->remove( reqid );
-	  } else if (snac->smtp_deliverable()) {
-
+	  }
+	  else if (snac->smtp_deliverable())
+	  {
 	    // todo - konst have volunteered :-)
 	    //                  yeah I did.. <konst> ;)
 
@@ -432,8 +474,11 @@ namespace ICQ2000
 
 	    m_smtp->SendEvent(ev);
 	    
-	  } else {
-	    if (snac->getErrorParam() != "DUPLEX RESPONSE") {
+	  }
+	  else
+	  {
+	    if (snac->getErrorParam() != "DUPLEX RESPONSE")
+	    {
 	      // ignore DUPLEX RESPONSE since I always get that
 	      ev->setFinished(true);
 	      ev->setDelivered(false);
@@ -444,25 +489,35 @@ namespace ICQ2000
 	    }
 	  }
 	
-	} else {
+	}
+	else
+	{
 	  throw ParseException("Request ID cached value is not for an SMS Message");
 	}
-      } else {
+      }
+      else
+      {
 	throw ParseException("Received an SMS response for unknown request id");
       }
       
-    } else if (snac->getType() == SrvResponseSNAC::SimpleUserInfo) {
-
-      if ( m_reqidcache->exists( snac->RequestID() ) ) {
+    }
+    else if (snac->getType() == SrvResponseSNAC::SimpleUserInfo)
+    {
+      if ( m_reqidcache->exists( snac->RequestID() ) )
+      {
 	RequestIDCacheValue *v = (*m_reqidcache)[ snac->RequestID() ];
 
-	if ( v->getType() == RequestIDCacheValue::Search ) {
+	if ( v->getType() == RequestIDCacheValue::Search )
+	{
 	  SearchCacheValue *sv = static_cast<SearchCacheValue*>(v);
 
 	  SearchResultEvent *ev = sv->getEvent();
-	  if (snac->isEmptyContact()) {
+	  if (snac->isEmptyContact())
+	  {
 	    ev->setLastContactAdded( NULL );
-	  } else {
+	  }
+	  else
+	  {
 	    ContactRef c = new Contact( snac->getUIN() );
 	    c->setAlias(snac->getAlias());
 	    c->setFirstName(snac->getFirstName());
@@ -482,17 +537,23 @@ namespace ICQ2000
 
 	  search_result.emit(ev);
 
-	  if (ev->isFinished()) {
+	  if (ev->isFinished())
+	  {
 	    delete ev;
 	    m_reqidcache->remove( snac->RequestID() );
 	  }
 	  
-	} else {
+	}
+	else
+	{
 	  SignalLog(LogEvent::WARN, "Request ID cached value is not for a Search request");
 	}
 	
-      } else {
-	if ( m_contact_tree.exists( snac->getUIN() ) ) {
+      }
+      else
+      {
+	if ( m_contact_tree.exists( snac->getUIN() ) )
+	{
 	  // update Contact
 	  ContactRef c = m_contact_tree[ snac->getUIN() ];
 	  c->setAlias( snac->getAlias() );
@@ -503,18 +564,24 @@ namespace ICQ2000
 	}
       }
       
-    } else if (snac->getType() == SrvResponseSNAC::SearchSimpleUserInfo) {
-
-      if ( m_reqidcache->exists( snac->RequestID() ) ) {
+    }
+    else if (snac->getType() == SrvResponseSNAC::SearchSimpleUserInfo)
+    {
+      if ( m_reqidcache->exists( snac->RequestID() ) )
+      {
 	RequestIDCacheValue *v = (*m_reqidcache)[ snac->RequestID() ];
 
-	if ( v->getType() == RequestIDCacheValue::Search ) {
+	if ( v->getType() == RequestIDCacheValue::Search )
+	{
 	  SearchCacheValue *sv = static_cast<SearchCacheValue*>(v);
 
 	  SearchResultEvent *ev = sv->getEvent();
-	  if (snac->isEmptyContact()) {
+	  if (snac->isEmptyContact())
+	  {
 	    ev->setLastContactAdded( NULL );
-	  } else {
+	  }
+	  else
+	  {
 	    ContactRef c = new Contact( snac->getUIN() );
 	    c->setAlias(snac->getAlias());
 	    c->setFirstName(snac->getFirstName());
@@ -534,94 +601,171 @@ namespace ICQ2000
 
 	  search_result.emit(ev);
 
-	  if (ev->isFinished()) {
+	  if (ev->isFinished())
+	  {
 	    delete ev;
 	    m_reqidcache->remove( snac->RequestID() );
 	  }
 	  
-	} else {
+	}
+	else
+	{
 	  SignalLog(LogEvent::WARN, "Request ID cached value is not for a Search request");
 	}
 	
-      } else {
+      }
+      else
+      {
 	SignalLog(LogEvent::WARN, "Received a Search Result for unknown request id");
       }
 
-    } else if (snac->getType() == SrvResponseSNAC::RMainHomeInfo) {
-
-      try {
+    }
+    else if (snac->getType() == SrvResponseSNAC::RMainHomeInfo)
+    {
+      try
+      {
 	ContactRef c = getUserInfoCacheContact( snac->RequestID() );
-	c->setMainHomeInfo( snac->getMainHomeInfo() );
-	c->userinfo_change_emit();
-      } catch(ParseException e) {
+	ICQ2000::Contact::MainHomeInfo& imh = snac->getMainHomeInfo();
+	ICQ2000::Contact::MainHomeInfo  omh;
+	omh.alias     = m_translator->server_to_client( imh.alias,     ENCODING_CONTACT_LOCALE, c );
+	omh.firstname = m_translator->server_to_client( imh.firstname, ENCODING_CONTACT_LOCALE, c );
+	omh.lastname  = m_translator->server_to_client( imh.lastname,  ENCODING_CONTACT_LOCALE, c );
+	omh.email     = m_translator->server_to_client( imh.email,     ENCODING_CONTACT_LOCALE, c );
+	omh.city      = m_translator->server_to_client( imh.city,      ENCODING_CONTACT_LOCALE, c );
+	omh.state     = m_translator->server_to_client( imh.state,     ENCODING_CONTACT_LOCALE, c );
+	omh.phone     = m_translator->server_to_client( imh.phone,     ENCODING_CONTACT_LOCALE, c );
+	omh.fax       = m_translator->server_to_client( imh.fax,       ENCODING_CONTACT_LOCALE, c );
+	omh.street    = m_translator->server_to_client( imh.street,    ENCODING_CONTACT_LOCALE, c );
+	omh.zip       = m_translator->server_to_client( imh.zip,       ENCODING_CONTACT_LOCALE, c );
+	omh.setMobileNo( imh.getMobileNo() );
+	omh.country   = imh.country;
+	omh.timezone  = imh.timezone;
+	c->setMainHomeInfo( omh );
+      }
+      catch(ParseException e)
+      {
 	SignalLog(LogEvent::WARN, e.what());
       }
 	
-    } else if (snac->getType() == SrvResponseSNAC::RHomepageInfo) {
-
-      try {
+    }
+    else if (snac->getType() == SrvResponseSNAC::RHomepageInfo)
+    {
+      try
+      {
 	ContactRef c = getUserInfoCacheContact( snac->RequestID() );
+	m_translator->server_to_client_inplace( snac->getHomepageInfo().homepage, ENCODING_CONTACT_LOCALE, c );
 	c->setHomepageInfo( snac->getHomepageInfo() );
-	c->userinfo_change_emit();
-      } catch(ParseException e) {
+      }
+      catch(ParseException e)
+      {
 	SignalLog(LogEvent::WARN, e.what());
       }
 
-    } else if (snac->getType() == SrvResponseSNAC::RWorkInfo) {
-
-      try {
+    }
+    else if (snac->getType() == SrvResponseSNAC::RWorkInfo)
+    {
+      try
+      {
 	ContactRef c = getUserInfoCacheContact( snac->RequestID() );
-	c->setWorkInfo( snac->getWorkInfo() );
-	c->userinfo_change_emit();
-      } catch(ParseException e) {
+
+	ICQ2000::Contact::WorkInfo& imh = snac->getWorkInfo();
+	ICQ2000::Contact::WorkInfo  omh;
+	omh.city             = m_translator->server_to_client( imh.city,             ENCODING_CONTACT_LOCALE, c );
+	omh.state            = m_translator->server_to_client( imh.state,            ENCODING_CONTACT_LOCALE, c );
+	omh.street           = m_translator->server_to_client( imh.street,           ENCODING_CONTACT_LOCALE, c );
+	omh.zip              = m_translator->server_to_client( imh.zip,              ENCODING_CONTACT_LOCALE, c );
+	omh.company_name     = m_translator->server_to_client( imh.company_name,     ENCODING_CONTACT_LOCALE, c );
+	omh.company_dept     = m_translator->server_to_client( imh.company_dept,     ENCODING_CONTACT_LOCALE, c );
+	omh.company_position = m_translator->server_to_client( imh.company_position, ENCODING_CONTACT_LOCALE, c );
+	omh.company_web      = m_translator->server_to_client( imh.company_web,      ENCODING_CONTACT_LOCALE, c );
+
+	c->setWorkInfo( omh );
+      }
+      catch(ParseException e)
+      {
 	SignalLog(LogEvent::WARN, e.what());
       }
 
-    } else if (snac->getType() == SrvResponseSNAC::RBackgroundInfo) {
-
-      try {
+    }
+    else if (snac->getType() == SrvResponseSNAC::RBackgroundInfo)
+    {
+      try
+      {
 	ContactRef c = getUserInfoCacheContact( snac->RequestID() );
+
+	for (Contact::BackgroundInfo::SchoolList::iterator iter = snac->getBackgroundInfo().schools.begin();
+	     iter != snac->getBackgroundInfo().schools.end();
+	     ++iter )
+	  m_translator->server_to_client_inplace( iter->second, ENCODING_CONTACT_LOCALE, c );
+
 	c->setBackgroundInfo( snac->getBackgroundInfo() );
-	c->userinfo_change_emit();
-      } catch(ParseException e) {
+      }
+      catch(ParseException e)
+      {
 	SignalLog(LogEvent::WARN, e.what());
       }
 
-    } else if (snac->getType() == SrvResponseSNAC::RInterestInfo) {
-
-      try {
+    }
+    else if (snac->getType() == SrvResponseSNAC::RInterestInfo)
+    {
+      try
+      {
 	ContactRef c = getUserInfoCacheContact( snac->RequestID() );
+
+	for (Contact::PersonalInterestInfo::InterestList::iterator iter = snac->getPersonalInterestInfo().interests.begin();
+	     iter != snac->getPersonalInterestInfo().interests.end();
+	     ++iter )
+	  m_translator->server_to_client_inplace( iter->second, ENCODING_CONTACT_LOCALE, c );
+
 	c->setInterestInfo( snac->getPersonalInterestInfo() );
-	c->userinfo_change_emit();
-      } catch(ParseException e) {
+      }
+      catch(ParseException e)
+      {
 	SignalLog(LogEvent::WARN, e.what());
       }
 
-    } else if (snac->getType() == SrvResponseSNAC::REmailInfo) {
-
-      try {
+    }
+    else if (snac->getType() == SrvResponseSNAC::REmailInfo)
+    {
+      try
+      {
 	ContactRef c = getUserInfoCacheContact( snac->RequestID() );
+	
+	for (Contact::EmailInfo::EmailList::iterator iter = snac->getEmailInfo().emails.begin();
+	     iter != snac->getEmailInfo().emails.end();
+	     ++iter )
+	  m_translator->server_to_client_inplace( *iter, ENCODING_CONTACT_LOCALE, c );
+
 	c->setEmailInfo( snac->getEmailInfo() );
 	c->userinfo_change_emit();
-      } catch(ParseException e) {
+      }
+      catch(ParseException e)
+      {
 	SignalLog(LogEvent::WARN, e.what());
       }
 
-    } else if (snac->getType() == SrvResponseSNAC::RAboutInfo) {
-
-      try {
+    }
+    else if (snac->getType() == SrvResponseSNAC::RAboutInfo)
+    {
+      try
+      {
 	ContactRef c = getUserInfoCacheContact( snac->RequestID() );
-	c->setAboutInfo( snac->getAboutInfo() );
-      } catch(ParseException e) {
+	c->setAboutInfo( m_translator->server_to_client( snac->getAboutInfo(), ENCODING_CONTACT_LOCALE, c ) );
+      }
+      catch(ParseException e)
+      {
 	SignalLog(LogEvent::WARN, e.what());
       }
 
-    } else if (snac->getType() == SrvResponseSNAC::RandomChatFound) {
-
-      if ( m_reqidcache->exists( snac->RequestID() ) ) {
+    }
+    else if (snac->getType() == SrvResponseSNAC::RandomChatFound)
+    {
+      if ( m_reqidcache->exists( snac->RequestID() ) )
+      {
 	RequestIDCacheValue *v = (*m_reqidcache)[ snac->RequestID() ];
 
-	if ( v->getType() == RequestIDCacheValue::Search ) {
+	if ( v->getType() == RequestIDCacheValue::Search )
+	{
 	  SearchCacheValue *sv = static_cast<SearchCacheValue*>(v);
 
 	  SearchResultEvent *ev = sv->getEvent();
@@ -647,10 +791,13 @@ namespace ICQ2000
   void Client::mergeSBL(ContactTree& tree)
   {
     ContactTree::iterator curr = tree.begin();
-    while (curr != tree.end()) {
+    while (curr != tree.end())
+    {
       ContactTree::Group::iterator gcurr = (*curr).begin();
+
       std::cout << "Group: " << (*curr).get_label() << endl;
-      while (gcurr != (*curr).end()) {
+      while (gcurr != (*curr).end())
+      {
 	std::cout << "  Contact: " << (*gcurr)->getAlias() << endl;
 	++gcurr;
       }
@@ -660,33 +807,43 @@ namespace ICQ2000
 
   ContactRef Client::getUserInfoCacheContact(unsigned int reqid)
   {
-    if ( m_reqidcache->exists( reqid ) ) {
+    if ( m_reqidcache->exists( reqid ) )
+    {
       RequestIDCacheValue *v = (*m_reqidcache)[ reqid ];
 
-      if ( v->getType() == RequestIDCacheValue::UserInfo ) {
+      if ( v->getType() == RequestIDCacheValue::UserInfo )
+      {
 	UserInfoCacheValue *uv = static_cast<UserInfoCacheValue*>(v);
 	return uv->getContact();
       }
-      else throw ParseException("Request ID cached value is not for a User Info request");
+      else
+      {
+	throw ParseException("Request ID cached value is not for a User Info request");
+      }
 
-    } else {
+    }
+    else
+    {
       throw ParseException("Received a UserInfo response for unknown request id");
     }
 
   }
 
-  void Client::SignalUINResponse(UINResponseSNAC *snac) {
+  void Client::SignalUINResponse(UINResponseSNAC *snac)
+  {
     unsigned int uin = snac->getUIN();
     NewUINEvent e(uin);
     newuin.emit(&e);
   }
 
-  void Client::SignalUINRequestError() {
+  void Client::SignalUINRequestError()
+  {
     NewUINEvent e(0,false);
     newuin.emit(&e);
   }
   
-  void Client::SignalRateInfoChange(RateInfoChangeSNAC *snac) {
+  void Client::SignalRateInfoChange(RateInfoChangeSNAC *snac)
+  {
     RateInfoChangeEvent e(snac->getCode(), snac->getRateClass(),
 			  snac->getWindowSize(), snac->getClear(),
 			  snac->getAlert(), snac->getLimit(),
@@ -695,12 +852,14 @@ namespace ICQ2000
     rate.emit(&e);
   }
 
-  void Client::SignalLog(LogEvent::LogType type, const string& msg) {
+  void Client::SignalLog(LogEvent::LogType type, const string& msg)
+  {
     LogEvent ev(type,msg);
     logger.emit(&ev);
   }
   
-  void Client::ICBMCookieCache_expired_cb(MessageEvent *ev) {
+  void Client::ICBMCookieCache_expired_cb(MessageEvent *ev)
+  {
     SignalLog(LogEvent::WARN, "Message timeout without receiving ACK, sending offline");
     SendViaServerNormal(ev);
     /* downgrade Contact's capabilities, so we don't
@@ -708,9 +867,10 @@ namespace ICQ2000
     ev->getContact()->set_capabilities(Capabilities());
   }
 
-  void Client::reqidcache_expired_cb(RequestIDCacheValue* v) 
+  void Client::reqidcache_expired_cb(RequestIDCacheValue* v)
   {
-    if ( v->getType() == RequestIDCacheValue::Search ) {
+    if ( v->getType() == RequestIDCacheValue::Search )
+    {
       SearchCacheValue *sv = static_cast<SearchCacheValue*>(v);
 
       SearchResultEvent *ev = sv->getEvent();
@@ -724,7 +884,8 @@ namespace ICQ2000
   }
   
 
-  void Client::dccache_expired_cb(DirectClient *dc) {
+  void Client::dccache_expired_cb(DirectClient *dc)
+  {
     SignalLog(LogEvent::WARN, "Direct connection timeout reached");
   }
 
@@ -735,17 +896,22 @@ namespace ICQ2000
     // connection will only timeout after 10 mins
   }
 
-  void Client::dc_log_cb(LogEvent *ev) {
+  void Client::dc_log_cb(LogEvent *ev)
+  {
     logger.emit(ev);
   }
 
-  void Client::dc_socket_cb(SocketEvent *ev) {
+  void Client::dc_socket_cb(SocketEvent *ev)
+  {
     socket.emit(ev);
   }
 
-  void Client::SignalUserOnline(BuddyOnlineSNAC *snac) {
+  void Client::SignalUserOnline(BuddyOnlineSNAC *snac)
+  {
     const UserInfoBlock& userinfo = snac->getUserInfo();
-    if (m_contact_tree.exists(userinfo.getUIN())) {
+
+    if (m_contact_tree.exists(userinfo.getUIN()))
+    {
       ContactRef c = m_contact_tree[userinfo.getUIN()];
       Status old_st = c->getStatus();
       
@@ -766,7 +932,7 @@ namespace ICQ2000
       ostr << "Received Buddy Online for "
 	   << c->getAlias()
 	   << " (" << c->getUIN() << ") " << Status_text[old_st]
-	   << "->" << c->getStatusStr() << " from server";
+	   << "->" << Status_text[ c->getStatus() ] << " from server";
       SignalLog(LogEvent::INFO, ostr.str() );
 
     } else {
@@ -1139,21 +1305,27 @@ namespace ICQ2000
 
   }
 
-  void Client::ParseCh2(Buffer& b, unsigned short seq_num) {
+  void Client::ParseCh2(Buffer& b, unsigned short seq_num)
+  {
     InSNAC *snac;
-    try {
+    try
+    {
       snac = ParseSNAC(b);
-    } catch(ParseException e) {
+    }
+    catch(ParseException e)
+    {
       ostringstream ostr;
       ostr << "Problem parsing SNAC: " << e.what();
       SignalLog(LogEvent::WARN, ostr.str());
       return;
     }
 
-    switch(snac->Family()) {
+    switch(snac->Family())
+    {
       
     case SNAC_FAM_GEN:
-      switch(snac->Subtype()) {
+      switch(snac->Subtype())
+      {
       case SNAC_GEN_ServerReady:
 	SignalLog(LogEvent::INFO, "Received Server Ready from server");
 	SendCapabilities();
@@ -1186,7 +1358,8 @@ namespace ICQ2000
       break;
 
     case SNAC_FAM_BUD:
-      switch(snac->Subtype()) {
+      switch(snac->Subtype())
+      {
       case SNAC_BUD_Online:
 	SignalUserOnline(static_cast<BuddyOnlineSNAC*>(snac));
 	break;
@@ -1197,7 +1370,8 @@ namespace ICQ2000
       break;
 
     case SNAC_FAM_MSG:
-      switch(snac->Subtype()) {
+      switch(snac->Subtype())
+      {
       case SNAC_MSG_Message:
 	SignalLog(LogEvent::INFO, "Received Message from server");
 	SignalMessage(static_cast<MessageSNAC*>(snac));
@@ -1214,7 +1388,8 @@ namespace ICQ2000
       break;
 
     case SNAC_FAM_SRV:
-      switch(snac->Subtype()) {
+      switch(snac->Subtype())
+      {
       case SNAC_SRV_Response:
 	SignalLog(LogEvent::INFO, "Received Server Response from server");
 	SignalSrvResponse(static_cast<SrvResponseSNAC*>(snac));
@@ -1223,7 +1398,8 @@ namespace ICQ2000
       break;
 
     case SNAC_FAM_UIN:
-      switch(snac->Subtype()) {
+      switch(snac->Subtype())
+      {
       case SNAC_UIN_Response:
 	SignalLog(LogEvent::INFO, "Received UIN Response from server");
 	SignalUINResponse(static_cast<UINResponseSNAC*>(snac));
@@ -1236,8 +1412,8 @@ namespace ICQ2000
       break;
 
     case SNAC_FAM_SBL:
-
-      switch(snac->Subtype()) {
+      switch(snac->Subtype())
+      {
       case SNAC_SBL_Rights_Reply:
 	SignalLog(LogEvent::INFO, "Server-based contact list rights granted\n");
 	break;
@@ -1329,7 +1505,8 @@ namespace ICQ2000
 	
     } // switch(Family)
 
-    if (dynamic_cast<RawSNAC*>(snac)) {
+    if (dynamic_cast<RawSNAC*>(snac))
+    {
       ostringstream ostr;
       ostr << "Unknown SNAC packet received - Family: 0x" << std::hex << snac->Family()
 	   << " Subtype: 0x" << snac->Subtype();
@@ -1340,12 +1517,15 @@ namespace ICQ2000
 
   }
 
-  void Client::ParseCh3(Buffer& b, unsigned short seq_num) {
+  void Client::ParseCh3(Buffer& b, unsigned short seq_num)
+  {
     SignalLog(LogEvent::INFO, "Received packet on channel 0x03");
   }
 
-  void Client::ParseCh4(Buffer& b, unsigned short seq_num) {
-    if (m_state == AUTH_AWAITING_AUTH_REPLY || m_state == UIN_AWAITING_UIN_REPLY) {
+  void Client::ParseCh4(Buffer& b, unsigned short seq_num)
+  {
+    if (m_state == AUTH_AWAITING_AUTH_REPLY || m_state == UIN_AWAITING_UIN_REPLY)
+    {
       // An Authorisation Reply / Error
       TLVList tlvlist;
       tlvlist.Parse(b, TLV_ParseMode_Channel04, (short unsigned int)-1);
@@ -2446,45 +2626,6 @@ namespace ICQ2000
   }
 
   /**
-   *  Set the translation map file to use for character set translation.
-   * @param szMapFileName the name of the translation map file
-   * @return whether setting translation map was a success
-   */
-  bool Client::setTranslationMap(const string& szMapFileName) { 
-    try {
-      m_translator.setTranslationMap(szMapFileName);
-    } catch (TranslatorException e) {
-      SignalLog(LogEvent::WARN, e.what());
-      return false; 
-    }
-    return true;
-  }
-
-  /**
-   *  Get the File name of the translation map currently in use.
-   * @return filename of translation map
-   */
-  const string& Client::getTranslationMapFileName() const {
-    return m_translator.getMapFileName();
-  }
-
-  /**
-   *  Get the Name of the translation map currently in use.
-   * @return name of translation map
-   */
-  const string& Client::getTranslationMapName() const {
-    return m_translator.getMapName();
-  }
-
-  /**
-   *  Determine whether the default map (no translation) is in use.
-   * @return whether using the default map
-   */
-  bool Client::usingDefaultMap() const {
-    return m_translator.usingDefaultMap();
-  }
-
-  /**
    *  Get your uin.
    * @return your UIN
    */
@@ -2720,6 +2861,31 @@ namespace ICQ2000
   {
     return m_use_portrange;
   }
-
+  
+  /**
+   *  set the translator class to use in character set translations.
+   *  Memory management of the object is assumed to be passed onto
+   *  libicq2000, which will destroy it on destruction of the Client
+   *  object, or on assignment of a different translator. Passing NULL
+   *  for translator will disable any character set translation.
+   *
+   * @param t the translator
+   */
+  void Client::set_translator(Translator * t)
+  {
+    if (m_translator != NULL)
+    {
+      delete m_translator;
+    }
+    
+    if (t == NULL)
+    {
+      m_translator = new NULLTranslator();
+    }
+    else
+    {
+      m_translator = t;
+    }
+  }
 }
 

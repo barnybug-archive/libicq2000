@@ -1,5 +1,5 @@
 /*
- * Translate class
+ * Translator class
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,175 +17,115 @@
  *
  */
 
-#include <string>
-#include <fstream>
-#include "sstream_fix.h"
-
 #include "Translator.h"
 
-using std::ifstream;
-using std::string;
-using std::istringstream;
+namespace ICQ2000
+{
+  // ======================================================================
+  //  Translator
+  // ======================================================================
 
-namespace ICQ2000 {
-  //============ Translator ============//
+  Translator::Translator()
+  { }
 
-  Translator::Translator() {
-    setDefaultTranslationMap();
-  }
-
-  //============ setDefaultTranslationMap ============//
-
-  void Translator::setDefaultTranslationMap(){
-    for(int i = 0; i < 256; i++){
-      serverToClientTab[i]=i;
-      clientToServerTab[i]=i;
-    }
-
-    m_bDefault = true;
-    m_szMapFileName = "none";
-    m_szMapName = "none";
-
-  }
-
-  //============ setTranslationMap ============//
-
-  void Translator::setTranslationMap(const string& _szMapFileName){
-    // Map name is the file name with no path
-    string::size_type pos = _szMapFileName.rfind('/');
-    if ( pos == string::npos)
-      m_szMapName = _szMapFileName;
-    else
-      m_szMapName = string(_szMapFileName,pos+1);
-
-
-    if (m_szMapName == "" || _szMapFileName == "none") {
-      setDefaultTranslationMap();
-      return;
-    }
-
-    ifstream mapFile(_szMapFileName.c_str());
-    if (!mapFile) {
-      setDefaultTranslationMap();
-      throw TranslatorException("Could not open the translation file for reading");
-    }
-
-    char buffer[80];
-    int inputs[8];
-    unsigned char temp_table[512];
-    int c = 0;
-    char skip;      
-    while(mapFile.getline(buffer, 80) != NULL && c < 512){
-
-      istringstream istr(buffer);
-      istr.setf(std::ios::hex,std::ios::basefield);
-      istr>>skip>>skip>>inputs[0]
-	  >>skip>>skip>>skip>>inputs[1]
-	  >>skip>>skip>>skip>>inputs[2]
-	  >>skip>>skip>>skip>>inputs[3]
-	  >>skip>>skip>>skip>>inputs[4]
-	  >>skip>>skip>>skip>>inputs[5]
-	  >>skip>>skip>>skip>>inputs[6]
-	  >>skip>>skip>>skip>>inputs[7];
-
-      if(istr.fail()) {
-	setDefaultTranslationMap();
-	mapFile.close();
-	throw TranslatorException("Syntax error in translation file");
-      }
-
-      for (int j = 0; j < 8; j++)
-	temp_table[c++] = (unsigned char)inputs[j];
-
-    }
-
-    mapFile.close();
-
-    if (c == 512) {
-      for (c = 0; c < 256; c++){
-	serverToClientTab[c] = temp_table[c];
-	clientToServerTab[c] = temp_table[c | 256];
-      }
-    } else {
-      setDefaultTranslationMap();
-      throw TranslatorException("Translation file "+_szMapFileName+" corrupted.");
-    }
+  Translator::~Translator()
+  { }
   
-    m_bDefault = false;
-    m_szMapFileName = _szMapFileName;
-  }
-
-  //============ translateToClient ============//
-
-  void Translator::ServerToClient(string& szString){
-    CRLFtoLF(szString);  
-    if (m_bDefault)
-      return;
-    int len=szString.length();
-    for(int i=0;i<len;i++)
-      szString[i]=serverToClientTab[(unsigned char)szString[i]];
-  }
-
-  string Translator::ServerToClientCC(const string& s)
+  void Translator::client_to_server_inplace(std::string& str,
+					    Encoding en,
+					    const ICQ2000::ContactRef& c)
   {
-    string cc = s;
-    ServerToClient(cc);
-    return cc;
+    std::string tstr = client_to_server(str, en, c);
+    str = tstr;
   }
-
-  //============ translateToServer ============//
-
-  void Translator::ClientToServer(string& szString){
-    LFtoCRLF(szString);
-    if (m_bDefault)
-      return;
-    int len=szString.length();
-    for(int i=0;i<len;i++)
-      szString[i]=clientToServerTab[(unsigned char)szString[i]];
-  }
-
-  string Translator::ClientToServerCC(const string& s)
+  
+  void Translator::server_to_client_inplace(std::string& str,
+					    Encoding en,
+					    const ICQ2000::ContactRef& c)
   {
-    string cc = s;
-    ClientToServer(cc);
-    return cc;
+    std::string tstr = server_to_client(str, en, c);
+    str = tstr;
   }
 
-  //-----translateToClient (char)-------------------------------------------------
-  void Translator::ServerToClient(char &_cChar){
-    if (m_bDefault) return;
-    _cChar = serverToClientTab[(unsigned char)(_cChar)];
+  // ======================================================================
+  //  NULLTranslator
+  // ======================================================================
+
+  NULLTranslator::NULLTranslator()
+  { }
+
+  std::string NULLTranslator::client_to_server(const std::string& str,
+					       Encoding en,
+					       const ICQ2000::ContactRef& c)
+  {
+    return str;
+  }
+  
+  std::string NULLTranslator::server_to_client(const std::string& str,
+					       Encoding en,
+					       const ICQ2000::ContactRef& c)
+  {
+    return str;
   }
 
+  // ======================================================================
+  //  CRLFTranslator
+  // ======================================================================
 
-  //-----translateToServer (char)-------------------------------------------------
-  void Translator::ClientToServer(char &_cChar){
-    if (m_bDefault) return;
-    _cChar = clientToServerTab[(unsigned char)(_cChar)];
-  }
+  CRLFTranslator::CRLFTranslator()
+  { }
 
-  void Translator::LFtoCRLF(string& s) {
-    int curr = 0, next;
-    while ( (next = s.find( "\n", curr )) != -1 ) {
-      s.replace( next, 1, "\r\n" );
-      curr = next + 2;
+  std::string CRLFTranslator::client_to_server(const std::string& str,
+					       Encoding en,
+					       const ICQ2000::ContactRef& c)
+  {
+    std::string::const_iterator curr = str.begin();
+    std::string ret;
+
+    while ( curr != str.end() )
+    {
+      if (*curr == '\n')
+      {
+	ret += "\r\n";
+      }
+      else
+      {
+	ret += *curr;
+      }
+      
+      ++curr;
     }
+    
+    return ret;
   }
+  
+  std::string CRLFTranslator::server_to_client(const std::string& str,
+					       Encoding en,
+					       const ICQ2000::ContactRef& c)
+  {
+    std::string::const_iterator curr = str.begin();
+    std::string::const_iterator ncurr = curr;
+    std::string ret;
 
-  void Translator::CRLFtoLF(string& s) {
-    int curr = 0, next;
-    while ( (next = s.find( "\r\n", curr )) != -1 ) {
-      s.replace( next, 2, "\n" );
-      curr = next + 1;
+    while ( curr != str.end() )
+    {
+      ++ncurr;
+      
+      if (*curr == '\r' && ncurr != str.end()
+	  && *ncurr == '\n')
+      {
+	ret += '\n';
+	++curr;
+	++ncurr;
+      }
+      else
+      {
+	ret += *curr;
+      }
+      
+      ++curr;
     }
-  }
 
-  /**
-   * TranslatorException class
-   */
-  TranslatorException::TranslatorException(const string& text) : m_errortext(text) { }
-
-  const char* TranslatorException::what() const throw() {
-    return m_errortext.c_str();
+    return ret;
   }
 }

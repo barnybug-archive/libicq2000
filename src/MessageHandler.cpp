@@ -24,15 +24,17 @@
 #include "SNAC-MSG.h"
 #include "SNAC-SRV.h"
 #include "sstream_fix.h"
+#include "Translator.h"
 
 using std::string;
 using std::ostringstream;
 using std::endl;
 
-namespace ICQ2000 {
+namespace ICQ2000
+{
 
-  MessageHandler::MessageHandler(ContactRef self, ContactTree *cl)
-    : m_self_contact(self), m_contact_list(cl)
+  MessageHandler::MessageHandler(ContactRef self, ContactTree *cl, Translator * & tr)
+    : m_self_contact(self), m_contact_list(cl), m_translator(tr)
   { }
   
   /*
@@ -88,10 +90,13 @@ namespace ICQ2000 {
        */
 
       /* request away message if we are not online */
-      if (st != STATUS_ONLINE && advanced) {
+      if (st != STATUS_ONLINE && advanced)
+      {
 	want_auto_resp.emit(mev);
-	uist->setAwayMessage( mev->getAwayMessage() );
-      } else {
+	uist->setAwayMessage( m_translator->client_to_server(mev->getAwayMessage(), ENCODING_CONTACT_LOCALE, contact ) );
+      }
+      else
+      {
 	uist->setAwayMessage( "" );
       }
 
@@ -100,7 +105,8 @@ namespace ICQ2000 {
       uist->setACK(true);
       ack = true;
       
-      if (ev->isDelivered()) {
+      if (ev->isDelivered())
+      {
 	/* set accept-status of ACK */
 	switch(st) {
 	case STATUS_ONLINE:
@@ -171,7 +177,7 @@ namespace ICQ2000 {
     ICQMessageEvent *aev = dynamic_cast<ICQMessageEvent*>(ev);
     if (aev == NULL) return;
 
-    aev->setAwayMessage( icq->getAwayMessage() );
+    aev->setAwayMessage( m_translator->server_to_client( icq->getAwayMessage(), ENCODING_CONTACT_LOCALE, ev->getContact() ) );
     aev->setFinished(true);
 
     switch(icq->getStatus()) {
@@ -229,7 +235,8 @@ namespace ICQ2000 {
     {
       NormalICQSubType *nst = static_cast<NormalICQSubType*>(st);
       e = new NormalMessageEvent(contact,
-				 nst->getMessage(), nst->isMultiParty() );
+				 m_translator->server_to_client( nst->getMessage(), ENCODING_CONTACT_LOCALE, contact ),
+				 nst->isMultiParty() );
       break;
     }
 
@@ -237,22 +244,22 @@ namespace ICQ2000 {
     {
       URLICQSubType *ust = static_cast<URLICQSubType*>(st);
       e = new URLMessageEvent(contact,
-			      ust->getMessage(),
-			      ust->getURL());
+			      m_translator->server_to_client( ust->getMessage(), ENCODING_CONTACT_LOCALE, contact ),
+			      m_translator->server_to_client( ust->getURL(), ENCODING_CONTACT_LOCALE, contact ));
       break;
     }
 
     case MSG_Type_AuthReq:
     {
       AuthReqICQSubType *ust = static_cast<AuthReqICQSubType*>(st);
-      e = new AuthReqEvent(contact, ust->getMessage());
+      e = new AuthReqEvent(contact, m_translator->server_to_client( ust->getMessage(), ENCODING_CONTACT_LOCALE, contact ) );
       break;
     }
 
     case MSG_Type_AuthRej:
     {
       AuthRejICQSubType *ust = static_cast<AuthRejICQSubType*>(st);
-      e = new AuthAckEvent(contact, ust->getMessage(), false);
+      e = new AuthAckEvent(contact, m_translator->server_to_client( ust->getMessage(), ENCODING_CONTACT_LOCALE, contact ), false);
       break;
     }
 
@@ -333,27 +340,30 @@ namespace ICQ2000 {
     {
       // these come from 'magic' UIN 10
       EmailExICQSubType *subtype = static_cast<EmailExICQSubType*>(st);
-      contact = lookupEmail( subtype->getEmail(), subtype->getSender() );
+      std::string email = m_translator->server_to_client( subtype->getEmail(), ENCODING_ISO_8859_1, contact );
+      contact = lookupEmail( email, subtype->getSender() );
       e = new EmailExEvent(contact,
-			   subtype->getEmail(),
-			   subtype->getSender(),
-			   subtype->getMessage());
+			   email,
+			   m_translator->server_to_client( subtype->getSender(), ENCODING_ISO_8859_1, contact ),
+			   m_translator->server_to_client( subtype->getMessage(), ENCODING_ISO_8859_1, contact ));
       break;
     }
 
     case MSG_Type_WebPager:
     {
       WebPagerICQSubType *subtype = static_cast<WebPagerICQSubType*>(st);
-      contact = lookupEmail( subtype->getEmail(), subtype->getSender() );
+      std::string email = m_translator->server_to_client( subtype->getEmail(), ENCODING_ISO_8859_1, contact );
+      contact = lookupEmail( email, subtype->getSender() );
       e = new WebPagerEvent(contact,
-			    subtype->getEmail(),
-			    subtype->getSender(),
-			    subtype->getMessage());
+			    email,
+			    m_translator->server_to_client( subtype->getEmail(), ENCODING_ISO_8859_1, contact ),
+			    m_translator->server_to_client( subtype->getMessage(), ENCODING_ISO_8859_1, contact ));
       break;
     }
 
     case MSG_Type_SMS:
     {
+      /* TODO: Encoding!?! Someone told me once SMSs are UTF-8 encoded.. need to verify! */
       SMSICQSubType *sst = static_cast<SMSICQSubType*>(st);
       if (sst->getSMSType() == SMSICQSubType::SMS) {
 	contact = lookupMobile(sst->getSender());
@@ -388,12 +398,13 @@ namespace ICQ2000 {
     if (ev->getType() == MessageEvent::Normal) {
 
       NormalMessageEvent *nv = static_cast<NormalMessageEvent*>(ev);
-      ist = new NormalICQSubType(nv->getMessage());
+      ist = new NormalICQSubType( m_translator->client_to_server( nv->getMessage(), ENCODING_CONTACT_LOCALE, c ) );
 
     } else if (ev->getType() == MessageEvent::URL) {
 
       URLMessageEvent *uv = static_cast<URLMessageEvent*>(ev);
-      ist = new URLICQSubType(uv->getMessage(), uv->getURL());
+      ist = new URLICQSubType( m_translator->client_to_server( uv->getMessage(), ENCODING_CONTACT_LOCALE, c ),
+			       m_translator->client_to_server( uv->getURL(),     ENCODING_CONTACT_LOCALE, c ));
 
     } else if (ev->getType() == MessageEvent::AwayMessage) {
 
@@ -402,32 +413,36 @@ namespace ICQ2000 {
     } else if (ev->getType() == MessageEvent::AuthReq) {
 
       AuthReqEvent *uv = static_cast<AuthReqEvent*>(ev);
-      ist = new AuthReqICQSubType(m_self_contact->getAlias(),
-				  m_self_contact->getFirstName(),
-				  m_self_contact->getLastName(),
-				  m_self_contact->getEmail(),
-				  m_self_contact->getAuthReq(),
-				  uv->getMessage());
+      ist = new AuthReqICQSubType( m_translator->client_to_server( m_self_contact->getAlias(),     ENCODING_CONTACT_LOCALE, c ),
+				   m_translator->client_to_server( m_self_contact->getFirstName(), ENCODING_CONTACT_LOCALE, c ),
+				   m_translator->client_to_server( m_self_contact->getLastName(),  ENCODING_CONTACT_LOCALE, c ),
+				   m_translator->client_to_server( m_self_contact->getEmail(),     ENCODING_CONTACT_LOCALE, c ),
+				   m_self_contact->getAuthReq(),
+				   m_translator->client_to_server( uv->getMessage(),               ENCODING_CONTACT_LOCALE, c ));
 
-    } else if (ev->getType() == MessageEvent::AuthAck) {
+    }
+    else if (ev->getType() == MessageEvent::AuthAck)
+    {
 
       AuthAckEvent *uv = static_cast<AuthAckEvent*>(ev);
       if(uv->isGranted())
         ist = new AuthAccICQSubType();
       else
-        ist = new AuthRejICQSubType(uv->getMessage());
-    } else if (ev->getType() == MessageEvent::UserAdd) {
-
-      ist = new UserAddICQSubType(m_self_contact->getAlias(),
-				  m_self_contact->getFirstName(),
-				  m_self_contact->getLastName(),
-				  m_self_contact->getEmail(),
-				  m_self_contact->getAuthReq());
-    } else if (ev->getType() == MessageEvent::Contacts) {
-
+        ist = new AuthRejICQSubType( m_translator->client_to_server( uv->getMessage(), ENCODING_CONTACT_LOCALE, c ) );
+      
+    }
+    else if (ev->getType() == MessageEvent::UserAdd)
+    {
+      ist = new UserAddICQSubType( m_translator->client_to_server( m_self_contact->getAlias(),     ENCODING_CONTACT_LOCALE, c ),
+				   m_translator->client_to_server( m_self_contact->getFirstName(), ENCODING_CONTACT_LOCALE, c ),
+				   m_translator->client_to_server( m_self_contact->getLastName(),  ENCODING_CONTACT_LOCALE, c ),
+				   m_translator->client_to_server( m_self_contact->getEmail(),     ENCODING_CONTACT_LOCALE, c ),
+				   m_self_contact->getAuthReq() );
+    }
+    else if (ev->getType() == MessageEvent::Contacts)
+    {
       ContactMessageEvent *cv = static_cast<ContactMessageEvent*>(ev);
       ist = new ContactICQSubType(cv->getContacts());
-
     }
     
     ICQMessageEvent *iev;

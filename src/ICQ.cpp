@@ -21,8 +21,6 @@
 
 #include "ICQ.h"
 
-#include "Translator.h"
-
 #include "sstream_fix.h"
 #include <memory>
 
@@ -282,11 +280,9 @@ namespace ICQ2000 {
     }
   }
 
-  unsigned short NormalICQSubType::Length() const {
-    string text = m_message;
-    Translator::LFtoCRLF(text);
-
-    return text.size() + (m_advanced ? 13 : 5);
+  unsigned short NormalICQSubType::Length() const
+  {
+    return m_message.size() + (m_advanced ? 13 : 5);
   }
 
   unsigned char NormalICQSubType::getType() const { return MSG_Type_Normal; }
@@ -346,11 +342,9 @@ namespace ICQ2000 {
     }
   }
 
-  unsigned short URLICQSubType::Length() const {
-    string text = m_message + m_url;
-    Translator::LFtoCRLF(text);
-
-    return text.size() + 6;
+  unsigned short URLICQSubType::Length() const
+  {
+    return m_message.size() + 6;
   }
 
   unsigned char URLICQSubType::getType() const { return MSG_Type_URL; }

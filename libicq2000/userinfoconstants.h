@@ -157,12 +157,6 @@ enum Language
   LANGUAGE_ARMENIAN      = 59,
 };
 
-enum
-{
-  LANGUAGE_LIMIT_LOWER = 0,
-  LANGUAGE_LIMIT_UPPER = LANGUAGE_ARMENIAN,
-};
-
 enum Country
 {
   COUNTRY_UNKNOWN                            = 0,

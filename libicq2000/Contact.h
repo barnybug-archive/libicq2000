@@ -99,10 +99,10 @@ namespace ICQ2000
 
     class EmailInfo
     {
-    private:
-      std::list<std::string> email_list;
-
     public:
+      typedef std::list<std::string> EmailList;
+      EmailList emails;
+
       EmailInfo();
 
       void addEmailAddress(const std::string&);
@@ -122,7 +122,8 @@ namespace ICQ2000
     {
     public:
       typedef std::pair<unsigned short, std::string> School;
-      std::list<School> schools;   // school names
+      typedef std::list<School> SchoolList;
+      SchoolList schools;   // school names
 
       BackgroundInfo();
 
@@ -133,7 +134,8 @@ namespace ICQ2000
     {
      public:
       typedef std::pair<unsigned short, std::string> Interest;
-      std::list<Interest> interests;
+      typedef std::list<Interest> InterestList;
+      InterestList interests;
 
       PersonalInterestInfo();
     
@@ -196,7 +198,6 @@ namespace ICQ2000
     std::string getNameAlias() const;
 
     Status getStatus() const;
-    std::string getStatusStr() const;
     bool isInvisible() const;
     bool getAuthReq() const;
     bool getAuthAwait() const;
