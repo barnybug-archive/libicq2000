@@ -433,6 +433,7 @@ namespace ICQ2000 {
       UserAdd,
       Email,
       WebPager,
+      FileTransfer,
       Contacts
     };
 
@@ -719,6 +720,86 @@ namespace ICQ2000 {
     MessageType getType() const;
   };
 
+  /**
+   *  A File Transfer 
+   */  
+  class FileTransferEvent : public ICQMessageEvent
+  {
+   public:
+    enum State
+    {
+      NOT_CONNECTED,
+      SEND,
+      RECEIVE,
+      WAIT_RESPONS,
+      ACCEPTED,
+      REJECTED,
+      ERROR,
+      COMPLETE,
+      CANCELLED,
+      TIMEOUT,
+      CLOSE
+    };
+    
+   private:
+    State m_state;
+	
+    std::string m_error;
+    std::string m_message, m_description, m_refusal_message, m_save_path;
+    std::list<std::string> m_files;
+    unsigned int m_size, m_speed;
+    unsigned int m_totsize, m_totpos;
+    unsigned int m_pos, m_totfiles, m_currfile;
+    unsigned short m_port;
+    unsigned short m_seqnum;
+
+   public:
+    FileTransferEvent(ContactRef c, const std::string& msg, const std::string& desc,
+		      unsigned int size, unsigned short seqnum);
+
+    void setState(State st);
+    State getState();
+    void setError(const std::string& str);
+    std::string getError();
+    void addFile(const std::string& file);
+    std::string getFile();
+    unsigned int getFilesInQueue();
+    unsigned int getSpeed();
+    void setSpeed(const unsigned int speed);
+    std::string getMessage() const;
+    std::string getDescription() const;
+    void setDescription(const std::string& str);
+    std::string getSavePath() const;
+    void setSavePath(const std::string& str);
+
+    unsigned int getSize() const;
+    unsigned int getTotalSize() const;
+    unsigned int getTotalPos() const;
+    unsigned int getPos() const;
+    unsigned int getTotalFiles() const;
+    unsigned int getCurrFile() const;
+   
+    void setTotalSize(unsigned int t_size);	
+    void setSize(unsigned int size);
+    void setPos(unsigned int pos);
+    void setTotalPos(unsigned int pos);
+    void setTotalFiles(unsigned int nr);
+    void setCurrFile(unsigned int pos);
+    
+    unsigned short getPort() const;
+    void setPort(unsigned short port);
+    
+    std::string getRefusalMessage() const;
+    void setRefusalMessage(const std::string& s);
+
+    unsigned short getSeqNum() const;
+    void setSeqNum(unsigned short seqnum);
+    
+    MessageType getType() const;
+    ICQMessageEvent* copy() const;
+  };
+
+  
   /**
    *  A contacts message
    */

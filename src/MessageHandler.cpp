@@ -49,6 +49,15 @@ namespace ICQ2000
   {
     ContactRef contact;
     bool advanced, ack = false;
+
+    if (ist->getType() == MSG_Type_FT)
+    {
+      ostringstream ostr;
+      ostr << "FileTransfer request through server." <<endl;
+      SignalLog( LogEvent::WARN, ostr.str() );
+      //handleIncomingFT(static_cast<FTICQSubType*>(ist));
+      return false;
+    }
     
     UINICQSubType *uist = dynamic_cast<UINICQSubType*>(ist);
     MessageEvent *ev = ICQSubTypeToEvent(ist, contact, advanced);
@@ -80,6 +89,10 @@ namespace ICQ2000
       contact->set_last_message_time( t );
     } else {
       contact->set_last_away_msg_check_time( t );
+
+      ostringstream ostr;
+      ostr << "Away_msg respons to: " << contact->getAlias() << endl;
+      SignalLog( LogEvent::INFO, ostr.str() );
     }
 
     if (advanced) {
@@ -154,6 +167,26 @@ namespace ICQ2000
     return ack;
   }
 
+  FileTransferEvent* MessageHandler::handleIncomingFT(FTICQSubType *ist,
+						      bool direct)
+  {
+    ContactRef contact = lookupUIN( ist->getSource() );
+    FileTransferEvent *ev = new FileTransferEvent(contact, ist->getMessage(),
+						  ist->getDescription(),
+						  ist->getSize(), ist->getSeqNum());
+
+    ev->setDelivered(true);
+    ev->setDirect(direct);
+    ev->setFinished(true);
+
+    ostringstream ostr;
+    ostr << "Incoming file transfer received.";
+    SignalLog(LogEvent::INFO, ostr.str() );
+
+    filetransfer_incoming_signal.emit(ev);
+    return ev;
+  }
+	
   /*
    * This method handles:
    * - Setting up the UINICQSubType for Sending messages
@@ -172,6 +205,28 @@ namespace ICQ2000
     return icq;
   }
 
+  void MessageHandler::handleIncomingFTACK(FileTransferEvent *ev, FTICQSubType *ft)
+  {
+    if (ft->getPort() != 0)
+      ev->setState(FileTransferEvent::ACCEPTED);
+    else
+      ev->setState(FileTransferEvent::REJECTED);
+
+    ev->setRefusalMessage(ft->getMessage());
+    ev->setPort(ft->getPort());
+    ostringstream ostr;
+    ostr << "Incoming file transfer ACK: ";
+        
+    if (ev->getState() == FileTransferEvent::ACCEPTED)
+      ostr << "Is Accepted to port: " << ev->getPort();
+    else
+      ostr << "Is Rejected: " << ev->getRefusalMessage();
+    
+    SignalLog(LogEvent::INFO, ostr.str() );
+
+    filetransfer_update_signal.emit(ev);
+  }
+	
   void MessageHandler::handleIncomingACK(MessageEvent *ev, UINICQSubType *icq)
   {
     ICQMessageEvent *aev = dynamic_cast<ICQMessageEvent*>(ev);
@@ -213,14 +268,35 @@ namespace ICQ2000
       }
     }
 
-    if (aev->getType() == MessageEvent::AwayMessage) {
+    if (aev->getType() == MessageEvent::AwayMessage)
+    {
       // count any ack to an away message request as always delivered
       aev->setDelivered(true);
+    }
+    else if (aev->getType() == MessageEvent::FileTransfer) {
+	 handleIncomingFTACK(static_cast<FileTransferEvent*>(ev),
+			     static_cast<FTICQSubType*>(icq));
+
+	 aev->setDelivered(true);
     }
     
     messageack.emit(ev);
   }
+
+  void MessageHandler::handleUpdateFT(FileTransferEvent *ev)
+  {
+    filetransfer_update_signal.emit(ev);
+  }
   
+  void MessageHandler::handleIncomingFTCancel(FileTransferEvent *ev)
+  {
+    ev->setState(FileTransferEvent::CANCELLED);
+    ostringstream ostr;
+    ostr << "FileTransfer cancel received" << endl;
+    SignalLog( LogEvent::WARN, ostr.str() );
+    filetransfer_update_signal.emit(ev);
+  }
+	
   /**
    *  Convert a UINICQSubType into an ICQMessageEvent
    */
@@ -327,6 +403,7 @@ namespace ICQ2000
     case MSG_Type_AutoReq_DND:
     case MSG_Type_AutoReq_FFC:
     case MSG_Type_UserAdd:
+    case MSG_Type_FT:
     case MSG_Type_Contact:
     {
       UINICQSubType *ist = static_cast<UINICQSubType*>(st);
@@ -406,6 +483,13 @@ namespace ICQ2000
       ist = new URLICQSubType( m_translator->client_to_server( uv->getMessage(), ENCODING_CONTACT_LOCALE, c ),
 			       m_translator->client_to_server( uv->getURL(),     ENCODING_CONTACT_LOCALE, c ));
 
+    } else if (ev->getType() == MessageEvent::FileTransfer) {
+
+      FileTransferEvent *uv = static_cast<FileTransferEvent*>(ev);
+      ist = new FTICQSubType( m_translator->client_to_server( uv->getMessage(), ENCODING_CONTACT_LOCALE, c ),
+						m_translator->client_to_server( uv->getDescription(),     ENCODING_CONTACT_LOCALE, c ), uv->getSize());
+					    
+   
     } else if (ev->getType() == MessageEvent::AwayMessage) {
 
       ist = new AwayMsgSubType( c->getStatus() );

@@ -19,7 +19,8 @@ libicq2000_la_SOURCES = \
  DirectClient.h     SNAC-base.h         SNAC-SRV.cpp   \
  events.cpp         SNAC-BOS.cpp        SNAC-SRV.h    version.cpp \
  exceptions.cpp     SNAC-BOS.h          SNAC-UIN.cpp  Xml.cpp \
- ICBMCookieCache.h  SNAC-BUD.cpp        SNAC-UIN.h    Xml.h
+ ICBMCookieCache.h  SNAC-BUD.cpp        SNAC-UIN.h    Xml.h \
+ FileTransferClient.h  FileTransferClient.cpp FTCache.h
 
 libicq2000_la_LDFLAGS = -version-info @LIBICQ2000_SO_VERSION@
 

@@ -92,6 +92,8 @@ namespace ICQ2000 {
 
     ICQSubType* getICQSubType() const { return m_icqsubtype; }
     ICQSubType* grabICQSubType();
+    void setICQSubType(ICQSubType *ist) { m_icqsubtype = ist; }
+    void setICBMCookie(const ICBMCookie& c) { m_cookie = c; }
     ICBMCookie getICBMCookie() const { return m_cookie; }
 
     unsigned short Subtype() const { return SNAC_MSG_Message; }

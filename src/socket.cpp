@@ -180,7 +180,7 @@ namespace ICQ2000
 
     while (sent < b.size())
     {
-      ret = send(m_socketDescriptor, data + sent, b.size() - sent, 0);
+      ret = send(m_socketDescriptor, data + sent, b.size() - sent, MSG_NOSIGNAL);
       if (ret == -1) {
 	m_state = NOT_CONNECTED;
 	close(m_socketDescriptor);
@@ -197,7 +197,7 @@ namespace ICQ2000
 
     unsigned char buffer[max_receive_size];
 
-    int ret = recv(m_socketDescriptor, buffer, max_receive_size, 0);
+    int ret = recv(m_socketDescriptor, buffer, max_receive_size, MSG_NOSIGNAL);
     if (ret <= 0) {
       if (ret == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) return false;
 

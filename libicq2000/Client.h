@@ -64,6 +64,8 @@ namespace ICQ2000
   class TCPSocket;
   class TCPServer;
   class Translator;
+  class FileTransferClient;
+  class FTCache;
 
   /**
    *  The main library object.  This is the object the user interface
@@ -125,6 +127,7 @@ namespace ICQ2000
     SMTPClient * m_smtp;
 
     DCCache * m_dccache;
+    FTCache * m_ftcache;
 
     time_t m_last_server_ping;
 
@@ -220,11 +223,13 @@ namespace ICQ2000
 
     void ICBMCookieCache_expired_cb(MessageEvent *ev);
     void dccache_expired_cb(DirectClient *dc);
+    void ftcache_expired_cb(FileTransferClient *ftc);
     void reqidcache_expired_cb(	RequestIDCacheValue *v );
     void dc_connected_cb(SocketClient *dc);
     void dc_log_cb(LogEvent *ev);
     void dc_socket_cb(SocketEvent *ev);
     void dc_messageack_cb(MessageEvent *ev);
+    void ftc_messageack_cb(MessageEvent *ev);
 
     bool SendDirect(MessageEvent *ev);
 
@@ -378,12 +383,27 @@ namespace ICQ2000
      *  event is finished and deleted from memory by the library.
      */
     sigslot::signal1<SearchResultEvent*> search_result;
+
+    /**
+     *  Signal when an incoming file transfer request is received.
+     */
+    sigslot::signal1<FileTransferEvent*> filetransfer_incoming_signal;
+    
+    /**
+     *  Signal when a FileTransferEvent object is updated.
+     */
+    sigslot::signal1<FileTransferEvent*> filetransfer_update_signal;
     
     // -------------
 
     // -- Send calls --
     void SendEvent(MessageEvent *ev);
 
+    // -- File Transfer methods --
+    void SendFileTransfer(FileTransferEvent *ev);
+    void SendFileTransferACK(FileTransferEvent *ev);
+    void CancelFileTransfer(FileTransferEvent *ev);
+	
     // -- Set Status --
     void setStatus(const Status st);
     void setStatus(const Status st, bool inv);

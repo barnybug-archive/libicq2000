@@ -46,8 +46,10 @@ namespace ICQ2000 {
   unsigned short UserInfoBlock::getLanPort() const { return m_lan_port; }
   unsigned short UserInfoBlock::getExtPort() const { return m_ext_port; }
   unsigned short UserInfoBlock::getFirewall() const { return m_firewall; }
+  unsigned int UserInfoBlock::getDCCookie() const { return m_dc_cookie; }
   unsigned char UserInfoBlock::getTCPVersion() const { return m_tcp_version; }
   unsigned short UserInfoBlock::getStatus() const { return m_status; }
+  bool UserInfoBlock::getBirthday() const { return m_birthday; }
   bool UserInfoBlock::contains_capabilities() const { return m_contains_capabilities; }
   Capabilities UserInfoBlock::get_capabilities() const { return m_capabilities; }
   
@@ -76,6 +78,7 @@ namespace ICQ2000 {
       m_allowDirect = t->getAllowDirect();
       m_webAware = t->getWebAware();
       m_status = t->getStatus();
+      m_birthday = t->getBirthday();
     }
 
     m_timeOnline = 0;
@@ -106,6 +109,7 @@ namespace ICQ2000 {
       m_lan_port = t->getLanPort();
       m_firewall = t->getFirewall();
       m_tcp_version = t->getTCPVersion();
+      m_dc_cookie = t->getDCCookie();
     }
 
     m_ext_ip = 0;

@@ -152,10 +152,12 @@ namespace ICQ2000
 
     // dynamic fields - updated when they come online
     unsigned char m_tcp_version;
+    unsigned int m_dc_cookie;
     Status m_status;
     bool m_invisible;
     bool m_authreq, m_authawait;
     bool m_direct;
+    bool m_bday;    // Birthday Flag
     bool m_server_based;
     unsigned int m_ext_ip, m_lan_ip;
     unsigned short m_ext_port, m_lan_port, m_group_id, m_tag_id;
@@ -208,6 +210,7 @@ namespace ICQ2000
     unsigned short getExtPort() const;
     unsigned short getLanPort() const;
     unsigned char getTCPVersion() const;
+    unsigned int getDCCookie() const;
     bool get_accept_adv_msgs() const;
     Capabilities get_capabilities() const;
 
@@ -229,6 +232,9 @@ namespace ICQ2000
     bool getDirect() const;
     void setDirect(bool b);
 
+    bool getBirthday() const;
+    void setBirthday(bool b);
+    
     void setStatus(Status st, bool i);
     void setStatus(Status st);
     void setInvisible(bool i);
@@ -237,6 +243,7 @@ namespace ICQ2000
     void setExtPort(unsigned short port);
     void setLanPort(unsigned short port);
     void setTCPVersion(unsigned char v);
+    void setDCCookie(unsigned int cookie);
     void set_capabilities(const Capabilities& c);
 
     void setServerSideInfo(unsigned short group_id, unsigned short tag_id);

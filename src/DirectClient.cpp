@@ -103,7 +103,15 @@ namespace ICQ2000 {
     m_socket->Connect();
     SignalAddSocket( m_socket->getSocketHandle(), SocketEvent::WRITE );
 
-    m_session_id = (unsigned int)(0xffffffff*(rand()/(RAND_MAX+1.0)));
+    if (m_contact->getDCCookie() != 0)
+    {
+      m_session_id = m_contact->getDCCookie();
+    }
+    else
+    {
+      m_session_id = (unsigned int)(0xffffffff*(rand()/(RAND_MAX+1.0)));
+    }
+    
 
     m_state = WAITING_FOR_INIT_ACK;
   }
@@ -452,23 +460,55 @@ namespace ICQ2000 {
 
     case V6_TCP_START:
     {
-      bool ack = m_message_handler->handleIncoming( icqsubtype );
-      if (ack) SendPacketAck(icqsubtype);
-      break;
+      if (icqsubtype->getType() == MSG_Type_FT)
+      {
+	FTICQSubType *fticqsubtype = static_cast<FTICQSubType*>( icqsubtype );
+	FileTransferEvent *ev = m_message_handler->handleIncomingFT( fticqsubtype, true );
+	m_msgcache.insert( seqnum, ev );
+      }
+      else
+      {
+	bool ack = m_message_handler->handleIncoming( icqsubtype );
+	if (ack) SendPacketAck(icqsubtype);
+      }
     }
-
+    break;
     case V6_TCP_ACK:
-      if ( m_msgcache.exists(seqnum) ) {
+      if ( m_msgcache.exists(seqnum) )
+      {
 	MessageEvent *ev = m_msgcache[seqnum];
 	ev->setDirect(true);
 	m_message_handler->handleIncomingACK( ev, icqsubtype );
 	m_msgcache.remove(seqnum);
-	delete ev;
-      } else {
+	if (icqsubtype->getType() != MSG_Type_FT)
+	  delete ev;  //WARNING!!! FileTransferEvent shall not be deleted here?
+	   
+      }
+      else
+      {
 	SignalLog(LogEvent::WARN, "Received Direct ACK for unknown message");
       }      
       break;
 
+    case V6_TCP_CANCEL:
+      // FileTransfer was cancelled before we responded
+      if ( icqsubtype->getType() == MSG_Type_FT
+	   && m_msgcache.exists(seqnum) )
+      {
+	MessageEvent *ev = m_msgcache[seqnum];
+	if ( ev->getType() == MessageEvent::FileTransfer )
+	{
+	  FileTransferEvent *eev = static_cast<FileTransferEvent*>(ev);
+	  m_message_handler->handleIncomingFTCancel( eev );
+	  m_msgcache.remove(seqnum);
+	}
+	
+      }
+      else
+      {
+	SignalLog(LogEvent::WARN, "Received Direct Cancel for unknown message");
+      }      
+      break;
     default:
       ostr << "Unknown TCP Command received 0x" << command;
       throw ParseException( ostr.str() );
@@ -655,7 +695,7 @@ namespace ICQ2000 {
     if (ist == NULL) return;
 
     ist->setAdvanced(true);
-
+    
     b.setLittleEndian();
     b << (unsigned int)0x00000000 // checksum (filled in by Encrypt)
       << V6_TCP_START
@@ -670,9 +710,16 @@ namespace ICQ2000 {
     Encrypt(b,c);
     Send(c);
 
-    delete ist;
-
+    // Save seqnum so later ACK or CANCEL could be sent.
+    if (ist->getType() == MSG_Type_FT)
+    {
+      FileTransferEvent *fev = static_cast<FileTransferEvent*>(ev);
+      fev->setSeqNum(seqnum);
+    }
+    
     m_msgcache.insert(seqnum, ev);
+
+    delete ist;
   }
 
   void DirectClient::Send(Buffer &b) {
@@ -688,7 +735,64 @@ namespace ICQ2000 {
     }
   }
 
-  void DirectClient::SendEvent(MessageEvent *ev) {
+
+  void DirectClient::SendFTACK(FileTransferEvent *ev)
+  {
+    FTICQSubType icqsubtype;
+    icqsubtype.setAdvanced(true);
+    icqsubtype.setSeqNum(ev->getSeqNum());
+    if (ev->getState() == FileTransferEvent::ACCEPTED)
+    {
+      icqsubtype.setPort(ev->getPort());
+      icqsubtype.setRevPort(ev->getPort());
+      icqsubtype.setSize(0);
+      icqsubtype.setMessage("");
+	    
+      // port numbers, etc..
+    }
+    else
+    {
+      icqsubtype.setPort(0);
+      icqsubtype.setSize(0);
+      icqsubtype.setMessage( ev->getRefusalMessage() );
+    }
+    SendPacketAck(&icqsubtype);
+    while (m_msgcache.exists(ev->getSeqNum()))
+    {
+      m_msgcache.remove(ev->getSeqNum());
+    }
+  }
+
+  void DirectClient::SendFTCancel(FileTransferEvent *ev)
+  {
+    FTICQSubType fist;
+    fist.setAdvanced(true);
+    fist.setSeqNum(ev->getSeqNum());
+
+    fist.setPort(0);
+    fist.setSize(0);
+    fist.setMessage( "" );
+
+    Buffer b;
+    b.setLittleEndian();
+    b << (unsigned int)0x00000000 // checksum (filled in by Encrypt)
+      << V6_TCP_CANCEL
+      << (unsigned short)0x000e
+      << fist.getSeqNum()
+      << (unsigned int)0x00000000
+      << (unsigned int)0x00000000
+      << (unsigned int)0x00000000;
+    fist.Output(b);
+
+    Buffer c;
+    Encrypt(b,c);
+    Send(c);
+
+    m_msgcache.remove(ev->getSeqNum());
+  }
+
+  void DirectClient::SendEvent(MessageEvent *ev)
+  {
 
     if (m_state == CONNECTED) {
       // send straight away

@@ -1137,6 +1137,197 @@ namespace ICQ2000 {
 
   EmailMessageEvent::MessageType EmailMessageEvent::getType() const { return MessageEvent::Email; }
 
+
+  // ============================================================================
+  //  File Transfer
+  // ============================================================================
+
+  FileTransferEvent::FileTransferEvent(ContactRef c, const string& msg,
+				       const string& desc, unsigned int size, unsigned short seqnum)
+    : ICQMessageEvent(c), m_message(msg), m_description(desc), m_size(size),
+	 m_seqnum(seqnum), m_state(NOT_CONNECTED),
+	 m_speed(100), m_pos(0), m_totpos(0)
+  { }
+
+  void FileTransferEvent::setState(FileTransferEvent::State st)
+  {
+    m_state = st;
+  }
+
+  FileTransferEvent::State FileTransferEvent::getState()
+  {
+    return m_state;
+  }
+  
+  void FileTransferEvent::setError(const std::string& str)
+  {
+    m_error = str;
+  }
+  
+  std::string FileTransferEvent::getError()
+  {
+    return m_error;
+  }
+  
+  void FileTransferEvent::addFile(const std::string& file)
+  {
+    m_files.push_back(file);
+  }
+
+  std::string FileTransferEvent::getFile()
+  {
+    if (m_files.empty())
+    {
+      return "";
+    }
+    else
+    {
+      std::string str = m_files.front();
+      m_files.pop_front();
+      return str;
+    }
+  }
+
+  unsigned int FileTransferEvent::getFilesInQueue()
+  {
+    return m_files.size();
+  }
+
+  void FileTransferEvent::setSpeed(const unsigned int speed)
+  {
+    m_speed = speed;
+  }
+	
+  unsigned int FileTransferEvent::getSpeed()
+  {
+    return m_speed;
+  }
+	  
+  std::string FileTransferEvent::getMessage() const
+  {
+    return m_message;
+  }
+  
+  std::string FileTransferEvent::getDescription() const
+  {
+    return m_description;
+  }
+
+  void FileTransferEvent::setDescription(const std::string& str)
+  {
+    m_description = str;
+  }
+  
+  string FileTransferEvent::getSavePath() const
+  {
+    return m_save_path;
+  }
+
+  void FileTransferEvent::setSavePath(const std::string& str)
+  {
+    m_save_path = str;
+  }
+  
+  unsigned int FileTransferEvent::getSize() const
+  {
+    return m_size;
+  }
+
+  void FileTransferEvent::setTotalSize(unsigned int t_size)
+  {
+    m_totsize = t_size;
+  }
+
+  void FileTransferEvent::setTotalPos(unsigned int t_pos)
+  {
+    m_totpos = t_pos;
+  }
+
+  void FileTransferEvent::setSize(unsigned int size)
+  {
+    m_size = size;
+  }
+  
+  unsigned int FileTransferEvent::getTotalSize() const
+  {
+    return m_totsize;
+  }
+
+  unsigned int FileTransferEvent::getTotalPos() const
+  {
+    return m_totpos;
+  }
+  
+  unsigned int FileTransferEvent::getPos() const
+  {
+    return m_pos;
+  }
+  
+  unsigned int FileTransferEvent::getTotalFiles() const
+  {
+    return m_totfiles;
+  }
+  
+  unsigned int FileTransferEvent::getCurrFile() const
+  {
+    return m_currfile;
+  }
+  
+  void FileTransferEvent::setPos(unsigned int pos)
+  {
+    m_pos = pos;
+  }
+
+  void FileTransferEvent::setTotalFiles(unsigned int nr)
+  {
+    m_totfiles = nr;
+  }
+  void FileTransferEvent::setCurrFile(unsigned int pos)
+  {
+    m_currfile = pos;
+  }
+
+  unsigned short FileTransferEvent::getPort() const
+  {
+    return m_port;
+  }
+  
+  void FileTransferEvent::setPort(unsigned short port)
+  {
+    m_port = port;
+  }
+  
+  FileTransferEvent::MessageType FileTransferEvent::getType() const
+  {
+    return MessageEvent::FileTransfer;
+  }
+
+  ICQMessageEvent* FileTransferEvent::copy() const
+  {
+    return new FileTransferEvent(*this);
+  }
+
+  string FileTransferEvent::getRefusalMessage() const
+  {
+    return m_refusal_message;
+  }
+
+  void FileTransferEvent::setRefusalMessage(const std::string& s)
+  {
+    m_refusal_message = s;
+  }
+  
+  unsigned short FileTransferEvent::getSeqNum() const
+  {
+    return m_seqnum;
+  }
+  void FileTransferEvent::setSeqNum(unsigned short seqnum)
+  {
+    m_seqnum = seqnum;
+  }
+
+
+	
   // ============================================================================
   //  Contact(s) message
   // ============================================================================

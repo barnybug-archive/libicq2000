@@ -82,6 +82,9 @@ namespace ICQ2000 {
     case MSG_Type_AutoReq_FFC:
       ist = new AwayMsgSubType(type);
       break;
+    case MSG_Type_FT:
+      ist = new FTICQSubType();
+      break;	 
     default:
       {
 	ostringstream ostr;
@@ -768,6 +771,113 @@ namespace ICQ2000 {
 
   unsigned char UserAddICQSubType::getType() const { return MSG_Type_UserAdd; }
 
+// ============================================================================
+//  File Transfer request message
+// ============================================================================
+
+  FTICQSubType::FTICQSubType()
+    : m_port(0), m_revport(0), m_size(0)
+  { }
+
+  FTICQSubType::FTICQSubType(const std::string& msg, const std::string& desc, const int size)
+    : m_port(0), m_revport(0), m_size(size), m_message(msg),
+      m_description(desc)
+  { }
+	
+  void FTICQSubType::ParseBodyUIN(Buffer& b)
+  {
+    b.UnpackUint16StringNull(m_message);
+    b >> m_revport;   // network order
+    b.advance(2);     // unknown
+    b.UnpackUint16StringNull(m_description);
+    b >> m_size;      // total size of transfer
+    b >> m_port;
+    b.advance(2);     // unknown
+  }
+	
+  void FTICQSubType::ParseBodyUINACK(Buffer& b)
+  { 
+    b.UnpackUint16StringNull(m_message);
+    b >> m_revport;   // network order
+    b.advance(2);     // unknown
+    b.UnpackUint16StringNull(m_description);
+    b >> m_size;      // total size of transfer
+    b >> m_port;
+    b.advance(2);     // unknown
+  }
+	
+  void FTICQSubType::OutputBodyUIN(Buffer& b) const
+  {
+    b.PackUint16StringNull(m_message);
+    b << m_revport;
+    b << (unsigned short)0;
+    b.PackUint16StringNull(m_description);
+    b << m_size;
+    b << m_port;
+    b << (unsigned short)0;
+  }
+  
+  unsigned short FTICQSubType::Length() const 
+  {
+    return 0;
+  }
+
+  unsigned char FTICQSubType::getType() const
+  {
+    return MSG_Type_FT;
+  }
+
+  unsigned int FTICQSubType::getSize() const
+  {
+    return m_size;
+  }
+  
+  unsigned short FTICQSubType::getPort() const
+  {
+    return m_port;
+  }
+  
+  unsigned short FTICQSubType::getRevPort() const
+  {
+    return m_revport;
+  }
+
+  
+  std::string FTICQSubType::getMessage() const
+  {
+    return m_message;
+  }
+  
+  std::string FTICQSubType::getDescription() const
+  {
+    return m_description;
+  }
+
+  void FTICQSubType::setMessage(const string& msg)
+  {
+    m_message = msg;
+  }
+  
+  void FTICQSubType::setDescription(const string& desc)
+  {
+    m_description = desc;
+  }
+  
+  void FTICQSubType::setPort(unsigned short port)
+  {
+    m_port = port;
+  }
+  
+  void FTICQSubType::setRevPort(unsigned short port)
+  {
+    m_revport = ((port >> 8) & 0xFF) + ((port & 0xFF) << 8);
+  }
+ 
+  void FTICQSubType::setSize(unsigned int size)
+  {
+    m_size = size;
+  }
+	
   ContactICQSubType::ContactICQSubType() { }
 
   ContactICQSubType::ContactICQSubType(const std::list<ContactRef> &content)

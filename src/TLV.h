@@ -301,7 +301,8 @@ namespace ICQ2000 {
     unsigned char getAllowDirect() { return m_allowDirect; }
     unsigned char getWebAware() { return m_webAware; }
     unsigned short getStatus() { return m_status; }
-
+    bool getBirthday() { return ((m_webAware & 0x08) == 0x08); }
+    
     void setAllowDirect(unsigned char m) { m_allowDirect = m; }
     void setWebAware(unsigned char m) { m_webAware = m; }
     void setStatus(unsigned short m) { m_status = m; }
@@ -512,6 +513,9 @@ namespace ICQ2000 {
     unsigned short Length() const { return m_length; }
     void ParseValue(Buffer& b);
   };
+
+  const unsigned short MESSAGETEXT_FLAG1_UCS2      = 0x02;
+  const unsigned short MESSAGETEXT_FLAG1_ISO8859_1 = 0x03;
 
   class MessageTextTLV : public InTLV {
    protected:

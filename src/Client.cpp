@@ -27,7 +27,9 @@
 #include "socket.h"
 #include "SNAC.h"
 #include "DirectClient.h"
+#include "FileTransferClient.h"
 #include "DCCache.h"
+#include "FTCache.h"
 #include "MessageHandler.h"
 #include "RequestIDCache.h"
 #include "ICBMCookieCache.h"
@@ -37,6 +39,7 @@
 #include "sstream_fix.h"
 
 #include <vector>
+#include <iostream>
 
 using std::string;
 using std::ostringstream;
@@ -67,7 +70,7 @@ namespace ICQ2000
       m_smtp( new SMTPClient( m_self, "localhost", 25 ) ),
       m_dccache( new DCCache() ), m_reqidcache( new RequestIDCache() ),
       m_cookiecache( new ICBMCookieCache() ),
-      m_recv( new Buffer() )
+      m_recv( new Buffer() ), m_ftcache( new FTCache() )
   {
     Init();
   }
@@ -87,7 +90,7 @@ namespace ICQ2000
       m_smtp( new SMTPClient( m_self, "localhost", 25 ) ),
       m_dccache( new DCCache() ), m_reqidcache( new RequestIDCache() ),
       m_cookiecache( new ICBMCookieCache() ),
-      m_recv( new Buffer() )
+      m_recv( new Buffer() ), m_ftcache( new FTCache() )
   {
     Init();
   }
@@ -108,6 +111,7 @@ namespace ICQ2000
     delete m_listenServer;
     delete m_smtp;
     delete m_dccache;
+    delete m_ftcache;
     delete m_reqidcache;
     delete m_cookiecache;
     delete m_recv;
@@ -150,6 +154,11 @@ namespace ICQ2000
     // this will be increased once they are established
     m_dccache->expired.connect( this,&Client::dccache_expired_cb) ;
 
+    m_ftcache->setDefaultTimeout(30);
+    // set timeout on direct connections to 30 seconds
+    // this will be increased once they are established
+    m_ftcache->expired.connect( this,&Client::ftcache_expired_cb) ;
+
     m_reqidcache->expired.connect( this, &Client::reqidcache_expired_cb) ;
     
     m_smtp->logger.connect( this, &Client::dc_log_cb) ;
@@ -176,6 +185,8 @@ namespace ICQ2000
     m_message_handler->messageack.connect( messageack );
     m_message_handler->want_auto_resp.connect( want_auto_resp );
     m_message_handler->logger.connect( logger );
+    m_message_handler->filetransfer_incoming_signal.connect( filetransfer_incoming_signal );
+    m_message_handler->filetransfer_update_signal.connect( filetransfer_update_signal );
   }
 
   unsigned short Client::NextSeqNum() {
@@ -272,6 +283,7 @@ namespace ICQ2000
   void Client::DisconnectDirectConns()
   {
     m_dccache->removeAll();
+    m_ftcache->removeAll();
   }
 
   void Client::DisconnectDirectConn(int fd)
@@ -279,9 +291,29 @@ namespace ICQ2000
     if (m_dccache->exists(fd))
     {
       m_dccache->remove(fd);
-    } else if (m_smtp->getfd() == fd)
+    }
+    else if (m_ftcache->exists(fd))
+    {
+      FileTransferEvent *fev = (*m_ftcache)[fd]->getEvent();   
+      m_ftcache->remove(fd);
+      SignalLog(LogEvent::WARN, "Disconnecting filetransfer");
+      
+      if ((fev->getState() != FileTransferEvent::COMPLETE) &&
+	  (fev->getState() != FileTransferEvent::CLOSE) &&
+	  (fev->getState() != FileTransferEvent::ERROR))
+      {
+	fev->setState(FileTransferEvent::CANCELLED);
+      }
+      
+      filetransfer_update_signal.emit(fev);
+    }
+    else if (m_smtp->getfd() == fd)
     {
       SignalRemoveSocket( m_smtp->getfd() );
+    }
+    else
+    {
+      SignalLog(LogEvent::WARN, "Trying to disconnect unknown filedescriptor");
     }
   }
 
@@ -339,9 +371,31 @@ namespace ICQ2000
 
     if (st == NULL) return;
 
-    bool ack = m_message_handler->handleIncoming( st );
-    if (ack)
-      SendAdvancedACK(snac);
+    if (st->getType() == MSG_Type_FT)
+    {
+      ostringstream ostr;
+      ostr << "File transfer through server";   
+      SignalLog(LogEvent::INFO, ostr.str() );
+      ICBMCookie c = snac->getICBMCookie();
+      if ( m_cookiecache->exists( c ) )
+      {  
+	MessageEvent *ev = (*m_cookiecache)[c];
+	ev->setDirect(false);
+	m_message_handler->handleIncomingACK( static_cast<FileTransferEvent*>(ev), static_cast<FTICQSubType*>(st) );
+	m_cookiecache->remove(c);
+      }
+      else
+      {
+	//FIX ME!!! old ACK could arrive 
+	m_cookiecache->insert(snac->getICBMCookie(),
+			      m_message_handler->handleIncomingFT(static_cast<FTICQSubType*>(st), false));
+      }
+    }
+    else
+    {
+      bool ack = m_message_handler->handleIncoming( st );
+      if (ack) SendAdvancedACK(snac);
+    }
   }
 
 
@@ -356,6 +410,7 @@ namespace ICQ2000
     {
     case MSG_Type_Normal:
     case MSG_Type_URL:
+    case MSG_Type_FT:
     case MSG_Type_AutoReq_Away:
     case MSG_Type_AutoReq_Occ:
     case MSG_Type_AutoReq_NA:
@@ -396,6 +451,9 @@ namespace ICQ2000
     {
       /* indicate sending through server */
       MessageEvent *ev = (*m_cookiecache)[c];
+      if (ev->getType() == MessageEvent::FileTransfer)
+	SignalLog( LogEvent::INFO, "FileTransfer request received by server ACK");
+      
       ev->setFinished(false);
       ev->setDelivered(false);
       ev->setDirect(false);
@@ -410,16 +468,36 @@ namespace ICQ2000
 
   void Client::dc_messageack_cb(MessageEvent *ev)
   {
-    messageack.emit(ev);
-
-    if (!ev->isFinished())
+    
+    if (ev->getType() == MessageEvent::FileTransfer)
     {
-      ev->getContact()->setDirect(false);
-      // attempt to deliver via server instead
-      SendViaServer(ev);
+      FileTransferEvent *fev = static_cast<FileTransferEvent*>(ev);
+      fev->setFinished(true);
+      fev->setState(FileTransferEvent::TIMEOUT);
+      filetransfer_update_signal.emit(fev);
+    }
+    else
+    {
+      messageack.emit(ev);
+    
+      if (!ev->isFinished())
+      {
+	ev->getContact()->setDirect(false);
+	// attempt to deliver via server instead
+	SendViaServer(ev);
+      }
     }
   }
 
+  void Client::ftc_messageack_cb(MessageEvent *ev)
+  {
+    if (ev->getType() == MessageEvent::FileTransfer)
+    {
+      FileTransferEvent *fev = static_cast<FileTransferEvent*>(ev);
+      filetransfer_update_signal.emit(fev);
+    }
+  }
+	
   void Client::SignalSrvResponse(SrvResponseSNAC *snac)
   {
     if (snac->getType() == SrvResponseSNAC::OfflineMessagesComplete)
@@ -860,7 +938,16 @@ namespace ICQ2000
   
   void Client::ICBMCookieCache_expired_cb(MessageEvent *ev)
   {
+    if (ev->getType() == MessageEvent::FileTransfer)
+    {
+      FileTransferEvent *fev = static_cast<FileTransferEvent*>(ev);
+      fev->setState(FileTransferEvent::TIMEOUT);
+      filetransfer_update_signal.emit(fev);
+      return;
+    }
+  
     SignalLog(LogEvent::WARN, "Message timeout without receiving ACK, sending offline");
+    
     SendViaServerNormal(ev);
     /* downgrade Contact's capabilities, so we don't
        attempt to send it as advanced again           */
@@ -889,6 +976,11 @@ namespace ICQ2000
     SignalLog(LogEvent::WARN, "Direct connection timeout reached");
   }
 
+  void Client::ftcache_expired_cb(FileTransferClient *ftc)
+  {
+    SignalLog(LogEvent::WARN, "FileTransfer connection timeout reached");
+  }
+
   void Client::dc_connected_cb(SocketClient *dc)
   {
     m_dccache->setTimeout(dc->getfd(), 600);
@@ -914,7 +1006,10 @@ namespace ICQ2000
     {
       ContactRef c = m_contact_tree[userinfo.getUIN()];
       Status old_st = c->getStatus();
-      
+
+      // Birthday Flag set?
+      if (userinfo.getBirthday()) c->setBirthday(true);
+		 
       c->setDirect(true); // reset flags when a user goes online
       c->setStatus( Contact::MapICQStatusToStatus(userinfo.getStatus()),
 		    Contact::MapICQStatusToInvisible(userinfo.getStatus()) );
@@ -923,6 +1018,7 @@ namespace ICQ2000
       if ( userinfo.getLanIP() != 0 ) c->setLanIP( userinfo.getLanIP() );
       if ( userinfo.getLanPort() != 0 ) c->setLanPort( userinfo.getLanPort() );
       if ( userinfo.getTCPVersion() != 0 ) c->setTCPVersion( userinfo.getTCPVersion() );
+      if ( userinfo.getDCCookie() != 0 ) c->setDCCookie( userinfo.getDCCookie() );
 
       c->set_signon_time( userinfo.getSignonDate() );
       if (userinfo.contains_capabilities())
@@ -1649,6 +1745,7 @@ namespace ICQ2000
     m_cookiecache->clearoutPoll();
     m_dccache->clearoutPoll();
     m_dccache->clearoutMessagesPoll();
+    m_ftcache->clearoutMessagesPoll();
     m_smtp->clearoutMessagesPoll();
   }
 
@@ -1726,6 +1823,22 @@ namespace ICQ2000
       dc->socket.connect( this, &Client::dc_socket_cb );
       SignalAddSocket( sock->getSocketHandle(), SocketEvent::READ );
 
+    } else if ( m_ftcache->exists_listenfd( fd ) ) {
+      
+      FileTransferClient *ftc = (*m_ftcache)[fd];
+      if (ftc->getSocket() != NULL)
+      {
+	ftc->setSocket();
+	ftc->logger.connect( this, &Client::dc_log_cb );
+	ftc->messageack.connect( this, &Client::ftc_messageack_cb );
+	ftc->socket.connect( this, &Client::dc_socket_cb );
+	m_ftcache->remove_and_not_delete(fd);
+	(*m_ftcache)[ftc->getfd()] = ftc;
+	SignalAddSocket( ftc->getfd(), SocketEvent::READ );
+	SignalLog(LogEvent::INFO, "Incoming filetransfer connection");
+      } else {
+	SignalLog(LogEvent::INFO, "Incoming filetransfer connection on already open connection.");
+      }
     } else {
       /*
        * File descriptor is a direct connection we have open to someone
@@ -1733,11 +1846,20 @@ namespace ICQ2000
        */
 
       SocketClient *dc;
-      if (m_dccache->exists(fd)) {
+      if (m_dccache->exists(fd))
+      {
 	dc = (*m_dccache)[fd];
-      } else if(m_smtp->getfd() == fd) {
+      }
+      else if(m_smtp->getfd() == fd)
+      {
 	dc = m_smtp;
-      } else {
+      }
+      else if (m_ftcache->exists(fd))
+      {
+	dc = (*m_ftcache)[fd];
+      }
+      else
+      {
 	SignalLog(LogEvent::ERROR, "Problem: Unassociated socket");
 	return;
       }
@@ -1772,6 +1894,15 @@ namespace ICQ2000
 	  DisconnectDirectConn( fd );
 	}
 
+	if (dynamic_cast<FileTransferClient*>(dc) != NULL)
+	{
+	  SignalRemoveSocket(fd);
+	  // no longer select on read
+	  
+	  SignalAddSocket(fd, SocketEvent::WRITE);
+	  // select on write now
+	}
+
       } else if (sock->getState() == TCPSocket::CONNECTED && (m & SocketEvent::READ)) { 
 	try {
 	  dc->Recv();
@@ -1780,6 +1911,20 @@ namespace ICQ2000
 	  SignalLog(LogEvent::WARN, e.what());
 	  DisconnectDirectConn( fd );
 	}
+      }
+      else if (sock->getState() == TCPSocket::CONNECTED && (m & SocketEvent::WRITE))
+      {
+	// Should maybe make sure only FileTransferClients enter here..
+	// Rate could be controlled here or in FileTransferClient
+	try {
+	  dc->Recv();
+	  dc->SendEvent(NULL); 
+	} catch(DisconnectedException e) {
+	  // tear down connection
+	  SignalLog(LogEvent::WARN, e.what());
+	  DisconnectDirectConn( fd );
+	}	
+	
       } else {
 	SignalLog(LogEvent::ERROR, "Direct Connection socket in inconsistent state!");
 	DisconnectDirectConn( fd );
@@ -1836,6 +1981,7 @@ namespace ICQ2000
       case MessageEvent::Normal:
       case MessageEvent::URL:
       case MessageEvent::AwayMessage:
+      case MessageEvent::FileTransfer:
       case MessageEvent::Contacts:
       if (!SendDirect(ev)) SendViaServer(ev);
 	break;
@@ -1900,13 +2046,14 @@ namespace ICQ2000
     return dc;
   }
 
-  void Client::SendViaServer(MessageEvent *ev) {
+  void Client::SendViaServer(MessageEvent *ev)
+  {
     ContactRef c = ev->getContact();
 
     if (ev->getType() == MessageEvent::Normal
 	|| ev->getType() == MessageEvent::URL
-	|| ev->getType() == MessageEvent::Contacts) {
-      
+	|| ev->getType() == MessageEvent::Contacts)
+    {
       /*
        * Normal messages and URL messages sent via the server
        * can be sent as advanced for ICQ2000 users online, in which
@@ -1943,7 +2090,8 @@ namespace ICQ2000
       
     } else if (ev->getType() == MessageEvent::AuthReq
 	       || ev->getType() == MessageEvent::AuthAck
-	       || ev->getType() == MessageEvent::UserAdd) {
+	       || ev->getType() == MessageEvent::UserAdd)
+    {
       
       /*
        * This seems the sure way of sending authorisation messages and
@@ -1952,8 +2100,9 @@ namespace ICQ2000
       SendViaServerNormal(ev);
       delete ev;
 
-    } else if (ev->getType() == MessageEvent::SMS) {
-
+    }
+    else if (ev->getType() == MessageEvent::SMS)
+    {
       /*
        * SMS Messages are sent via a completely different mechanism.
        *
@@ -1967,6 +2116,13 @@ namespace ICQ2000
 
       FLAPwrapSNACandSend( ssnac );
 
+    }
+    else if (ev->getType() == MessageEvent::FileTransfer)
+    {
+      ostringstream ostr;
+      ostr << "Sending FileTransfer via Server ";
+      SignalLog(LogEvent::INFO, ostr.str() );
+      SendViaServerAdvanced(ev);
     }
 
   }
@@ -1992,6 +2148,7 @@ namespace ICQ2000
     msnac.setSeqNum( c->nextSeqNum() );
     ICBMCookie ck = m_cookiecache->generateUnique();
     msnac.setICBMCookie( ck );
+
     m_cookiecache->insert( ck, ev );
 
     msnac.set_capabilities( c->get_capabilities() );
@@ -2656,6 +2813,212 @@ namespace ICQ2000
     SignalDisconnect(r);
   }
 
+  /**
+   *  Call this method when you want to initiate a file transfer to a
+   *  remote client. The File Transfer object must have the message,
+   *  description and list of files that will be transfered all set up
+   *  before passing here.
+   *
+   * @param ev the FileTransferEvent
+   */
+  void Client::SendFileTransfer(FileTransferEvent *ev)
+  {
+    if (ev->getState() == FileTransferEvent::NOT_CONNECTED)
+    {
+      if (!FileTransferClient::SetupFileTransfer(ev))
+      {
+	// TODO - enum!
+	ev->setError("I/O error trying to resolve given filename.");
+	ev->setState(FileTransferEvent::ERROR);
+	filetransfer_update_signal.emit(ev);
+	return;
+      } else {
+	ev->setState(FileTransferEvent::WAIT_RESPONS);
+	ev->setDirect(ev->getContact()->getDirect());
+	SendEvent(ev);
+	return;
+      }
+    }
+    
+    FileTransferClient *ftc = new FileTransferClient(m_self,
+						     ev->getContact(),
+						     m_message_handler,
+						     m_ext_ip,
+						     ev);
+
+    ftc->logger.connect( this, &Client::dc_log_cb) ;
+    ftc->socket.connect( this, &Client::dc_socket_cb) ;
+
+    try
+    {
+      ftc->Connect();
+    }
+    catch(DisconnectedException e)
+    {
+      SignalLog(LogEvent::WARN, e.what());
+      ev->setError("ERROR while trying to connect");
+      ev->setState(FileTransferEvent::ERROR);
+      delete ftc;
+      return;
+    }
+    catch(SocketException e)
+    {
+      SignalLog(LogEvent::WARN, e.what());
+      ev->setError("ERROR while trying to connect");
+      ev->setState(FileTransferEvent::ERROR);
+      delete ftc;
+      return;
+    }
+    catch(...)
+    {
+      SignalLog(LogEvent::WARN, "Uncaught exception");
+      return;
+    }
+
+    (*m_ftcache)[ ftc->getfd() ] = ftc;
+    
+    try
+    {
+      ftc->SendEvent(NULL);
+    }
+    catch(DisconnectedException e)
+    {
+      SignalLog(LogEvent::WARN, e.what());
+      DisconnectDirectConn(ftc->getfd());
+    }
+  }
+  
+  /**
+   *  Call this method after an incoming request has been signalled,
+   *  with accept/refuse (and a message) indicated.
+   *
+   * @param ev the FileTransferEvent
+   * @see filetransfer_incoming_signal
+   */
+  void Client::SendFileTransferACK(FileTransferEvent *ev)
+  {
+    if (ev->isDirect()) {
+	 DirectClient *dc = m_dccache->getByContact(ev->getContact());
+	 if (dc == NULL)
+	   dc = ConnectDirect(ev->getContact());
+
+	 if (dc == NULL) {
+	   ev->setState(FileTransferEvent::ERROR);
+	   ev->setError("Couldn't open an Direct connection to target");
+	   filetransfer_update_signal.emit(ev);
+	   return;
+	 }
+	 
+	 if (ev->getState() == FileTransferEvent::ACCEPTED) {
+	   FileTransferClient *ftc = new FileTransferClient(m_self,
+											  m_message_handler,
+											  &m_contact_tree,
+											  m_ext_ip, ev);
+	   SignalAddSocket(ftc->getlistenfd(), SocketEvent::READ );
+	   ev->setPort(ftc->getlistenPort());
+		 
+	   (*m_ftcache)[ftc->getlistenfd()] = ftc;
+	 }
+	 
+	 try {
+	   dc->SendFTACK(ev);
+	   SignalLog(LogEvent::INFO, "Sending FileTransfer ACK direct");
+	 } catch(DisconnectedException e) {
+	   // tear down connection
+	   SignalLog(LogEvent::WARN, e.what());
+	   DisconnectDirectConn( dc->getfd() );
+	 }
+	 
+	 if (ev->getState() == FileTransferEvent::ACCEPTED)
+	    ev->setState(FileTransferEvent::RECEIVE);
+	 else
+	    ev->setState(FileTransferEvent::NOT_CONNECTED);
+	 	 
+    } else {
+      // ughh.
+	 MessageSNAC *snac = new MessageSNAC();
+	 ICBMCookie cookie;
+	 cookie.generate();
+	 snac->setICBMCookie(cookie);
+	 FTICQSubType *fst = new FTICQSubType(ev->getMessage(),
+								   ev->getDescription(),
+								   ev->getSize());
+	 if (ev->getState() == FileTransferEvent::ACCEPTED) {
+	    FileTransferClient *ftc =
+		    new FileTransferClient(m_self,
+							  m_message_handler,
+							  &m_contact_tree,
+							  m_ext_ip, ev);
+	    SignalAddSocket(ftc->getlistenfd(), SocketEvent::READ );
+	    ev->setPort(ftc->getlistenPort());
+
+	    fst->setPort(ev->getPort());
+	    fst->setRevPort(ev->getPort());
+
+	    (*m_ftcache)[ftc->getlistenfd()] = ftc;
+	    ev->setState(FileTransferEvent::RECEIVE);
+	 } else {
+	    ev->setState(FileTransferEvent::NOT_CONNECTED);
+	 }
+	 
+	 snac->setICQSubType(fst);
+
+	 SignalLog(LogEvent::INFO, "Sending FileTransfer ACK through server");
+	 //Don't know if it should be advanced???
+	 SendAdvancedACK(snac);
+    }
+  }
+    
+  void Client::CancelFileTransfer(FileTransferEvent *ev)
+  {
+	  if (ev != NULL) {
+	    switch (ev->getState()) {
+	    case FileTransferEvent::NOT_CONNECTED: // Do nothing.
+	    case FileTransferEvent::ERROR:         // FileTransferClient is 
+	    case FileTransferEvent::CANCELLED:     // already deleted.
+	    case FileTransferEvent::COMPLETE:
+		    break; 
+	    case FileTransferEvent::WAIT_RESPONS:
+		    if (ev->isDirect()) {
+			  // Through Direct Connection
+			  DirectClient *dc = m_dccache->getByContact(ev->getContact());
+			  if (dc == NULL)
+				dc = ConnectDirect(ev->getContact());
+
+			  if (dc == NULL) {
+				ev->setState(FileTransferEvent::ERROR);
+				ev->setError("Couldn't send filetransfer cancel to target direct");
+				filetransfer_update_signal.emit(ev);
+				return;
+			  }
+			  try {
+			    dc->SendFTCancel(ev);
+			  } catch(DisconnectedException e) {
+				// tear down connection
+				SignalLog(LogEvent::WARN, e.what());
+				DisconnectDirectConn( dc->getfd() );
+			  }
+			  SignalLog(LogEvent::INFO, "Sending FT Cancel through direct connection");
+		    } else {
+			  // Through Server
+			  SignalLog(LogEvent::INFO, "Sending FT Cancel through server not implemented yet.");
+			  //Don't know how to do this
+		    }
+		    break;
+	    case FileTransferEvent::CLOSE:
+	    case FileTransferEvent::TIMEOUT:
+		    FileTransferClient *ftc = m_ftcache->getByEvent(ev);
+		    if (ftc != NULL)
+			 DisconnectDirectConn(ftc->getfd());
+		    break;	
+	    }
+	  }
+
+	  ev->setState(FileTransferEvent::NOT_CONNECTED);
+  }
+
+
+	
   /**
    *  Get your uin.
    * @return your UIN

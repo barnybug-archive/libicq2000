@@ -73,11 +73,13 @@ namespace ICQ2000 {
   void Contact::Init()
   {
     m_tcp_version = 0;
+    m_dc_cookie = 0;
     m_ext_ip = 0;
     m_lan_ip = 0;
     m_ext_port = 0;
     m_lan_port = 0;
     m_direct = true;
+    m_bday = false;
     m_signon_time = 0;
     m_last_online_time = 0;
     m_last_status_change_time = 0;
@@ -138,6 +140,8 @@ namespace ICQ2000 {
   unsigned short Contact::getLanPort() const { return m_lan_port; }
 
   unsigned char Contact::getTCPVersion() const { return m_tcp_version; }
+
+  unsigned int Contact::getDCCookie() const { return m_dc_cookie; }
 
   bool Contact::getDirect() const { return (m_direct && m_status != STATUS_OFFLINE); }
 
@@ -293,6 +297,11 @@ namespace ICQ2000 {
 
   void Contact::setTCPVersion(unsigned char v) {
     m_tcp_version = v;
+    userinfo_change_emit(true);
+  }
+
+  void Contact::setDCCookie(unsigned int cookie) {
+    m_dc_cookie = cookie;
     userinfo_change_emit(true);
   }
 
@@ -578,4 +587,10 @@ namespace ICQ2000 {
     interests.push_back(Interest(cat, s));
   }
 
+  bool Contact::getBirthday() const { return m_bday; }
+
+  void Contact::setBirthday(bool b) {
+    m_bday = b;
+    userinfo_change_emit(true);
+  }
 }

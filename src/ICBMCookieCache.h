@@ -38,8 +38,10 @@ namespace ICQ2000 {
       removeAll();
     }
 
-    void removeItem(const ICBMCookieCache::literator& l) {
-      delete ((*l).getValue());
+    void removeItem(const ICBMCookieCache::literator& l)
+    {
+      if (((*l).getValue())->getType() != MessageEvent::FileTransfer)
+	delete ((*l).getValue());
       Cache<ICBMCookie, MessageEvent*>::removeItem(l);
     }
 

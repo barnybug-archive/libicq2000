@@ -37,11 +37,12 @@ namespace ICQ2000 {
 
   const unsigned short V6_TCP_START     = 0x07ee;
   const unsigned short V6_TCP_ACK       = 0x07da;
-  
+  const unsigned short V6_TCP_CANCEL    = 0x07d0;  
 
   // ------------- Message Types ----------------------
 
   const unsigned char MSG_Type_Normal  = 0x01;
+  const unsigned char MSG_Type_FT      = 0x03;
   const unsigned char MSG_Type_URL     = 0x04;
   const unsigned char MSG_Type_AuthReq = 0x06;
   const unsigned char MSG_Type_AuthRej = 0x07;
@@ -359,7 +360,39 @@ namespace ICQ2000 {
     unsigned char getType() const;
   };
 
-  class ContactICQSubType : public UINICQSubType {
+  
+  class FTICQSubType : public UINICQSubType
+  {
+   private:
+    std::string m_message, m_description;
+    unsigned int m_size;
+    unsigned short m_port, m_revport;
+    
+   public:
+    FTICQSubType();
+    FTICQSubType(const std::string& msg, const std::string& desc,
+		 const int size);
+    void ParseBodyUIN(Buffer& b);
+    void ParseBodyUINACK(Buffer& b);
+    void OutputBodyUIN(Buffer& b) const;
+    unsigned short Length() const;
+    unsigned char getType() const;
+
+    unsigned int getSize() const;
+    unsigned short getPort() const;
+    unsigned short getRevPort() const;
+    std::string getMessage() const;
+    std::string getDescription() const;
+
+    void setMessage(const std::string& msg);
+    void setDescription(const std::string& msg);
+    void setPort(unsigned short port);
+    void setRevPort(unsigned short port);
+    void setSize(unsigned int size);
+  };
+
+  class ContactICQSubType : public UINICQSubType
+  {
    private:
     std::list<ContactRef> m_content;
 

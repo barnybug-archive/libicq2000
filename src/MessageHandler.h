@@ -35,6 +35,7 @@ namespace ICQ2000
   class ContactTree;
   class ICQSubType;
   class UINICQSubType;
+  class FTICQSubType;
   class MessageEvent;
   class ICQMessageEvent;
   class Translator;
@@ -69,17 +70,26 @@ namespace ICQ2000
 
     // incoming messages
     bool handleIncoming(ICQSubType* icq, time_t t = 0);
-
+    FileTransferEvent* handleIncomingFT(FTICQSubType* icq, bool direct);
+    
     // outgoing messages
     UINICQSubType* handleOutgoing(MessageEvent *ev);
 
     // incoming ACKs
     void handleIncomingACK(MessageEvent *ev, UINICQSubType* icq);
+    void handleIncomingFTACK(FileTransferEvent *ev, FTICQSubType* ft);
 
+    // filetransfer info update
+    void handleUpdateFT(FileTransferEvent *ev);
+    // incoming File transfer cancels
+    void handleIncomingFTCancel(FileTransferEvent *ev);
+    
     sigslot::signal1<MessageEvent*> messaged;
     sigslot::signal1<MessageEvent*> messageack;
     sigslot::signal1<ICQMessageEvent*> want_auto_resp;
     sigslot::signal1<LogEvent*> logger;
+    sigslot::signal1<FileTransferEvent*> filetransfer_incoming_signal;
+    sigslot::signal1<FileTransferEvent*> filetransfer_update_signal;
   };
 }
 

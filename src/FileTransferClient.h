@@ -1,5 +1,5 @@
 /*
- * DirectClient
+ * FileTransferClient
  *
  * Copyright (C) 2001 Barnaby Gray <barnaby@beedesign.co.uk>
  *
@@ -19,14 +19,17 @@
  *
  */
 
-#ifndef DIRECTCLIENT_H
-#define DIRECTCLIENT_H
+#ifndef FILETRANSFERCLIENT_H
+#define FILETRANSFERCLIENT_H
 
 #include <list>
+#include <string>
+#include <fstream>
 
 #include "libicq2000/sigslot.h"
 
 #include <stdlib.h>
+#include <time.h>
 
 #include "socket.h"
 #include "buffer.h"
@@ -34,15 +37,17 @@
 #include "exceptions.h"
 #include "Contact.h"
 #include "ContactTree.h"
-#include "SeqNumCache.h"
 #include "SocketClient.h"
 #include "MessageHandler.h"
+
+
+
 
 namespace ICQ2000 {
 
   class UINICQSubType;
   
-  class DirectClient : public SocketClient {
+  class FileTransferClient : public SocketClient {
    private:
     enum State { NOT_CONNECTED,
 		 WAITING_FOR_INIT,
@@ -50,9 +55,23 @@ namespace ICQ2000 {
 		 WAITING_FOR_INIT2,
 		 CONNECTED };
 
-    State m_state;
+     static const unsigned short MAX_FileChunk = 4096;
+    
+    TCPServer m_listenserver;
+    FileTransferEvent* m_ev;
 
+    std::string m_path, *m_base_dir;
+    
+    State m_state;
+ 
+    bool m_more, m_continue;
+    bool m_senddir;
+    
     Buffer m_recv;
+
+    unsigned char m_const_buf[MAX_FileChunk];
+    std::ofstream m_fout;
+    std::ifstream m_fin;
 
     ContactRef m_self_contact;
     ContactRef m_contact;
@@ -76,51 +95,70 @@ namespace ICQ2000 {
     void ParsePacket(Buffer& b);
     void ParsePacketInt(Buffer& b);
 
+    void ParsePacket0x00(Buffer& b);
+    void ParsePacket0x01(Buffer& b);
+    void ParsePacket0x02(Buffer& b);
+    void ParsePacket0x03(Buffer& b);
+    void ParsePacket0x05(Buffer& b);
+    void ParsePacket0x06(Buffer& b);
+    
+    void SendPacket0x00();
+    void SendPacket0x01();
+    void SendPacket0x02();
+    void SendPacket0x03(unsigned int npos, unsigned int nfiles);
+    void SendPacket0x05();
+    void SendPacket0x06();
+
+    
     void SendInitAck();
     void SendInitPacket();
     void SendInit2();
-    void SendPacketEvent(MessageEvent *ev);
     void SendPacketAck(ICQSubType *i);
     void Send(Buffer &b);
-    
-    bool Decrypt(Buffer& in, Buffer& out);
-    void Encrypt(Buffer& in, Buffer& out);
-    static unsigned char client_check_data[];
-    SeqNumCache m_msgcache;
-    std::list<MessageEvent*> m_msgqueue;
-    unsigned short m_seqnum;
 
-    unsigned short NextSeqNum();
+        
+    unsigned int m_timeout;
+    time_t m_timestamp;
+    bool m_msgqueue;
+   
     void ConfirmUIN();
 
-    void expired_cb(MessageEvent *ev);
+    void expired();
     void flush_queue();
 
     void Init();
 
+    static void listDirectory(std::string str, int &size, int &files, int &dirs, FileTransferEvent *ev);
+
+    void SendFile();
+    
    public:
-    DirectClient(ContactRef self, TCPSocket *sock, MessageHandler *mh, ContactTree *cl, unsigned int ext_ip,
-		 unsigned short server_port);
-    DirectClient(ContactRef self, ContactRef c, MessageHandler *mh, unsigned int ext_ip,
-		 unsigned short server_port);
-    ~DirectClient();
+    FileTransferClient(ContactRef self, MessageHandler *mh, ContactTree *cl, unsigned int ext_ip, FileTransferEvent* ev);
+    FileTransferClient(ContactRef self, ContactRef c, MessageHandler *mh, unsigned int ext_ip, FileTransferEvent* ev);
+    ~FileTransferClient();
 
     void Connect();
     void FinishNonBlockingConnect();
     void Recv();
+    
 
+    static bool SetupFileTransfer(FileTransferEvent *ev);
+
+    FileTransferEvent* getEvent();
+    
     unsigned int getUIN() const;
     unsigned int getIP() const;
     unsigned short getPort() const;
+    unsigned short getlistenPort() const;
     int getfd() const;
+    int getlistenfd();
     TCPSocket* getSocket() const;
+    void setSocket();
     void clearoutMessagesPoll();
 
     void setContact(ContactRef c);
     ContactRef getContact() const;
     void SendEvent(MessageEvent* ev);
-    void SendFTACK(FileTransferEvent *ev);
-    void SendFTCancel(FileTransferEvent *ev);
   };
 
 }

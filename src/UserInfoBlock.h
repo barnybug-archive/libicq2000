@@ -39,9 +39,11 @@ namespace ICQ2000 {
     unsigned short m_warninglevel, m_userClass;
     unsigned char m_allowDirect, m_webAware;
     unsigned short m_status;
+    bool m_birthday;
     unsigned int m_timeOnline;
     unsigned int m_signupDate, m_signonDate;
     unsigned int m_lan_ip, m_ext_ip;
+    unsigned int m_dc_cookie;
     unsigned short m_lan_port, m_ext_port, m_firewall;
     unsigned char m_tcp_version;
     bool m_contains_capabilities;
@@ -60,9 +62,11 @@ namespace ICQ2000 {
     unsigned short getLanPort() const;
     unsigned short getExtPort() const;
     unsigned short getFirewall() const;
+    unsigned int getDCCookie() const;
     unsigned char getTCPVersion() const;
     unsigned short getStatus() const;
-
+    bool getBirthday() const;
+    
     bool contains_capabilities() const;
     Capabilities get_capabilities() const;
 
