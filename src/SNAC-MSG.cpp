@@ -132,12 +132,12 @@ namespace ICQ2000 {
 
       m_icqsubtype->Output(b);
       
+      b.setAutoSizeMarker(m1);
+      b.setAutoSizeMarker(m2);
+
       b.setBigEndian();
       b << (unsigned short)0x0003 // TLV
 	<< (unsigned short)0x0000;
-
-      b.setAutoSizeMarker(m1);
-      b.setAutoSizeMarker(m2);
 
       return;
     }
