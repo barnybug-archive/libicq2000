@@ -55,11 +55,11 @@ namespace ICQ2000 {
   // ============================================================================
 
   _ContactTree_Group::_ContactTree_Group(const std::string& l, unsigned short id)
-    : m_label(l), m_id(id)
+    : m_id(id), m_label(l)
   { }
   
   _ContactTree_Group::_ContactTree_Group()
-    : m_label(""), m_id(0)
+    : m_id(0), m_label("")
   { }
   
   _ContactTree_Group::_ContactTree_Group(const _ContactTree_Group& gp)

@@ -166,8 +166,8 @@ namespace ICQ2000 {
   {
    private:
     std::string m_group_name;
-    unsigned short m_group_id;
     std::list<ContactRef> m_buddy_list;
+    unsigned short m_group_id;
     
    protected:
     void OutputBody(Buffer& b) const;
@@ -212,8 +212,8 @@ namespace ICQ2000 {
   {
    private:
     std::string m_group_name;
-    unsigned short m_group_id;
     std::list<ContactRef> m_buddy_list;
+    unsigned short m_group_id;
     
    protected:
     void OutputBody(Buffer& b) const;
