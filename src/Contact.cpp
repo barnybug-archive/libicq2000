@@ -69,7 +69,6 @@ namespace ICQ2000 {
     m_ext_port = 0;
     m_lan_port = 0;
     m_direct = true;
-    m_accept_adv_msgs = false;
   }
 
   unsigned int Contact::getUIN() const { return m_uin; }
@@ -131,8 +130,13 @@ namespace ICQ2000 {
     userinfo_change_emit(true);
   }
 
-  bool Contact::acceptAdvancedMsgs() const {
-    return (m_tcp_version >= 7 && m_status != STATUS_OFFLINE && m_accept_adv_msgs);
+  bool Contact::get_accept_adv_msgs() const {
+    return (m_tcp_version >= 7 && m_status != STATUS_OFFLINE && m_capabilities.get_accept_adv_msgs());
+  }
+
+  Capabilities Contact::get_capabilities() const
+  {
+    return m_capabilities;
   }
 
   bool Contact::isInvisible() const { return m_invisible; }
@@ -183,7 +187,7 @@ namespace ICQ2000 {
       m_ext_port = 0;
       m_lan_port = 0;
       m_tcp_version = 0;
-      m_accept_adv_msgs = false;
+      m_capabilities.clear();
     }
 
     status_change_signal.emit( &sev );
@@ -244,7 +248,10 @@ namespace ICQ2000 {
     userinfo_change_emit(true);
   }
 
-  void Contact::setAcceptAdvMsgs(bool b) { m_accept_adv_msgs = b; }
+  void Contact::set_capabilities(const Capabilities& c)
+  {
+    m_capabilities = c;
+  }
 
   void Contact::setMainHomeInfo(const MainHomeInfo& s) {
     m_main_home_info = s;

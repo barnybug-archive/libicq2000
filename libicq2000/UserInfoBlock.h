@@ -25,6 +25,7 @@
 #include <string>
 
 #include <libicq2000/buffer.h>
+#include <libicq2000/Capabilities.h>
 
 namespace ICQ2000 {
  
@@ -33,13 +34,6 @@ namespace ICQ2000 {
    * encapsulate it here
    */
   class UserInfoBlock {
-   public:
-    enum tristate {
-      tri_unknown,
-      tri_true,
-      tri_false
-    };
-	
    protected:
     string m_screenname;
     unsigned short m_warninglevel, m_userClass;
@@ -50,10 +44,11 @@ namespace ICQ2000 {
     unsigned int m_lan_ip, m_ext_ip;
     unsigned short m_lan_port, m_ext_port, m_firewall;
     unsigned char m_tcp_version;
-    tristate m_accept_adv_msgs;
+    bool m_contains_capabilities;
+    Capabilities m_capabilities;
     
    public:
-    UserInfoBlock() : m_accept_adv_msgs(tri_unknown) { }
+    UserInfoBlock();
 
     string getScreenName() const;
     unsigned int getUIN() const;
@@ -64,8 +59,10 @@ namespace ICQ2000 {
     unsigned short getExtPort() const;
     unsigned short getFirewall() const;
     unsigned char getTCPVersion() const;
-    tristate getAcceptAdvMsgs() const;
     unsigned short getStatus() const;
+
+    bool contains_capabilities() const;
+    Capabilities get_capabilities() const;
 
     void Parse(Buffer& b);
   };

@@ -33,6 +33,7 @@
 #include <libicq2000/buffer.h>
 #include <libicq2000/constants.h>
 #include <libicq2000/ICQ.h>
+#include <libicq2000/Capabilities.h>
 
 using std::string;
 using std::map;
@@ -388,23 +389,27 @@ namespace ICQ2000 {
   };
 
   class UserInfoCapabilitiesTLV : public OutTLV {
+   private:
+    Capabilities m_capabilities;
+
    public:
-    UserInfoCapabilitiesTLV() { }
+    UserInfoCapabilitiesTLV();
     unsigned short Type() const { return TLV_UserInfoCapabilities; }
-    unsigned short Length() const { return 32; }
+    unsigned short Length() const;
 
     void OutputValue(Buffer& b) const;
   };
 
   class CapabilitiesTLV : public InTLV {
    private:
-    bool m_accept_adv_msgs;
+    Capabilities m_capabilities;
     
    public:
     CapabilitiesTLV() { }
     unsigned short Type() const { return TLV_Capabilities; }
-    unsigned short Length() const { return 32; }
-    bool getAcceptAdvMsgs() const;
+    unsigned short Length() const { return m_capabilities.get_length(); }
+
+    Capabilities get_capabilities() const;
 
     void ParseValue(Buffer& b);
   };

@@ -54,6 +54,11 @@ namespace ICQ2000 {
     m_cookie = c;
   }
 
+  void MsgSendSNAC::set_capabilities(const Capabilities& c)
+  {
+    m_dest_capabilities = c;
+  }
+  
   void MsgSendSNAC::OutputBody(Buffer& b) const {
 
     // ICBM Cookie
@@ -78,11 +83,8 @@ namespace ICQ2000 {
       Buffer::marker m1 = b.getAutoSizeShortMarker();
 
       b << (unsigned short)0x0000       // status
-	<< m_cookie
-	<< (unsigned int)  0x09461349   // cap
-	<< (unsigned int)  0x4c7f11d1   // cap
-	<< (unsigned int)  0x82224445   // cap
-	<< (unsigned int)  0x53540000;  // cap
+	<< m_cookie;
+      m_dest_capabilities.OutputFirst16(b);
 
       b << (unsigned short)0x000a       // TLV
 	<< (unsigned short)0x0002
@@ -326,30 +328,40 @@ namespace ICQ2000 {
 
     b.PackByteString( Contact::UINtoString( m_icqsubtype->getSource() ) );
 
-    b << (unsigned short)0x0003;
-
-    // unknown..
-    b << (unsigned int)  0x1B000700
-      << (unsigned int)  0x00000000
-      << (unsigned int)  0x00000000
-      << (unsigned int)  0x00000000
-      << (unsigned int)  0x00000000
-      << (unsigned int)  0x00000300
-      << (unsigned short)0x0000;
-    
-    b << (unsigned char)0x00; // unknown 0 for normal 4 for away message request
-    
     b.setLittleEndian();
-    b << m_icqsubtype->getSeqNum()
-      << (unsigned short)0x000e
-      << m_icqsubtype->getSeqNum();
     
+    // -- start of first subsection
+    Buffer::marker m1 = b.getAutoSizeShortMarker();
+      
+    // unknown..
+    b << (unsigned short)0x0007;      // Protocol version
+
+    b << (unsigned int)  0x00000000   // Unknown
+      << (unsigned int)  0x00000000
+      << (unsigned int)  0x00000000
+      << (unsigned int)  0x00000000
+      << (unsigned short)0x0000;
+
+    b << (unsigned int)  0x00000003;  // Client features (?)
+    b << (unsigned char) 0x00;        // Unknown
+
+    b << m_icqsubtype->getSeqNum();
+
+    b.setAutoSizeMarker(m1);
+    // -- end of first subsection
+
+    // -- start of second subsection
+    Buffer::marker m2 = b.getAutoSizeShortMarker();
+    b << m_icqsubtype->getSeqNum();
+
     // unknown
     b << (unsigned int)0x00000000
       << (unsigned int)0x00000000
       << (unsigned int)0x00000000;
-    
-    m_icqsubtype->setACK(true);
+
+    b.setAutoSizeMarker(m2);
+    // -- end of second subsection
+
     m_icqsubtype->Output(b);
   }
 

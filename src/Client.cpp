@@ -737,7 +737,7 @@ namespace ICQ2000 {
     SendViaServerNormal(ev);
     /* downgrade Contact's capabilities, so we don't
        attempt to send it as advanced again           */
-    ev->getContact()->setAcceptAdvMsgs(false);
+    ev->getContact()->set_capabilities(Capabilities());
   }
 
   void Client::reqidcache_expired_cb(RequestIDCacheValue* v) 
@@ -791,9 +791,8 @@ namespace ICQ2000 {
       c->setExtPort( userinfo.getExtPort() );
       c->setLanPort( userinfo.getLanPort() );
       c->setTCPVersion( userinfo.getTCPVersion() );
-      if (userinfo.getAcceptAdvMsgs() != UserInfoBlock::tri_unknown) {
-	c->setAcceptAdvMsgs( userinfo.getAcceptAdvMsgs() == UserInfoBlock::tri_true );
-      }
+      if (userinfo.contains_capabilities())
+	c->set_capabilities( userinfo.get_capabilities() );
       
       ostringstream ostr;
       ostr << "Received Buddy Online for "
@@ -801,6 +800,7 @@ namespace ICQ2000 {
 	   << " (" << c->getUIN() << ") " << Status_text[old_st]
 	   << "->" << c->getStatusStr() << " from server";
       SignalLog(LogEvent::INFO, ostr.str() );
+
     } else {
       ostringstream ostr;
       ostr << "Received Status change for user not on contact list: " << userinfo.getUIN();
@@ -1670,7 +1670,7 @@ namespace ICQ2000 {
        * knowing if it's received
        */
       
-      if (c->acceptAdvancedMsgs())
+      if (c->get_accept_adv_msgs())
 	SendViaServerAdvanced(ev);
       else {
 	SendViaServerNormal(ev);
@@ -1686,7 +1686,7 @@ namespace ICQ2000 {
        * to the client as non-delivered
        */
 
-      if (c->acceptAdvancedMsgs())
+      if (c->get_accept_adv_msgs())
 	SendViaServerAdvanced(ev);
       else {
 	ev->setFinished(true);
@@ -1739,6 +1739,8 @@ namespace ICQ2000 {
     ICBMCookie ck = m_cookiecache.generateUnique();
     msnac.setICBMCookie( ck );
     m_cookiecache.insert( ck, ev );
+
+    msnac.set_capabilities( c->get_capabilities() );
     
     FLAPwrapSNACandSend( msnac );
     

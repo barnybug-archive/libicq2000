@@ -26,6 +26,7 @@
 #include <libicq2000/ICQ.h>
 #include <libicq2000/UserInfoBlock.h>
 #include <libicq2000/ICBMCookie.h>
+#include <libicq2000/Capabilities.h>
 
 namespace ICQ2000 {
 
@@ -60,6 +61,7 @@ namespace ICQ2000 {
     bool m_advanced;
     unsigned short m_seqnum;
     ICBMCookie m_cookie;
+    Capabilities m_dest_capabilities;
 
     void OutputBody(Buffer& b) const;
 
@@ -69,6 +71,7 @@ namespace ICQ2000 {
     void setSeqNum(unsigned short sn);
     void setAdvanced(bool ad);
     void setICBMCookie(const ICBMCookie& c);
+    void set_capabilities(const Capabilities& c);
 
     unsigned short Subtype() const { return SNAC_MSG_Send; }
   };

@@ -232,16 +232,19 @@ namespace ICQ2000 {
 
   // ----------------- UserInfoCapabilities TLV -----------
 
+  UserInfoCapabilitiesTLV::UserInfoCapabilitiesTLV()
+  {
+    m_capabilities.default_icq2000_capabilities();
+  }
+  
+  unsigned short UserInfoCapabilitiesTLV::Length() const
+  {
+    return m_capabilities.get_length();
+  }
+
   void UserInfoCapabilitiesTLV::OutputValue(Buffer& b) const {
     b << Length();
-    b << (unsigned int)0x09461349
-      << (unsigned int)0x4c7f11d1
-      << (unsigned int)0x82224445
-      << (unsigned int)0x53540000
-      << (unsigned int)0x09461344
-      << (unsigned int)0x4c7f11d1
-      << (unsigned int)0x82224445
-      << (unsigned int)0x53540000;
+    m_capabilities.Output(b);
   }
 
   // ----------------- Capabilities TLV -----------
@@ -254,13 +257,14 @@ namespace ICQ2000 {
     // ICQ2000 sends out 32 bytes
     // ICQLite sends out 16, so this is what we'll use for now until someone
     // figures out what those capabilities mean
-    if (l > 16)
-      m_accept_adv_msgs = true;
-    else
-      m_accept_adv_msgs = false;
+
+    m_capabilities.Parse(b, l);
   }
 
-  bool CapabilitiesTLV::getAcceptAdvMsgs() const { return m_accept_adv_msgs; }
+  Capabilities CapabilitiesTLV::get_capabilities() const
+  {
+    return m_capabilities;
+  }
 
   // ----------------- Status TLV -----------------
 

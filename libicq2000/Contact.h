@@ -31,6 +31,8 @@
 #include <libicq2000/constants.h>
 #include <libicq2000/ref_ptr.h>
 
+#include <libicq2000/Capabilities.h>
+
 using std::list;
 using std::string;
 
@@ -145,7 +147,7 @@ namespace ICQ2000 {
     bool m_direct;
     unsigned int m_ext_ip, m_lan_ip;
     unsigned short m_ext_port, m_lan_port;
-    bool m_accept_adv_msgs;
+    Capabilities m_capabilities;
 
     static unsigned int imag_uin;
     
@@ -189,7 +191,8 @@ namespace ICQ2000 {
     unsigned short getExtPort() const;
     unsigned short getLanPort() const;
     unsigned char getTCPVersion() const;
-    bool acceptAdvancedMsgs() const;
+    bool get_accept_adv_msgs() const;
+    Capabilities get_capabilities() const;
 
     void setMobileNo(const string& mn);
     void setAlias(const string& al);
@@ -209,7 +212,7 @@ namespace ICQ2000 {
     void setExtPort(unsigned short port);
     void setLanPort(unsigned short port);
     void setTCPVersion(unsigned char v);
-    void setAcceptAdvMsgs(bool b);
+    void set_capabilities(const Capabilities& c);
    
     void setMainHomeInfo(const MainHomeInfo& m);
     void setHomepageInfo(const HomepageInfo& s);
