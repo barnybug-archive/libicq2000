@@ -614,6 +614,11 @@ namespace ICQ2000 {
    */
   void NormalMessageEvent::setBackground(unsigned int b) { m_background = b; }
 
+  ICQMessageEvent* NormalMessageEvent::copy() const
+  {
+    return new NormalMessageEvent(*this);
+  }
+
   // ============================================================================
   //  URL Message
   // ============================================================================
@@ -657,6 +662,11 @@ namespace ICQ2000 {
    * @return the url
    */
   string URLMessageEvent::getURL() const { return m_url; }
+
+  ICQMessageEvent* URLMessageEvent::copy() const
+  {
+    return new URLMessageEvent(*this);
+  }
 
   // ============================================================================
   //  SMS Message
@@ -818,6 +828,11 @@ namespace ICQ2000 {
 
   MessageEvent::MessageType AwayMessageEvent::getType() const { return MessageEvent::AwayMessage; }
 
+  ICQMessageEvent* AwayMessageEvent::copy() const
+  {
+    return new AwayMessageEvent(*this);
+  }
+
   // ============================================================================
   //  Authorisation Request
   // ============================================================================
@@ -853,6 +868,11 @@ namespace ICQ2000 {
    * @return authorisation message
    */
   string AuthReqEvent::getMessage() const { return m_message; }
+
+  ICQMessageEvent* AuthReqEvent::copy() const
+  {
+    return new AuthReqEvent(*this);
+  }
 
   // ============================================================================
   //  Authorisation Acknowledgement
@@ -925,6 +945,11 @@ namespace ICQ2000 {
    */
   string AuthAckEvent::getMessage() const { return m_message; }
 
+  ICQMessageEvent* AuthAckEvent::copy() const
+  {
+    return new AuthAckEvent(*this);
+  }
+
   // ============================================================================
   //  E-mail Express message
   // ============================================================================
@@ -953,6 +978,11 @@ namespace ICQ2000 {
   MessageEvent::MessageType UserAddEvent::getType() const { return MessageEvent::UserAdd; }
 
   unsigned int UserAddEvent::getSenderUIN() const { return m_contact->getUIN(); }
+
+  ICQMessageEvent* UserAddEvent::copy() const
+  {
+    return new UserAddEvent(*this);
+  }
 
   // ============================================================================
   //  Email Message

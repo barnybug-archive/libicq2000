@@ -411,6 +411,8 @@ namespace ICQ2000 {
     unsigned int getSenderUIN() const;
     std::string getAwayMessage() const;
     void setAwayMessage(const std::string& msg);
+
+    virtual ICQMessageEvent* copy() const = 0;
   };
 
   /**
@@ -434,6 +436,8 @@ namespace ICQ2000 {
     unsigned int getBackground() const;
     void setForeground(unsigned int f);
     void setBackground(unsigned int b);
+
+    ICQMessageEvent* copy() const;
   };
   
   /**
@@ -450,6 +454,8 @@ namespace ICQ2000 {
     string getMessage() const;
     string getURL() const;
     MessageType getType() const;
+
+    ICQMessageEvent* copy() const;
   };
   
   /**
@@ -516,6 +522,8 @@ namespace ICQ2000 {
     AwayMessageEvent(ContactRef c);
 
     MessageType getType() const;
+
+    ICQMessageEvent* copy() const;
   };
 
   /**
@@ -531,6 +539,8 @@ namespace ICQ2000 {
 
     string getMessage() const;
     MessageType getType() const;
+
+    ICQMessageEvent* copy() const;
   };
   
   /**
@@ -550,6 +560,8 @@ namespace ICQ2000 {
     string getMessage() const;
     MessageType getType() const;
     bool isGranted() const;
+
+    ICQMessageEvent* copy() const;
   };
 
   /**
@@ -579,6 +591,8 @@ namespace ICQ2000 {
 
     MessageType getType() const;
     unsigned int getSenderUIN() const;
+
+    ICQMessageEvent* copy() const;
   };
 
   /**
