@@ -84,7 +84,10 @@ namespace ICQ2000 {
 
       b << (unsigned short)0x0000       // status
 	<< m_cookie;
-      m_dest_capabilities.OutputFirst16(b);
+
+      Capabilities c;
+      c.set_capability_flag( Capabilities::ICQServerRelay );
+      c.Output(b);
 
       b << (unsigned short)0x000a       // TLV
 	<< (unsigned short)0x0002

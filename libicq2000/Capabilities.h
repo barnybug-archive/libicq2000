@@ -25,24 +25,61 @@
 
 #include <libicq2000/buffer.h>
 
-#include <vector>
+#include <set>
 
 namespace ICQ2000 {
 
   class Capabilities {
+   public:
+
+    /*
+     * A lot of these flags are AIM specific - so we're unlikely to
+     * see/use them unless the other end is a 'libfaim pretending to
+     * be ICQ' client.
+     */
+    enum Flag {
+      Chat            = 0,
+      Voice           = 1,
+      SendFile        = 2,
+      ICQ             = 3,
+      IMImage         = 4,
+      BuddyIcon       = 5,
+      SaveStocks      = 6,
+      GetFile         = 7,
+      ICQServerRelay  = 8,
+      Games           = 9,
+      Games2          = 10,
+      SendBuddyList   = 11,
+      ICQRTF          = 12,
+      ICQUnknown      = 13,
+      Empty           = 14,
+      TrillianCrypt   = 15,
+      APInfo          = 16,
+      ICQUnknown2     = 17
+    };
+
    private:
-    std::string m_data;
+    struct Block {
+      Flag flag;
+      unsigned char data[16];
+    };
+    static const Block caps[];
+
+    std::set<Flag> m_flags;
 
    public:
     Capabilities();
     
     void default_icq2000_capabilities();
     void default_icq2002_capabilities();
+
     void clear();
+    void set_capability_flag(Flag f);
+    void clear_capability_flag(Flag f);
+    bool has_capability_flag(Flag f) const;
 
     void Parse(Buffer& b, unsigned short len);
     void Output(Buffer& b) const;
-    void OutputFirst16(Buffer& b) const;
 
     unsigned short get_length() const;
 

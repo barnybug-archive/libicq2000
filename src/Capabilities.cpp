@@ -21,82 +21,193 @@
 
 #include <libicq2000/Capabilities.h>
 
+using std::set;
+
 namespace ICQ2000 {
+
+  /*
+   * Capability blocks.  (Thanks libfaim for figuring out these - many
+   * are only relevant to AIM, but included for completeness)
+   *
+   * These are CLSIDs. They should actually be of the form:
+   *
+   * {0x0946134b, 0x4c7f, 0x11d1,
+   *  {0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00}},
+   *
+   * But, eh.
+   */
+  
+  const struct Capabilities::Block Capabilities::caps[] = {
+    /*
+     * Chat is oddball.
+     */
+    {Chat,
+     {0x74, 0x8f, 0x24, 0x20, 0x62, 0x87, 0x11, 0xd1, 
+      0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00}},
+    
+    /*
+     * These are mostly in order.
+     */
+    {Voice,
+     {0x09, 0x46, 0x13, 0x41, 0x4c, 0x7f, 0x11, 0xd1, 
+      0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00}},
+    
+    {SendFile,
+     {0x09, 0x46, 0x13, 0x43, 0x4c, 0x7f, 0x11, 0xd1, 
+      0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00}},
+    
+    /*
+     * Advertised by the EveryBuddy client.
+     */
+    {ICQ,
+     {0x09, 0x46, 0x13, 0x44, 0x4c, 0x7f, 0x11, 0xd1, 
+      0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00}},
+    
+    {IMImage,
+     {0x09, 0x46, 0x13, 0x45, 0x4c, 0x7f, 0x11, 0xd1, 
+      0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00}},
+    
+    {BuddyIcon,
+     {0x09, 0x46, 0x13, 0x46, 0x4c, 0x7f, 0x11, 0xd1, 
+      0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00}},
+    
+    {SaveStocks,
+     {0x09, 0x46, 0x13, 0x47, 0x4c, 0x7f, 0x11, 0xd1,
+      0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00}},
+    
+    {GetFile,
+     {0x09, 0x46, 0x13, 0x48, 0x4c, 0x7f, 0x11, 0xd1,
+      0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00}},
+    
+    {ICQServerRelay,
+     {0x09, 0x46, 0x13, 0x49, 0x4c, 0x7f, 0x11, 0xd1,
+      0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00}},
+    
+    /*
+     * Indeed, there are two of these.  The former appears to be correct, 
+     * but in some versions of winaim, the second one is set.  Either they 
+     * forgot to fix endianness, or they made a typo. It really doesn't 
+     * matter which.
+     */
+    {Games,
+     {0x09, 0x46, 0x13, 0x4a, 0x4c, 0x7f, 0x11, 0xd1,
+      0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00}},
+    {Games2,
+     {0x09, 0x46, 0x13, 0x4a, 0x4c, 0x7f, 0x11, 0xd1,
+      0x22, 0x82, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00}},
+    
+    {SendBuddyList,
+     {0x09, 0x46, 0x13, 0x4b, 0x4c, 0x7f, 0x11, 0xd1,
+      0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00}},
+    
+    {ICQUnknown2,
+     {0x09, 0x46, 0x13, 0x4e, 0x4c, 0x7f, 0x11, 0xd1,
+      0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00}},
+    
+    {ICQRTF,
+     {0x97, 0xb1, 0x27, 0x51, 0x24, 0x3c, 0x43, 0x34, 
+      0xad, 0x22, 0xd6, 0xab, 0xf7, 0x3f, 0x14, 0x92}},
+    
+    {ICQUnknown,
+     {0x2e, 0x7a, 0x64, 0x75, 0xfa, 0xdf, 0x4d, 0xc8,
+      0x88, 0x6f, 0xea, 0x35, 0x95, 0xfd, 0xb6, 0xdf}},
+    
+    {Empty,
+     {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}},
+    
+    {TrillianCrypt,
+     {0xf2, 0xe7, 0xc7, 0xf4, 0xfe, 0xad, 0x4d, 0xfb,
+      0xb2, 0x35, 0x36, 0x79, 0x8b, 0xdf, 0x00, 0x00}},
+    
+    {APInfo, 
+     {0xaa, 0x4a, 0x32, 0xb5, 0xf8, 0x84, 0x48, 0xc6,
+      0xa3, 0xd7, 0x8c, 0x50, 0x97, 0x19, 0xfd, 0x5b}}
+  };
 
   Capabilities::Capabilities()
   { }
   
   void Capabilities::default_icq2000_capabilities()
   {
-    m_data = string("\x09\x46\x13\x49"
-		    "\x4c\x7f\x11\xd1"
-		    "\x82\x22\x44\x45"
-		    "\x53\x54\x00\x00"
-		    "\x09\x46\x13\x44"
-		    "\x4c\x7f\x11\xd1"
-		    "\x82\x22\x44\x45"
-		    "\x53\x54\x00\x00", 32);
+    clear();
+    set_capability_flag( ICQ );
+    set_capability_flag( ICQServerRelay );
   }
 
   void Capabilities::default_icq2002_capabilities()
   {
-    m_data = string("\x09\x46\x13\x49"
-		    "\x4c\x7f\x11\xd1"
-		    "\x82\x22\x44\x45"
-		    "\x53\x54\x00\x00"
-		    "\x09\x46\x13\x4e"
-		    "\x4c\x7f\x11\xd1"
-		    "\x82\x22\x44\x45"
-		    "\x53\x54\x00\x00"
-		    "\x97\xb1\x27\x51"
-		    "\x24\x3c\x43\x34"
-		    "\xad\x22\xd6\xab"
-		    "\xf7\x3f\x14\x92"
-		    "\x09\x46\x13\x44"
-		    "\x4c\x7f\x11\xd1"
-		    "\x82\x22\x44\x45"
-		    "\x53\x54\x00\x00", 64);
+    clear();
+    set_capability_flag( ICQ );
+    set_capability_flag( ICQServerRelay );
+    set_capability_flag( ICQRTF );
+    set_capability_flag( ICQUnknown2 );
   }
 
   void Capabilities::clear()
   {
-    m_data.erase();
+    m_flags.clear();
   }
   
+  void Capabilities::set_capability_flag(Flag f)
+  {
+    m_flags.insert(f);
+  }
+  
+  void Capabilities::clear_capability_flag(Flag f)
+  {
+    m_flags.erase(f);
+  }
+
+  bool Capabilities::has_capability_flag(Flag f) const
+  {
+    return (m_flags.count(f) > 0);
+  }
+
   void Capabilities::Parse(Buffer& b, unsigned short len)
   {
-    b.Unpack( m_data, (unsigned int)len );
+    int i = (len % 16) / 16;
+    unsigned char cap[16];
+    for (int j = 0; j < i; ++j) {
+      b.Unpack(cap, 16);
+
+      // search for capability in list
+      for (int k = 0; k < sizeof(caps) / sizeof(Block); ++k)
+	if ( memcmp( caps[k].data, cap, 16 ) == 0 ) {
+	  set_capability_flag( caps[k].flag );
+	  break;
+	}
+      // might be nice to catch unknown capabilities
+    }
+
+    // any remainder (there shouldn't be any, but..)
+    b.advance( len - i * 16 );
   }
 
   void Capabilities::Output(Buffer& b) const
   {
-    b.Pack( m_data );
+    for (set<Flag>::const_iterator curr = m_flags.begin();
+	 curr != m_flags.end(); ++curr)
+      for (int i = 0; i < sizeof(caps) / sizeof(Block); ++i)
+	if ( caps[i].flag == *curr ) {
+	  b.Pack( caps[i].data, 16 );
+	  break;
+	}
+    
   }
   
-  void Capabilities::OutputFirst16(Buffer& b) const
-  {
-    string s;
-    if (m_data.size() < 16) {
-      s = string("\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",16);
-    } else {
-      s = m_data.substr( 0, 16 );
-    }
-    
-    b.Pack( s );
-  }
-
   unsigned short Capabilities::get_length() const
   {
-    return (unsigned short)m_data.size();
+    return sizeof(Block::data) * m_flags.size();
   }
 
+  /*
+   * This can be done properly based on the actual capability now - as
+   * opposed to the dodgy method based on length that was used before.
+   */
   bool Capabilities::get_accept_adv_msgs() const
   {
-    // ICQ2001 sends out 64 bytes or so
-    // ICQ2000 sends out 32 bytes
-    // ICQLite sends out 16, so this is what we'll use for now until someone
-    // figures out what those capabilities mean
-    return (m_data.size() > 16);
+    return has_capability_flag(ICQServerRelay);
   }
 
 }

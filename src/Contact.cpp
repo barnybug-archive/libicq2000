@@ -136,7 +136,7 @@ namespace ICQ2000 {
   }
 
   bool Contact::get_accept_adv_msgs() const {
-    return (m_tcp_version >= 7 && m_status != STATUS_OFFLINE && m_capabilities.get_accept_adv_msgs());
+    return (m_status != STATUS_OFFLINE && m_capabilities.get_accept_adv_msgs());
   }
 
   Capabilities Contact::get_capabilities() const { return m_capabilities; }
