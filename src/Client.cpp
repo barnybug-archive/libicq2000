@@ -1888,7 +1888,6 @@ namespace ICQ2000 {
    */
   void Client::addContact(Contact& c) {
 
-    if (m_self.getUIN() != c.getUIN())
     if (!m_contact_list.exists(c.getUIN())) {
 
       Contact& m_contact = m_contact_list.add(c);
@@ -2009,9 +2008,7 @@ namespace ICQ2000 {
    * that uin exists on your list.
    */
   Contact* Client::getContact(const unsigned int uin) {
-    if (uin == m_self.getUIN()) {
-      return &m_self;
-    } else if (m_contact_list.exists(uin)) {
+    if (m_contact_list.exists(uin)) {
       return &m_contact_list[uin];
     } else {
       return NULL;
