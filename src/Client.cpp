@@ -483,15 +483,18 @@ namespace ICQ2000 {
 	throw ParseException("Received an SMS response for unknown request id");
       }
       
-    } else if (snac->getType() == SrvResponseSNAC::SimpleUserInfo ||
-               snac->getType() == SrvResponseSNAC::SearchSimpleUserInfo) {
-        Contact *c = new Contact( snac->getUIN() );
-        c->setAlias( snac->getAlias() );
-        c->setEmail( snac->getEmail() );
-        c->setFirstName( snac->getFirstName() );
-        c->setLastName( snac->getLastName() );
-        SearchResultEvent ev(c, snac->isLastInSearch() );
-        contactlist.emit(&ev);
+    } else if (snac->getType() == SrvResponseSNAC::SimpleUserInfo) {
+      // update Contact
+      if ( m_contact_list.exists( snac->getUIN() ) ) {
+	Contact& c = m_contact_list[ snac->getUIN() ];
+	c.setAlias( snac->getAlias() );
+	c.setEmail( snac->getEmail() );
+	c.setFirstName( snac->getFirstName() );
+	c.setLastName( snac->getLastName() );
+	UserInfoChangeEvent ev(&c);
+      }
+    } else if (snac->getType() == SrvResponseSNAC::SearchSimpleUserInfo) {
+      // todo
     } else if (snac->getType() == SrvResponseSNAC::RMainHomeInfo) {
 
       try {
@@ -1831,10 +1834,8 @@ namespace ICQ2000 {
 
 	Send(b);
 
-/* Icy Juice: disabled fetchDetailedContactInfo
 	// fetch detailed userinfo from server
 	fetchDetailContactInfo(&m_contact);
-Icy Juice */
       }
     }
 
