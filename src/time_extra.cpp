@@ -27,7 +27,7 @@ namespace ICQ2000
 
   time_t gmt_mktime (struct tm *tm)
   {
-    static const int epoch = 1900;
+    static const int epoch = 1970;
     
     time_t when;
     int day, year;
