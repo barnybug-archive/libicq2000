@@ -381,8 +381,7 @@ namespace ICQ2000 {
 
     unsigned int unknown;
     b >> unknown // 0x0000000a
-      >> unknown;// 0x00000001 on genuine connections, otherwise some weird connections which we drop
-    if (unknown != 0x00000001) throw DisconnectedException("Ignoring weird direct connection");
+      >> unknown;
     b.advance(24); // unknowns
   }
 
@@ -435,9 +434,11 @@ namespace ICQ2000 {
 
     b >> checksum
       >> command
-      >> unknown // 0x000e
+      >> unknown // 0x000e or 0x0012 in probe packets
       >> seqnum;
 
+    if (unknown != 0x000e) throw ParseException("Ignoring weird packet");
+    
     b.advance(12); // unknown 3 ints
 
     ICQSubType *i = ICQSubType::ParseICQSubType(b, true, (command == V6_TCP_ACK));
