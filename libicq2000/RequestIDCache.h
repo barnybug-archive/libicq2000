@@ -33,7 +33,8 @@ namespace ICQ2000 {
     enum Type {
       UserInfo,
       SMSMessage,
-      Search
+      Search,
+      ServerBasedContact
     };
 
     virtual ~RequestIDCacheValue() { }
@@ -74,6 +75,16 @@ namespace ICQ2000 {
     SearchCacheValue( SearchResultEvent *ev ) : m_ev(ev) { }
     SearchResultEvent* getEvent() const { return m_ev; }
     Type getType() const { return Search; }
+  };
+
+  class ServerBasedContactCacheValue : public RequestIDCacheValue {
+   private:
+    ServerBasedContactEvent *m_ev;
+
+   public:
+    ServerBasedContactCacheValue( ServerBasedContactEvent *ev ) : m_ev(ev) { }
+    ServerBasedContactEvent *getEvent() const { return m_ev; }
+    Type getType() const { return ServerBasedContact; }
   };
 
   class RequestIDCache : public Cache<unsigned int, RequestIDCacheValue*> {

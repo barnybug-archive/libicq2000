@@ -140,7 +140,7 @@ namespace ICQ2000 {
     unsigned char m_tcp_version;
     Status m_status;
     bool m_invisible;
-    bool m_authreq;
+    bool m_authreq, m_authawait;
     bool m_direct;
     unsigned int m_ext_ip, m_lan_ip;
     unsigned short m_ext_port, m_lan_port, m_group_id, m_tag_id;
@@ -184,6 +184,7 @@ namespace ICQ2000 {
     std::string getStatusStr() const;
     bool isInvisible() const;
     bool getAuthReq() const;
+    bool getAuthAwait() const;
 
     unsigned int getExtIP() const;
     unsigned int getLanIP() const;
@@ -205,6 +206,7 @@ namespace ICQ2000 {
     void setLastName(const std::string& ln);
     void setEmail(const std::string& em);
     void setAuthReq(bool b);
+    void setAuthAwait(bool b);
 
     bool getDirect() const;
     void setDirect(bool b);

@@ -87,6 +87,7 @@ namespace ICQ2000 {
   const unsigned short TLV_Capabilities = 0x000d;
   const unsigned short TLV_TimeOnline = 0x000f;
   const unsigned short TLV_ContactNickname = 0x0131;
+  const unsigned short TLV_AuthAwaited = 0x0066;
 
   // Channel 0x0004
   // const unsigned short TLV_Screenname = 0x0001;

@@ -84,6 +84,7 @@ namespace ICQ2000 {
 
     ContactList();
     ContactList(const ContactList& cl);
+    ContactList(ContactRef ct);
 
     ContactRef operator[](unsigned int uin);
     ContactRef lookup_uin(unsigned int uin);

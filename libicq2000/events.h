@@ -682,11 +682,32 @@ namespace ICQ2000 {
    *  The event signalled when entries from the server-based contact list is received.
    */
   class ServerBasedContactEvent : public Event {
+   public:
+    enum SBLType {
+     Fetch,
+     Upload,
+     Remove
+    };
+
+    enum UploadResult {
+     Success,
+     Failed,
+     AuthRequired
+    };
+
    private:
     ContactList m_clist;
+    SBLType m_type;
+    std::vector<UploadResult> m_results;
+
    public:
-    ServerBasedContactEvent(const ContactList& l);
+    ServerBasedContactEvent(SBLType t, const ContactList& l);
+
+    void setUploadResults(const std::vector<UploadResult> &v);
+    std::map<unsigned int, UploadResult> getUploadResults() const;
+
     ContactList& getContactList();
+    SBLType getType() const { return m_type; }
   };
 
   // ============================================================================

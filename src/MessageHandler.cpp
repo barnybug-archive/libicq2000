@@ -259,6 +259,7 @@ namespace ICQ2000 {
     case MSG_Type_AuthAcc:
     {
       e = new AuthAckEvent(contact, true);
+      e->getContact()->setAuthAwait(false);
       break;
     }
 

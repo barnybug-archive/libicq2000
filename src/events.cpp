@@ -246,8 +246,24 @@ namespace ICQ2000 {
   //  ServerBasedContactEvent
   // ============================================================================
 
-  ServerBasedContactEvent::ServerBasedContactEvent(const ContactList& l) : m_clist(l) { }
+  ServerBasedContactEvent::ServerBasedContactEvent(SBLType t, const ContactList& l) : m_type(t), m_clist(l) { }
   ContactList& ServerBasedContactEvent::getContactList() { return m_clist; }
+  void ServerBasedContactEvent::setUploadResults(const std::vector<ServerBasedContactEvent::UploadResult> &v) { m_results = v; }
+
+  std::map<unsigned int, ServerBasedContactEvent::UploadResult> ServerBasedContactEvent::getUploadResults() const {
+    std::map<unsigned int, ServerBasedContactEvent::UploadResult> r;
+
+    ContactList::const_iterator curr = m_clist.begin();
+    std::vector<ServerBasedContactEvent::UploadResult>::const_iterator ir = m_results.begin();
+
+    while(curr != m_clist.end() && ir != m_results.end()) {
+      r[(*curr)->getUIN()] = *ir;
+      ++curr;
+      ++ir;
+    }
+
+    return r;
+  }
 
   // ============================================================================
   //  Contact Event

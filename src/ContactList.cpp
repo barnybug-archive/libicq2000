@@ -32,6 +32,11 @@ namespace ICQ2000 {
     : m_cmap(cl.m_cmap)
   { }
 
+  ContactList::ContactList(ContactRef ct)
+  {
+    add(ct);
+  }
+
   ContactRef ContactList::operator[](unsigned int uin)
   {
     return lookup_uin(uin);

@@ -164,6 +164,8 @@ namespace ICQ2000 {
 
   bool Contact::getAuthReq() const { return m_authreq; }
 
+  bool Contact::getAuthAwait() const { return m_authawait; }
+
   void Contact::setMobileNo(const string& mn) {
     m_main_home_info.setMobileNo(mn);
     userinfo_change_emit();
@@ -234,6 +236,11 @@ namespace ICQ2000 {
 
   void Contact::setAuthReq(bool b) {
     m_authreq = b;
+    userinfo_change_emit(true);
+  }
+
+  void Contact::setAuthAwait(bool b) {
+    m_authawait = b;
     userinfo_change_emit(true);
   }
 

@@ -29,9 +29,12 @@
 
 #include <sigc++/bind.h>
 
+#include <vector>
+
 using std::string;
 using std::ostringstream;
 using std::endl;
+using std::vector;
 
 namespace ICQ2000 {
 
@@ -1176,22 +1179,47 @@ namespace ICQ2000 {
       case SNAC_SBL_Modification_Ack: {
 	vector<ModificationAckSBLSNAC::Result> r = static_cast<ModificationAckSBLSNAC*>(snac)->getResults();
 	vector<ModificationAckSBLSNAC::Result>::iterator ir;
+	vector<ServerBasedContactEvent::UploadResult> updresults;
 	
 	for(ir = r.begin(); ir != r.end(); ++ir)
 	switch( *ir ) {
 	  case ModificationAckSBLSNAC::Success:
 	    SignalLog(LogEvent::INFO, "Server-based contact list modification succeeded\n");
+	    updresults.push_back(ServerBasedContactEvent::Success);
 	    break;
 	  case ModificationAckSBLSNAC::Failed:
 	    SignalLog(LogEvent::INFO, "Server-based contact list modification failed\n");
+	    updresults.push_back(ServerBasedContactEvent::Failed);
 	    break;
 	  case ModificationAckSBLSNAC::AuthRequired:
 	    SignalLog(LogEvent::INFO, "Authentification is required to perform the server-based modification\n");
+	    updresults.push_back(ServerBasedContactEvent::AuthRequired);
 	    break;
 	  case ModificationAckSBLSNAC::AlreadyExists:
 	    SignalLog(LogEvent::INFO, "Already exists on the server-based contact list\n");
 	    break;
 	  }
+
+	if(!updresults.empty()) {
+	  if( m_reqidcache.exists( snac->RequestID() ) ) {
+	    RequestIDCacheValue *v = m_reqidcache[ snac->RequestID() ];
+
+	    if ( v->getType() == RequestIDCacheValue::ServerBasedContact ) {
+	      ServerBasedContactCacheValue *sv = static_cast<ServerBasedContactCacheValue*>(v);
+	      ServerBasedContactEvent *ev = sv->getEvent();
+	      ev->setUploadResults(updresults);
+	      server_based_contact_list.emit(ev);
+
+	      delete ev;
+	      m_reqidcache.remove( snac->RequestID() );
+	    }
+
+	  } else {
+	    SignalLog(LogEvent::WARN, "Request ID cached value is not for a server-base contacts upload request");
+	  }
+
+	}
+
 	}
 	break;
       }
@@ -1712,6 +1740,10 @@ namespace ICQ2000 {
     ICQMessageEvent *cev;
     if ((cev = dynamic_cast<ICQMessageEvent*>(ev)) != NULL) cev->setOfflineMessage(true);
     
+    if (ev->getType() == MessageEvent::AuthReq) {
+      ev->getContact()->setAuthAwait(true);
+    }
+
     messageack.emit(ev);
     delete ist;
   }
@@ -1745,9 +1777,15 @@ namespace ICQ2000 {
     Buffer b(&m_translator);
 
     FLAPwrapSNAC( b, EditReqAccessSBLSNAC() );
-
     FLAPwrapSNAC( b, AddItemSBLSNAC(m_default_group_name, m_default_group) );
-    FLAPwrapSNAC( b, AddItemSBLSNAC(l) );
+
+    ServerBasedContactEvent *ev = new ServerBasedContactEvent(ServerBasedContactEvent::Upload, l);
+    unsigned int reqid = NextRequestID();
+    m_reqidcache.insert( reqid, new ServerBasedContactCacheValue( ev ) );
+
+    AddItemSBLSNAC ssnac(l);
+    ssnac.setRequestID( reqid );
+    FLAPwrapSNAC( b, ssnac );
 
     FLAPwrapSNAC( b, EditFinishSBLSNAC() );
 
@@ -1764,7 +1802,15 @@ namespace ICQ2000 {
     Buffer b(&m_translator);
 
     FLAPwrapSNAC( b, EditReqAccessSBLSNAC() );
-    FLAPwrapSNAC( b, RemoveItemSBLSNAC(l) );
+
+    ServerBasedContactEvent *ev = new ServerBasedContactEvent(ServerBasedContactEvent::Remove, l);
+    unsigned int reqid = NextRequestID();
+    m_reqidcache.insert( reqid, new ServerBasedContactCacheValue( ev ) );
+
+    RemoveItemSBLSNAC ssnac(l);
+    ssnac.setRequestID( reqid );
+    FLAPwrapSNAC( b, ssnac );
+
     FLAPwrapSNAC( b, EditFinishSBLSNAC() );
 
     Send(b);
@@ -2072,7 +2118,7 @@ namespace ICQ2000 {
   }
   
   void Client::SignalServerBasedContactList(const ContactList& l) {
-    ServerBasedContactEvent ev(l);
+    ServerBasedContactEvent ev(ServerBasedContactEvent::Fetch, l);
     server_based_contact_list.emit(&ev);
   }
 
