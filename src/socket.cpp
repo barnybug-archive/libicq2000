@@ -26,6 +26,10 @@
 
 #include <libicq2000/buffer.h>
 
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif
+
 using std::ostringstream;
 using std::istringstream;
 //using std::copy;
