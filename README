@@ -160,7 +160,7 @@ Known clients that use this library are:
 
 * CenterICQ (http://konst.org.ua/centericq/) - a console client
 
-* IcqJuice (http://www.mitzpettel.com/software/icyjuice.html)
+* IcyJuice (http://www.mitzpettel.com/software/icyjuice.html)
    - a Mac OS X graphical client
 
 
@@ -230,7 +230,7 @@ homepage (the API link on the right).
 The API should be more stable now, and I am aiming to avoid breaking
 backward compatability in future as much as possible from now onwards
 
-The examples directory contact the shell example, which shows how to
+The examples directory contains the shell example, which shows how to
 use the library from the shell simply and how the socket callbacks
 interact.
 
