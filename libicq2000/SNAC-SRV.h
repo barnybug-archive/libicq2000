@@ -216,6 +216,19 @@ namespace ICQ2000 {
       unsigned short Subtype() const { return SNAC_SRV_Send; }
  };
   
+  class SrvRequestRandomChat : public SrvFamilySNAC, public OutSNAC {
+    private:
+      unsigned int m_my_uin;
+      unsigned short m_random_group;
+
+    protected:
+      void OutputBody(Buffer& b) const;
+
+    public:
+      SrvRequestRandomChat(unsigned int my_uin, unsigned short random_group);
+      unsigned short Subtype() const { return SNAC_SRV_Send; }
+ };
+
   const unsigned short SrvResponse_Error          = 0x0001;
   const unsigned short SrvResponse_AckMainHomeInfoChange = 0x0064; // used to be SrvResponse_SMS
   const unsigned short SrvResponse_AckWorkInfoChange	 = 0x006E;
@@ -233,6 +246,7 @@ namespace ICQ2000 {
   const unsigned short SrvResponse_EmailInfo      = 0x00eb;
   const unsigned short SrvResponse_InterestInfo   = 0x00f0;
   const unsigned short SrvResponse_BackgroundInfo = 0x00fa;
+  const unsigned short SrvResponse_RandomChatFound = 0x0366;
   const unsigned short SrvResponse_Unknown        = 0x010e;
 
   class SrvResponseSNAC : public SrvFamilySNAC, public InSNAC {
@@ -255,7 +269,8 @@ namespace ICQ2000 {
       AckMainHomeInfoChange,
       AckHomepageInfoChange,
       AckWorkInfoChange,
-      AckAboutInfoChange
+      AckAboutInfoChange,
+      RandomChatFound
     };
 
    protected:
@@ -301,6 +316,7 @@ namespace ICQ2000 {
     void ParseSMSResponse(Buffer& b);
     void ParseSimpleUserInfo(Buffer &b, unsigned short subtype);
     void ParseDetailedUserInfo(Buffer &b, unsigned short subtype);
+    void ParseRandomChatFound(Buffer& b);
     
    public:
     SrvResponseSNAC();

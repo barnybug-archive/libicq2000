@@ -410,6 +410,28 @@ namespace ICQ2000 {
         b.setAutoSizeMarker(m2);
     }
     
+  SrvRequestRandomChat::SrvRequestRandomChat(unsigned int my_uin, unsigned short random_group)
+    : m_my_uin(my_uin), m_random_group(random_group) { }
+    
+  void SrvRequestRandomChat::OutputBody(Buffer& b) const {
+	b << (unsigned short)0x0001;
+
+	Buffer::marker m1 = b.getAutoSizeShortMarker();
+    
+	b.setLittleEndian();
+	Buffer::marker m2 = b.getAutoSizeShortMarker();
+
+	b << m_my_uin;
+
+	b << (unsigned short)2000   /* type 9808 */
+	    << (unsigned short)m_requestID /* low word of the request ID */
+	    << (unsigned short)0x074E; /* subtype */
+
+	b << (unsigned short)m_random_group;
+	b.setAutoSizeMarker(m1);
+	b.setAutoSizeMarker(m2);
+    }
+    
   SrvResponseSNAC::SrvResponseSNAC() : m_icqsubtype(NULL) { }
 
   SrvResponseSNAC::~SrvResponseSNAC() {
@@ -529,6 +551,9 @@ namespace ICQ2000 {
     case SrvResponse_AckHomepageInfoChange:
     case SrvResponse_AckAboutInfoChange:
       ParseInfoChangeAck(b, subtype);
+      break;
+    case SrvResponse_RandomChatFound:
+      ParseRandomChatFound(b);
       break;
     default:
       throw ParseException("Unknown ICQ subtype for Server response SNAC");
@@ -858,6 +883,17 @@ namespace ICQ2000 {
       b >> m_more_results;
     }
 
+  }
+
+  void SrvResponseSNAC::ParseRandomChatFound(Buffer& b) {
+    unsigned char wb;
+
+    m_empty_contact = false;
+    m_type = RandomChatFound;
+
+    b >> wb;
+    b >> m_uin;
+    b >> wb;
   }
 
 }

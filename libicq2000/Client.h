@@ -427,6 +427,8 @@ namespace ICQ2000 {
 
     SearchResultEvent* searchForContacts(const std::string& keyword);
 
+    SearchResultEvent* searchForContacts(RandomChatGroup group);
+
     /*
      *  Poll must be called regularly (at least every 60 seconds)
      *  but I recommended 5 seconds, so timeouts work with good

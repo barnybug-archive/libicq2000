@@ -576,6 +576,31 @@ namespace ICQ2000 {
 	SignalLog(LogEvent::WARN, e.what());
       }
 
+    } else if (snac->getType() == SrvResponseSNAC::RandomChatFound) {
+
+      if ( m_reqidcache.exists( snac->RequestID() ) ) {
+	RequestIDCacheValue *v = m_reqidcache[ snac->RequestID() ];
+
+	if ( v->getType() == RequestIDCacheValue::Search ) {
+	  SearchCacheValue *sv = static_cast<SearchCacheValue*>(v);
+
+	  SearchResultEvent *ev = sv->getEvent();
+
+	  ContactRef c = new Contact( snac->getUIN() );
+	  ContactList& cl = ev->getContactList();
+	  ev->setLastContactAdded( cl.add(c) );
+	  ev->setFinished(true);
+
+	  search_result.emit(ev);
+
+	  delete ev;
+	  m_reqidcache.remove( snac->RequestID() );
+	  
+	} else {
+	  SignalLog(LogEvent::WARN, "Request ID cached value is not for a Search request");
+	}
+
+      }
     }
   }
   
@@ -2155,6 +2180,21 @@ namespace ICQ2000 {
     ssnac.setRequestID( reqid );
     
     SignalLog(LogEvent::INFO, "Sending contact keyword search request");
+    FLAPwrapSNACandSend( ssnac );
+    
+    return ev;
+  }
+
+  SearchResultEvent* Client::searchForContacts(RandomChatGroup group)
+  {
+    SearchResultEvent *ev = new SearchResultEvent( SearchResultEvent::RandomChat );
+    unsigned int reqid = NextRequestID();
+    m_reqidcache.insert( reqid, new SearchCacheValue( ev ) );
+    
+    SrvRequestRandomChat ssnac( m_self->getUIN(), group );
+    ssnac.setRequestID( reqid );
+    
+    SignalLog(LogEvent::INFO, "Sending contact random chat search request");
     FLAPwrapSNACandSend( ssnac );
     
     return ev;

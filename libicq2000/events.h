@@ -651,7 +651,8 @@ namespace ICQ2000 {
       ShortWhitepage,
       FullWhitepage,
       UIN,
-      Keyword
+      Keyword,
+      RandomChat
     };
 	
    private:

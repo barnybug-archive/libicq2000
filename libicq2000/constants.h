@@ -48,6 +48,32 @@ static const unsigned int SMS_Max_Length = 160;
 static const unsigned int String_Limit = 16384; // A sensible limit
 static const unsigned int Incoming_Packet_Limit = 65535;
  
+enum RandomChatGroup {
+  group_GeneralChat,
+  group_Romance,
+  group_Games,
+  group_Students,
+  group_20,
+  group_30,
+  group_40,
+  group_50Plus,
+  group_SeekingWomen,
+  group_SeekingMen
+};
+
+static const char* const RandomChatGroup_text[] = {
+  "General Chat",
+  "Romance",
+  "Games",
+  "Students",
+  "20 Something",
+  "30 Something",
+  "40 Something",
+  "50 Plus",
+  "Seeking Women",
+  "Seeking Men"
+};
+ 
 }
 
 #endif
