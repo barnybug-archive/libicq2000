@@ -4,15 +4,10 @@
 
 SUBDIRS = src libicq2000 examples
 
-EXTRA_DIST = TODO THANKS NEWS doc libicq2000.m4 doxyfile.conf	\
-libicq2000-config.1
+EXTRA_DIST = TODO THANKS NEWS doc libicq2000.pc.in doxyfile.conf
 
-bin_SCRIPTS = libicq2000-config
-
-m4datadir = $(datadir)/aclocal
-m4data_DATA = libicq2000.m4
-
-man_MANS = libicq2000-config.1
+pkgconfigdir            = $(libdir)/pkgconfig
+pkgconfig_DATA          = libicq2000.pc
 
 docs: src/*.cpp src/*.h
 	doxygen doxyfile.conf
