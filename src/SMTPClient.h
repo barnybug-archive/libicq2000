@@ -22,8 +22,8 @@
 #ifndef SMTPCLIENT_H
 #define SMTPCLIENT_H
 
-#include <libicq2000/SocketClient.h>
-#include <libicq2000/buffer.h>
+#include "SocketClient.h"
+#include "buffer.h"
 
 namespace ICQ2000 {
 

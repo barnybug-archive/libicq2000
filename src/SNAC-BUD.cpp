@@ -19,9 +19,9 @@
  *
  */
 
-#include <libicq2000/SNAC-BUD.h>
+#include "SNAC-BUD.h"
 
-#include <libicq2000/TLV.h>
+#include "TLV.h"
 
 using std::string;
 using std::list;

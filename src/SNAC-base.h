@@ -22,10 +22,11 @@
 #ifndef SNAC_BASE_H
 #define SNAC_BASE_H
 
-class Buffer;
-
 namespace ICQ2000 {
  
+  /* predeclare classes */
+  class Buffer;
+
   // ------------- SNAC numerical constants ------------
 
   // SNAC Families
@@ -102,9 +103,9 @@ namespace ICQ2000 {
     unsigned short Family() const { return m_family; }
     unsigned short Subtype() const { return m_subtype; }
   };
-
+  
+  Buffer& operator<<(Buffer& b, const ICQ2000::OutSNAC& t);
+ 
 }
-
-Buffer& operator<<(Buffer& b, const ICQ2000::OutSNAC& t);
 
 #endif

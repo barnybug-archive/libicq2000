@@ -19,7 +19,7 @@
  *
  */
 
-#include <libicq2000/exceptions.h>
+#include "exceptions.h"
 
 using std::string;
 

@@ -19,12 +19,12 @@
  *
  */
 
-#include <libicq2000/SNAC-MSG.h>
+#include "SNAC-MSG.h"
 
 #include "sstream_fix.h"
 
-#include <libicq2000/TLV.h>
-#include <libicq2000/Contact.h>
+#include "TLV.h"
+#include "Contact.h"
 
 using std::string;
 using std::ostringstream;

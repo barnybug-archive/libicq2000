@@ -23,7 +23,7 @@
 #ifndef ICBMCOOKIE_H
 #define ICBMCOOKIE_H
 
-#include <libicq2000/buffer.h>
+#include "buffer.h"
 
 namespace ICQ2000 {
 
@@ -43,9 +43,9 @@ namespace ICQ2000 {
     ICBMCookie& operator=(const ICBMCookie& c);
   };
 
-}
+  Buffer& operator<<(Buffer& b, const ICQ2000::ICBMCookie& c);
+  Buffer& operator>>(Buffer& b, ICQ2000::ICBMCookie& c);
 
-Buffer& operator<<(Buffer& b, const ICQ2000::ICBMCookie& c);
-Buffer& operator>>(Buffer& b, ICQ2000::ICBMCookie& c);
+}
 
 #endif

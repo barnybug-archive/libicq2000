@@ -28,12 +28,12 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include <libicq2000/Xml.h>
-#include <libicq2000/exceptions.h>
-#include <libicq2000/buffer.h>
-#include <libicq2000/constants.h>
-#include <libicq2000/ICQ.h>
-#include <libicq2000/Capabilities.h>
+#include "Xml.h"
+#include "exceptions.h"
+#include "buffer.h"
+#include "constants.h"
+#include "ICQ.h"
+#include "Capabilities.h"
 
 namespace ICQ2000 {
  
@@ -670,8 +670,8 @@ namespace ICQ2000 {
 
   };
 
-}
+  Buffer& operator<<(Buffer& b, const ICQ2000::OutTLV& t);
 
-Buffer& operator<<(Buffer& b, const ICQ2000::OutTLV& t);
+}
 
 #endif

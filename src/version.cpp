@@ -19,7 +19,7 @@
  *
  */
 
-#include <libicq2000/version.h>
+#include "version.h"
 
 /*
  * This file is here simply to define the versioning symbols in the

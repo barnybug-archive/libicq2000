@@ -22,12 +22,15 @@
 #ifndef DCCACHE_H
 #define DCCACHE_H
 
-#include <libicq2000/Cache.h>
+#include "Cache.h"
 
 #include "libicq2000/sigslot.h"
 
-namespace ICQ2000 {
-
+namespace ICQ2000
+{
+  /* predeclare classes */
+  class DirectClient;
+  
   /* fd -> DirectClient cache
    *
    * Where the party is at. Once a DirectClient object is added to the
@@ -35,7 +38,8 @@ namespace ICQ2000 {
    * Contact are done in linear time now, it was just too much of a
    * head-ache maintaining the uin map in Client.
    */
-  class DCCache : public Cache<int, DirectClient*> {
+  class DCCache : public Cache<int, DirectClient*>
+  {
    public:
     DCCache() { }
     ~DCCache()
@@ -43,12 +47,14 @@ namespace ICQ2000 {
       removeAll();
     }
 
-    void removeItem(const DCCache::literator& l) {
+    void removeItem(const DCCache::literator& l)
+    {
       delete ((*l).getValue());
       Cache<int, DirectClient*>::removeItem(l);
     }
 
-    void expireItem(const DCCache::literator& l) {
+    void expireItem(const DCCache::literator& l)
+    {
       expired.emit( (*l).getValue() );
       Cache<int, DirectClient*>::expireItem(l);
       /* this will removeItem(..), which'll delete the DirectClient
@@ -56,7 +62,8 @@ namespace ICQ2000 {
        */
     }
 
-    void removeContact(const ContactRef& c) {
+    void removeContact(const ContactRef& c)
+    {
       literator curr = m_list.begin();
       literator next = curr;
       while ( curr != m_list.end() ) {
@@ -96,7 +103,8 @@ namespace ICQ2000 {
       return NULL; // not found
     }
 
-    void clearoutMessagesPoll() {
+    void clearoutMessagesPoll()
+    {
       literator curr = m_list.begin();
       while ( curr != m_list.end() ) {
 	DirectClient *dc = (*curr).getValue();

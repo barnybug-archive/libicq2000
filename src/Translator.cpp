@@ -21,7 +21,7 @@
 #include <fstream>
 #include "sstream_fix.h"
 
-#include <libicq2000/Translator.h>
+#include "Translator.h"
 
 using std::ifstream;
 using std::string;

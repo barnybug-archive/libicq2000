@@ -27,30 +27,22 @@
 
 #include <map>
 
-#include "libicq2000/sigslot.h"
+#include <libicq2000/sigslot.h>
 
 #include <time.h>
 
-#include <libicq2000/buffer.h>
-#include <libicq2000/socket.h>
 #include <libicq2000/events.h>
 #include <libicq2000/constants.h>
 #include <libicq2000/Contact.h>
 #include <libicq2000/ContactTree.h>
 #include <libicq2000/ContactList.h>
-#include <libicq2000/custom_marshal.h>
 #include <libicq2000/Translator.h>
-#include <libicq2000/RequestIDCache.h>
-#include <libicq2000/ICBMCookieCache.h>
-#include <libicq2000/DirectClient.h>
-#include <libicq2000/DCCache.h>
-#include <libicq2000/SMTPClient.h>
 #include <libicq2000/userinfoconstants.h>
-#include <libicq2000/MessageHandler.h>
 
-namespace ICQ2000 {
+namespace ICQ2000
+{
   
-  // declare some SNAC classes - vastly decreases header dependancies
+  /* predeclare classes */
   class MessageSNAC;
   class MessageACKSNAC;
   class MessageOfflineUserSNAC;
@@ -61,13 +53,25 @@ namespace ICQ2000 {
   class BuddyOfflineSNAC;
   class UserInfoSNAC;
   class OutSNAC;
+  class DirectClient;
+  class DCCache;
+  class MessageHandler;
+  class RequestIDCache;
+  class RequestIDCacheValue;
+  class ICBMCookieCache;
+  class SMTPClient;
+  class SocketClient;
+  class Buffer;
+  class TCPSocket;
+  class TCPServer;
 
   /**
    *  The main library object.  This is the object the user interface
    *  instantiates for a connection, hooks up to signal on and has the
    *  methods to connect, disconnect and send events from.
    */
-  class Client : public sigslot::has_slots<> {
+  class Client : public sigslot::has_slots<>
+  {
    private:
     enum State { NOT_CONNECTED,
 		 AUTH_AWAITING_CONN_ACK,
@@ -107,7 +111,7 @@ namespace ICQ2000 {
 
     bool m_fetch_sbl;
 
-    MessageHandler m_message_handler;
+    MessageHandler * m_message_handler;
 
     unsigned char *m_cookie_data;
     unsigned short m_cookie_length;
@@ -115,19 +119,19 @@ namespace ICQ2000 {
     unsigned int m_ext_ip;
     bool m_use_portrange;
     unsigned short m_upper_port, m_lower_port;
-    TCPSocket m_serverSocket;
-    TCPServer m_listenServer;
+    TCPSocket * m_serverSocket;
+    TCPServer * m_listenServer;
 
-    SMTPClient m_smtp;
+    SMTPClient * m_smtp;
 
-    DCCache m_dccache;
+    DCCache * m_dccache;
 
     time_t m_last_server_ping;
 
-    RequestIDCache m_reqidcache;
-    ICBMCookieCache m_cookiecache;
+    RequestIDCache * m_reqidcache;
+    ICBMCookieCache * m_cookiecache;
 
-    Buffer m_recv;
+    Buffer * m_recv;
    
     void Init();
     unsigned short NextSeqNum();
@@ -190,9 +194,6 @@ namespace ICQ2000 {
     void Send(Buffer& b);
 
     void HandleUserInfoSNAC(UserInfoSNAC *snac);
-
-    Buffer::marker FLAPHeader(Buffer& b, unsigned char channel);
-    void FLAPFooter(Buffer& b, Buffer::marker& mk);
 
     void FLAPwrapSNAC(Buffer& b, const OutSNAC& snac);
     void FLAPwrapSNACandSend(const OutSNAC& snac);

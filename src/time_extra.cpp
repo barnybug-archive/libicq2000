@@ -20,7 +20,7 @@
  *
  */
 
-#include <libicq2000/time_extra.h>
+#include "time_extra.h"
 
 namespace ICQ2000 
 {

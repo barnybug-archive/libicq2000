@@ -22,9 +22,9 @@
  *
  */
 
-#include <libicq2000/SNAC-BOS.h>
+#include "SNAC-BOS.h"
 
-#include <libicq2000/TLV.h>
+#include "TLV.h"
 
 using std::string;
 using std::list;

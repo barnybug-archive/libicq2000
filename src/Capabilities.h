@@ -23,7 +23,7 @@
 #ifndef CAPABILITIES_H
 #define CAPABILITIES_H
 
-#include <libicq2000/buffer.h>
+#include "buffer.h"
 
 #include <set>
 

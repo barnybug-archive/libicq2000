@@ -19,11 +19,19 @@
  *
  */
 
-#include <libicq2000/TLV.h>
-#include <libicq2000/UserInfoBlock.h>
+#include "TLV.h"
+#include "UserInfoBlock.h"
 
-#include <libicq2000/Client.h>
-#include <libicq2000/SNAC.h>
+#include "Client.h"
+#include "buffer.h"
+#include "socket.h"
+#include "SNAC.h"
+#include "DirectClient.h"
+#include "DCCache.h"
+#include "MessageHandler.h"
+#include "RequestIDCache.h"
+#include "ICBMCookieCache.h"
+#include "SMTPClient.h"
 
 #include "sstream_fix.h"
 
@@ -34,8 +42,8 @@ using std::ostringstream;
 using std::endl;
 using std::vector;
 
-namespace ICQ2000 {
-
+namespace ICQ2000
+{
   /**
    *  Constructor for creating the Client object.  Use this when
    *  uin/password are unavailable at time of creation, they can
@@ -43,9 +51,12 @@ namespace ICQ2000 {
    */
   Client::Client()
     : m_self( new Contact(0) ),
-      m_message_handler(m_self, &m_contact_tree),
-      m_smtp(m_self, "localhost", 25, &m_translator),
-      m_recv(&m_translator)
+      m_message_handler( new MessageHandler(m_self, &m_contact_tree) ),
+      m_serverSocket( new TCPSocket() ), m_listenServer( new TCPServer() ),
+      m_smtp( new SMTPClient( m_self, "localhost", 25, &m_translator ) ),
+      m_dccache( new DCCache() ), m_reqidcache( new RequestIDCache() ),
+      m_cookiecache( new ICBMCookieCache() ),
+      m_recv( new Buffer( &m_translator ) )
   {
     Init();
   }
@@ -60,9 +71,12 @@ namespace ICQ2000 {
    */
   Client::Client(const unsigned int uin, const string& password)
     : m_self( new Contact(uin) ), m_password(password),
-      m_message_handler(m_self, &m_contact_tree),
-      m_smtp(m_self, "localhost", 25, &m_translator),
-      m_recv(&m_translator)
+      m_message_handler( new MessageHandler( m_self, &m_contact_tree ) ),
+      m_serverSocket( new TCPSocket() ), m_listenServer( new TCPServer() ),
+      m_smtp( new SMTPClient( m_self, "localhost", 25, &m_translator ) ),
+      m_dccache( new DCCache() ), m_reqidcache( new RequestIDCache() ),
+      m_cookiecache( new ICBMCookieCache() ),
+      m_recv( new Buffer( &m_translator ) )
   {
     Init();
   }
@@ -72,10 +86,20 @@ namespace ICQ2000 {
    *  resources used by Client, including any Contact objects. It also
    *  automatically disconnects if you haven't done so already.
    */
-  Client::~Client() {
+  Client::~Client()
+  {
     if (m_cookie_data)
       delete [] m_cookie_data;
     Disconnect(DisconnectedEvent::REQUESTED);
+
+    delete m_message_handler;
+    delete m_serverSocket;
+    delete m_listenServer;
+    delete m_smtp;
+    delete m_dccache;
+    delete m_reqidcache;
+    delete m_cookiecache;
+    delete m_recv;
   }
 
   void Client::Init() {
@@ -104,20 +128,20 @@ namespace ICQ2000 {
 
     m_fetch_sbl = false;
 
-    m_cookiecache.setDefaultTimeout(30);
+    m_cookiecache->setDefaultTimeout(30);
     // 30 seconds is hopefully enough for even the slowest connections
-    m_cookiecache.expired.connect( this,&Client::ICBMCookieCache_expired_cb) ;
+    m_cookiecache->expired.connect( this,&Client::ICBMCookieCache_expired_cb) ;
 
-    m_dccache.setDefaultTimeout(30);
+    m_dccache->setDefaultTimeout(30);
     // set timeout on direct connections to 30 seconds
     // this will be increased once they are established
-    m_dccache.expired.connect( this,&Client::dccache_expired_cb) ;
+    m_dccache->expired.connect( this,&Client::dccache_expired_cb) ;
 
-    m_reqidcache.expired.connect( this, &Client::reqidcache_expired_cb) ;
+    m_reqidcache->expired.connect( this, &Client::reqidcache_expired_cb) ;
     
-    m_smtp.logger.connect( this, &Client::dc_log_cb) ;
-    m_smtp.messageack.connect( this, &Client::dc_messageack_cb) ;
-    m_smtp.socket.connect( this, &Client::dc_socket_cb) ;
+    m_smtp->logger.connect( this, &Client::dc_log_cb) ;
+    m_smtp->messageack.connect( this, &Client::dc_messageack_cb) ;
+    m_smtp->socket.connect( this, &Client::dc_socket_cb) ;
 
     /* contact list callbacks */
     m_contact_tree.contactlist_signal.connect( this, &Client::contactlist_cb) ;
@@ -135,10 +159,10 @@ namespace ICQ2000 {
     m_self->userinfo_change_signal.connect( self_contact_userinfo_change_signal );
     
     /* message handler callbacks */
-    m_message_handler.messaged.connect( messaged );
-    m_message_handler.messageack.connect( messageack );
-    m_message_handler.want_auto_resp.connect( want_auto_resp );
-    m_message_handler.logger.connect( logger );
+    m_message_handler->messaged.connect( messaged );
+    m_message_handler->messageack.connect( messageack );
+    m_message_handler->want_auto_resp.connect( want_auto_resp );
+    m_message_handler->logger.connect( logger );
   }
 
   unsigned short Client::NextSeqNum() {
@@ -166,13 +190,13 @@ namespace ICQ2000 {
 	ostr << "Looking up host name of authorizer: " << m_authorizerHostname.c_str();
 	SignalLog(LogEvent::INFO, ostr.str());
       }
-      m_serverSocket.setRemoteHost(m_authorizerHostname.c_str());
-      m_serverSocket.setRemotePort(m_authorizerPort);
+      m_serverSocket->setRemoteHost(m_authorizerHostname.c_str());
+      m_serverSocket->setRemotePort(m_authorizerPort);
 
-      m_serverSocket.setBlocking(false);
+      m_serverSocket->setBlocking(false);
 
       SignalLog(LogEvent::INFO, "Establishing TCP connection to authorizer");
-      m_serverSocket.Connect();
+      m_serverSocket->Connect();
     } catch(SocketException e) {
       // signal connection failure
       ostringstream ostr;
@@ -182,7 +206,7 @@ namespace ICQ2000 {
       return;
     }
     
-    SignalAddSocket( m_serverSocket.getSocketHandle(), SocketEvent::WRITE );
+    SignalAddSocket( m_serverSocket->getSocketHandle(), SocketEvent::WRITE );
 
     // randomize sequence number
     srand(time(0));
@@ -193,19 +217,19 @@ namespace ICQ2000 {
   }
 
   void Client::DisconnectAuthorizer() {
-    SignalRemoveSocket( m_serverSocket.getSocketHandle() );
-    m_serverSocket.Disconnect();
+    SignalRemoveSocket( m_serverSocket->getSocketHandle() );
+    m_serverSocket->Disconnect();
     m_state = NOT_CONNECTED;
   }
 
   void Client::ConnectBOS() {
     try {
-      m_serverSocket.setRemoteHost(m_bosHostname.c_str());
-      m_serverSocket.setRemotePort(m_bosPort);
+      m_serverSocket->setRemoteHost(m_bosHostname.c_str());
+      m_serverSocket->setRemotePort(m_bosPort);
 
       SignalLog(LogEvent::INFO, "Establishing TCP Connection to BOS Server");
-      m_serverSocket.setBlocking(false);
-      m_serverSocket.Connect();
+      m_serverSocket->setBlocking(false);
+      m_serverSocket->Connect();
     } catch(SocketException e) {
       ostringstream ostr;
       ostr << "Failed to connect to BOS server: " << e.what();
@@ -214,32 +238,37 @@ namespace ICQ2000 {
       return;
     }
 
-    SignalAddSocket( m_serverSocket.getSocketHandle(), SocketEvent::WRITE );
+    SignalAddSocket( m_serverSocket->getSocketHandle(), SocketEvent::WRITE );
 
     m_state = BOS_AWAITING_CONN_ACK;
   }
 
-  void Client::DisconnectBOS() {
+  void Client::DisconnectBOS()
+  {
     m_state = NOT_CONNECTED;
 
-    SignalRemoveSocket( m_serverSocket.getSocketHandle() );
-    m_serverSocket.Disconnect();
-    if (m_listenServer.isStarted()) {
-      SignalRemoveSocket( m_listenServer.getSocketHandle() );
-      m_listenServer.Disconnect();
+    SignalRemoveSocket( m_serverSocket->getSocketHandle() );
+    m_serverSocket->Disconnect();
+    if (m_listenServer->isStarted()) {
+      SignalRemoveSocket( m_listenServer->getSocketHandle() );
+      m_listenServer->Disconnect();
     }
     DisconnectDirectConns();
   }
 
-  void Client::DisconnectDirectConns() {
-    m_dccache.removeAll();
+  void Client::DisconnectDirectConns()
+  {
+    m_dccache->removeAll();
   }
 
-  void Client::DisconnectDirectConn(int fd) {
-    if (m_dccache.exists(fd)) {
-      m_dccache.remove(fd);
-    } else if (m_smtp.getfd() == fd) {
-      SignalRemoveSocket( m_smtp.getfd() );
+  void Client::DisconnectDirectConn(int fd)
+  {
+    if (m_dccache->exists(fd))
+    {
+      m_dccache->remove(fd);
+    } else if (m_smtp->getfd() == fd)
+    {
+      SignalRemoveSocket( m_smtp->getfd() );
     }
   }
 
@@ -287,7 +316,7 @@ namespace ICQ2000 {
     ICQSubType *st = snac->getICQSubType();
     if (st == NULL) return;
 
-    bool ack = m_message_handler.handleIncoming( st );
+    bool ack = m_message_handler->handleIncoming( st );
     if (ack) SendAdvancedACK(snac);
   }
 
@@ -307,11 +336,11 @@ namespace ICQ2000 {
     case MSG_Type_AutoReq_FFC:
     {
       ICBMCookie c = snac->getICBMCookie();
-      if ( m_cookiecache.exists( c ) ) {
-	MessageEvent *ev = m_cookiecache[c];
+      if ( m_cookiecache->exists( c ) ) {
+	MessageEvent *ev = (*m_cookiecache)[c];
 	ev->setDirect(false);
-	m_message_handler.handleIncomingACK( ev, st );
-	m_cookiecache.remove(c);
+	m_message_handler->handleIncomingACK( ev, st );
+	m_cookiecache->remove(c);
       } else {
 	SignalLog(LogEvent::WARN, "Received ACK for unknown message");
       }
@@ -335,10 +364,10 @@ namespace ICQ2000 {
      */
     ICBMCookie c = snac->getICBMCookie();
 
-    if ( m_cookiecache.exists( c ) ) {
+    if ( m_cookiecache->exists( c ) ) {
 
       /* indicate sending through server */
-      MessageEvent *ev = m_cookiecache[c];
+      MessageEvent *ev = (*m_cookiecache)[c];
       ev->setFinished(false);
       ev->setDelivered(false);
       ev->setDirect(false);
@@ -372,15 +401,15 @@ namespace ICQ2000 {
     } else if (snac->getType() == SrvResponseSNAC::OfflineMessage) {
 
       // wow.. this is so much simpler now :-)
-      m_message_handler.handleIncoming(snac->getICQSubType(), snac->getTime());
+      m_message_handler->handleIncoming(snac->getICQSubType(), snac->getTime());
       
     } else if (snac->getType() == SrvResponseSNAC::SMS_Error) {
       // mmm
     } else if (snac->getType() == SrvResponseSNAC::SMS_Response) {
       
       unsigned int reqid = snac->RequestID();
-      if ( m_reqidcache.exists( reqid ) ) {
-	RequestIDCacheValue *v = m_reqidcache[ reqid ];
+      if ( m_reqidcache->exists( reqid ) ) {
+	RequestIDCacheValue *v = (*m_reqidcache)[ reqid ];
 	
 	if ( v->getType() == RequestIDCacheValue::SMSMessage ) {
 	  SMSEventCacheValue *uv = static_cast<SMSEventCacheValue*>(v);
@@ -391,7 +420,7 @@ namespace ICQ2000 {
 	    ev->setDelivered(true);
 	    ev->setDirect(false);
 	    messageack.emit(ev);
-	    m_reqidcache.remove( reqid );
+	    m_reqidcache->remove( reqid );
 	  } else if (snac->smtp_deliverable()) {
 
 	    // todo - konst have volunteered :-)
@@ -401,7 +430,7 @@ namespace ICQ2000 {
 	    ev->setSMTPTo(snac->getSMTPTo());
 	    ev->setSMTPSubject(snac->getSMTPSubject());
 
-	    m_smtp.SendEvent(ev);
+	    m_smtp->SendEvent(ev);
 	    
 	  } else {
 	    if (snac->getErrorParam() != "DUPLEX RESPONSE") {
@@ -411,7 +440,7 @@ namespace ICQ2000 {
 	      ev->setDirect(false);
 	      ev->setDeliveryFailureReason(MessageEvent::Failed);
 	      messageack.emit(ev);
-	      m_reqidcache.remove( reqid );
+	      m_reqidcache->remove( reqid );
 	    }
 	  }
 	
@@ -424,8 +453,8 @@ namespace ICQ2000 {
       
     } else if (snac->getType() == SrvResponseSNAC::SimpleUserInfo) {
 
-      if ( m_reqidcache.exists( snac->RequestID() ) ) {
-	RequestIDCacheValue *v = m_reqidcache[ snac->RequestID() ];
+      if ( m_reqidcache->exists( snac->RequestID() ) ) {
+	RequestIDCacheValue *v = (*m_reqidcache)[ snac->RequestID() ];
 
 	if ( v->getType() == RequestIDCacheValue::Search ) {
 	  SearchCacheValue *sv = static_cast<SearchCacheValue*>(v);
@@ -455,7 +484,7 @@ namespace ICQ2000 {
 
 	  if (ev->isFinished()) {
 	    delete ev;
-	    m_reqidcache.remove( snac->RequestID() );
+	    m_reqidcache->remove( snac->RequestID() );
 	  }
 	  
 	} else {
@@ -476,8 +505,8 @@ namespace ICQ2000 {
       
     } else if (snac->getType() == SrvResponseSNAC::SearchSimpleUserInfo) {
 
-      if ( m_reqidcache.exists( snac->RequestID() ) ) {
-	RequestIDCacheValue *v = m_reqidcache[ snac->RequestID() ];
+      if ( m_reqidcache->exists( snac->RequestID() ) ) {
+	RequestIDCacheValue *v = (*m_reqidcache)[ snac->RequestID() ];
 
 	if ( v->getType() == RequestIDCacheValue::Search ) {
 	  SearchCacheValue *sv = static_cast<SearchCacheValue*>(v);
@@ -507,7 +536,7 @@ namespace ICQ2000 {
 
 	  if (ev->isFinished()) {
 	    delete ev;
-	    m_reqidcache.remove( snac->RequestID() );
+	    m_reqidcache->remove( snac->RequestID() );
 	  }
 	  
 	} else {
@@ -589,8 +618,8 @@ namespace ICQ2000 {
 
     } else if (snac->getType() == SrvResponseSNAC::RandomChatFound) {
 
-      if ( m_reqidcache.exists( snac->RequestID() ) ) {
-	RequestIDCacheValue *v = m_reqidcache[ snac->RequestID() ];
+      if ( m_reqidcache->exists( snac->RequestID() ) ) {
+	RequestIDCacheValue *v = (*m_reqidcache)[ snac->RequestID() ];
 
 	if ( v->getType() == RequestIDCacheValue::Search ) {
 	  SearchCacheValue *sv = static_cast<SearchCacheValue*>(v);
@@ -605,7 +634,7 @@ namespace ICQ2000 {
 	  search_result.emit(ev);
 
 	  delete ev;
-	  m_reqidcache.remove( snac->RequestID() );
+	  m_reqidcache->remove( snac->RequestID() );
 	  
 	} else {
 	  SignalLog(LogEvent::WARN, "Request ID cached value is not for a Search request");
@@ -631,8 +660,8 @@ namespace ICQ2000 {
 
   ContactRef Client::getUserInfoCacheContact(unsigned int reqid)
   {
-    if ( m_reqidcache.exists( reqid ) ) {
-      RequestIDCacheValue *v = m_reqidcache[ reqid ];
+    if ( m_reqidcache->exists( reqid ) ) {
+      RequestIDCacheValue *v = (*m_reqidcache)[ reqid ];
 
       if ( v->getType() == RequestIDCacheValue::UserInfo ) {
 	UserInfoCacheValue *uv = static_cast<UserInfoCacheValue*>(v);
@@ -699,8 +728,9 @@ namespace ICQ2000 {
     SignalLog(LogEvent::WARN, "Direct connection timeout reached");
   }
 
-  void Client::dc_connected_cb(SocketClient *dc) {
-    m_dccache.setTimeout(dc->getfd(), 600);
+  void Client::dc_connected_cb(SocketClient *dc)
+  {
+    m_dccache->setTimeout(dc->getfd(), 600);
     // once we are properly connected a direct
     // connection will only timeout after 10 mins
   }
@@ -766,17 +796,17 @@ namespace ICQ2000 {
 
   // ------------------ Outgoing packets -------------------
 
-  Buffer::marker Client::FLAPHeader(Buffer& b, unsigned char channel) 
+  Buffer::marker FLAPHeader(Buffer& b, unsigned char channel, unsigned short seq) 
   {
     b.setBigEndian();
     b << (unsigned char) 42;
     b << channel;
-    b << NextSeqNum();
+    b << seq;
     Buffer::marker mk = b.getAutoSizeShortMarker();
     return mk;
   }
   
-  void Client::FLAPFooter(Buffer& b, Buffer::marker& mk) 
+  void FLAPFooter(Buffer& b, Buffer::marker& mk) 
   {
     b.setAutoSizeMarker(mk);
   }
@@ -784,7 +814,7 @@ namespace ICQ2000 {
 
   void Client::FLAPwrapSNAC(Buffer& b, const OutSNAC& snac)
   {
-    Buffer::marker mk = FLAPHeader(b, 0x02);
+    Buffer::marker mk = FLAPHeader(b, 0x02, NextSeqNum());
     b << snac;
     FLAPFooter(b,mk);
   }
@@ -798,7 +828,7 @@ namespace ICQ2000 {
   
   void Client::SendAuthReq() {
     Buffer b(&m_translator);
-    Buffer::marker mk = FLAPHeader(b,0x01);
+    Buffer::marker mk = FLAPHeader(b, 0x01, NextSeqNum());
 
     b << (unsigned int)0x00000001;
 
@@ -819,11 +849,12 @@ namespace ICQ2000 {
     Send(b);
   }
 
-  void Client::SendNewUINReq() {
+  void Client::SendNewUINReq()
+  {
     Buffer b(&m_translator);
     Buffer::marker mk;
 
-    mk = FLAPHeader(b,0x01);
+    mk = FLAPHeader(b, 0x01, NextSeqNum());
     b << (unsigned int)0x00000001;
     FLAPFooter(b,mk);
     Send(b);
@@ -834,7 +865,7 @@ namespace ICQ2000 {
     
   void Client::SendCookie() {
     Buffer b(&m_translator);
-    Buffer::marker mk = FLAPHeader(b,0x01);
+    Buffer::marker mk = FLAPHeader(b,0x01,NextSeqNum());
 
     b << (unsigned int)0x00000001;
 
@@ -882,13 +913,13 @@ namespace ICQ2000 {
     // know the listening port and ip
     if (m_in_dc) {
       if (m_use_portrange) {
-        m_listenServer.StartServer(m_lower_port, m_upper_port);
+        m_listenServer->StartServer(m_lower_port, m_upper_port);
       } else {
-        m_listenServer.StartServer();
+        m_listenServer->StartServer();
       }
-      SignalAddSocket( m_listenServer.getSocketHandle(), SocketEvent::READ );
+      SignalAddSocket( m_listenServer->getSocketHandle(), SocketEvent::READ );
       ostringstream ostr;
-      ostr << "Server listening on " << IPtoString( m_serverSocket.getLocalIP() ) << ":" << m_listenServer.getPort();
+      ostr << "Server listening on " << IPtoString( m_serverSocket->getLocalIP() ) << ":" << m_listenServer->getPort();
       SignalLog(LogEvent::INFO, ostr.str());
     } else {
       SignalLog(LogEvent::INFO, "Not starting listening server, incoming Direct connections disabled");
@@ -906,8 +937,8 @@ namespace ICQ2000 {
     SetStatusSNAC sss(Contact::MapStatusToICQStatus(m_status_wanted, m_invisible_wanted), m_web_aware);
 
     sss.setSendExtra(true);
-    sss.setIP( m_serverSocket.getLocalIP() );
-    sss.setPort( (m_in_dc ? m_listenServer.getPort() : 0) );
+    sss.setIP( m_serverSocket->getLocalIP() );
+    sss.setPort( (m_in_dc ? m_listenServer->getPort() : 0) );
     FLAPwrapSNAC( b, sss );
 
     if (!m_invisible_wanted)
@@ -961,7 +992,7 @@ namespace ICQ2000 {
       ostringstream ostr;
       ostr << "Sending packet to Server" << endl << b;
       SignalLog(LogEvent::PACKET, ostr.str());
-      m_serverSocket.Send(b);
+      m_serverSocket->Send(b);
     } catch(SocketException e) {
       ostringstream ostr;
       ostr << "Failed to send: " << e.what();
@@ -975,8 +1006,8 @@ namespace ICQ2000 {
   void Client::RecvFromServer() {
 
     try {
-      while (m_serverSocket.connected()) {
-	if (!m_serverSocket.Recv(m_recv)) break;
+      while (m_serverSocket->connected()) {
+	if (!m_serverSocket->Recv(*m_recv)) break;
 	Parse();
       }
     } catch(SocketException e) {
@@ -996,14 +1027,14 @@ namespace ICQ2000 {
 
     // process FLAP(s) in packet
 
-    if (m_recv.empty()) return;
+    if (m_recv->empty()) return;
 
-    while (!m_recv.empty()) {
-      m_recv.setPos(0);
+    while (!m_recv->empty()) {
+      m_recv->setPos(0);
 
-      m_recv >> start_byte;
+      *m_recv >> start_byte;
       if (start_byte != 42) {
-	m_recv.clear();
+	m_recv->clear();
 	SignalLog(LogEvent::WARN, "Invalid Start Byte on FLAP");
 	return;
       }
@@ -1011,20 +1042,20 @@ namespace ICQ2000 {
       /* if we don't have at least six bytes we don't have enough
        * info to determine if we have the whole of the FLAP
        */
-      if (m_recv.remains() < 5) return;
+      if (m_recv->remains() < 5) return;
       
-      m_recv >> channel;
-      m_recv >> seq_num; // check sequence number - todo
+      *m_recv >> channel;
+      *m_recv >> seq_num; // check sequence number - todo
       
-      m_recv >> data_len;
-      if (m_recv.remains() < data_len) return; // waiting for more of the FLAP
+      *m_recv >> data_len;
+      if (m_recv->remains() < data_len) return; // waiting for more of the FLAP
 
       /* Copy into another Buffer which is passed
        * onto the separate parse code that way
        * multiple FLAPs in one packet are split up
        */
       Buffer sb(&m_translator);
-      m_recv.chopOffBuffer( sb, data_len+6 );
+      m_recv->chopOffBuffer( sb, data_len+6 );
 
       {
 	ostringstream ostr;
@@ -1251,8 +1282,8 @@ namespace ICQ2000 {
 	vector<ServerBasedContactEvent::UploadResult>::iterator iur;
 
 	if(!updresults.empty()) {
-	  if( m_reqidcache.exists( snac->RequestID() ) ) {
-	    RequestIDCacheValue *v = m_reqidcache[ snac->RequestID() ];
+	  if( m_reqidcache->exists( snac->RequestID() ) ) {
+	    RequestIDCacheValue *v = (*m_reqidcache)[ snac->RequestID() ];
 	    
 	    if ( v->getType() == RequestIDCacheValue::ServerBasedContact ) {
 	      ServerBasedContactCacheValue *sv = static_cast<ServerBasedContactCacheValue*>(v);
@@ -1282,7 +1313,7 @@ namespace ICQ2000 {
 	      server_based_contact_list.emit(ev);
 
 	      delete ev;
-	      m_reqidcache.remove( snac->RequestID() );
+	      m_reqidcache->remove( snac->RequestID() );
 	    } else {
 	      SignalLog(LogEvent::WARN, "Request ID cached value is not for a server-based contacts upload request");
 	    }
@@ -1424,19 +1455,21 @@ namespace ICQ2000 {
    *  timeouts on message sending works correctly, and that the server
    *  is pinged once every 60 seconds.
    */
-  void Client::Poll() {
+  void Client::Poll()
+  {
     time_t now = time(NULL);
-    if (now > m_last_server_ping + 60) {
+    if (now > m_last_server_ping + 60)
+    {
       PingServer();
       m_last_server_ping = now;
 
     }
 
-    m_reqidcache.clearoutPoll();
-    m_cookiecache.clearoutPoll();
-    m_dccache.clearoutPoll();
-    m_dccache.clearoutMessagesPoll();
-    m_smtp.clearoutMessagesPoll();
+    m_reqidcache->clearoutPoll();
+    m_cookiecache->clearoutPoll();
+    m_dccache->clearoutPoll();
+    m_dccache->clearoutMessagesPoll();
+    m_smtp->clearoutMessagesPoll();
   }
 
   /**
@@ -1453,7 +1486,7 @@ namespace ICQ2000 {
    */
   void Client::socket_cb(int fd, SocketEvent::Mode m) {
 
-    if ( fd == m_serverSocket.getSocketHandle() ) {
+    if ( fd == m_serverSocket->getSocketHandle() ) {
       /*
        * File descriptor is the socket we have open to server
        */
@@ -1463,17 +1496,17 @@ namespace ICQ2000 {
 	if (m & SocketEvent::READ) SignalLog(LogEvent::INFO, "socket_cb for read");
 	if (m & SocketEvent::EXCEPTION) SignalLog(LogEvent::INFO, "socket_cb for exception");
 
-	if (m_serverSocket.getState() == TCPSocket::NOT_CONNECTED) SignalLog(LogEvent::INFO, "server socket in state NOT_CONNECTED");
-	if (m_serverSocket.getState() == TCPSocket::NONBLOCKING_CONNECT) SignalLog(LogEvent::INFO, "server socket in state NONBLOCKING_CONNECT");
-	if (m_serverSocket.getState() == TCPSocket::CONNECTED) SignalLog(LogEvent::INFO, "server socket in state CONNECTED");
+	if (m_serverSocket->getState() == TCPSocket::NOT_CONNECTED) SignalLog(LogEvent::INFO, "server socket in state NOT_CONNECTED");
+	if (m_serverSocket->getState() == TCPSocket::NONBLOCKING_CONNECT) SignalLog(LogEvent::INFO, "server socket in state NONBLOCKING_CONNECT");
+	if (m_serverSocket->getState() == TCPSocket::CONNECTED) SignalLog(LogEvent::INFO, "server socket in state CONNECTED");
       */
 
-      if (m_serverSocket.getState() == TCPSocket::NONBLOCKING_CONNECT
+      if (m_serverSocket->getState() == TCPSocket::NONBLOCKING_CONNECT
 	  && (m & SocketEvent::WRITE)) {
 	// the non-blocking connect has completed (good/bad)
 
 	try {
-	  m_serverSocket.FinishNonBlockingConnect();
+	  m_serverSocket->FinishNonBlockingConnect();
 	} catch(SocketException e) {
 	  // signal connection failure
 	  ostringstream ostr;
@@ -1491,22 +1524,22 @@ namespace ICQ2000 {
 	SignalAddSocket(fd, SocketEvent::READ);
 	// select on read now
 	
-      } else if (m_serverSocket.getState() == TCPSocket::CONNECTED && (m & SocketEvent::READ)) { 
+      } else if (m_serverSocket->getState() == TCPSocket::CONNECTED && (m & SocketEvent::READ)) { 
 	RecvFromServer();
       } else {
 	SignalLog(LogEvent::ERROR, "Server socket in inconsistent state!");
 	Disconnect(DisconnectedEvent::FAILED_LOWLEVEL);
       }
       
-    } else if ( m_in_dc && fd == m_listenServer.getSocketHandle() ) {
+    } else if ( m_in_dc && fd == m_listenServer->getSocketHandle() ) {
       /*
        * File descriptor is the listening socket - someone is connected in
        */
 
-      TCPSocket *sock = m_listenServer.Accept();
-      DirectClient *dc = new DirectClient(m_self, sock, &m_message_handler, &m_contact_tree,
-					  m_ext_ip, m_listenServer.getPort(), &m_translator);
-      m_dccache[ sock->getSocketHandle() ] = dc;
+      TCPSocket *sock = m_listenServer->Accept();
+      DirectClient *dc = new DirectClient(m_self, sock, m_message_handler, &m_contact_tree,
+					  m_ext_ip, m_listenServer->getPort(), &m_translator);
+      (*m_dccache)[ sock->getSocketHandle() ] = dc;
       dc->logger.connect( this, &Client::dc_log_cb );
       dc->messageack.connect( this, &Client::dc_messageack_cb );
       dc->connected.connect( this, &Client::dc_connected_cb );
@@ -1520,10 +1553,10 @@ namespace ICQ2000 {
        */
 
       SocketClient *dc;
-      if (m_dccache.exists(fd)) {
-	dc = m_dccache[fd];
-      } else if(m_smtp.getfd() == fd) {
-	dc = &m_smtp;
+      if (m_dccache->exists(fd)) {
+	dc = (*m_dccache)[fd];
+      } else if(m_smtp->getfd() == fd) {
+	dc = m_smtp;
       } else {
 	SignalLog(LogEvent::ERROR, "Problem: Unassociated socket");
 	return;
@@ -1628,7 +1661,7 @@ namespace ICQ2000 {
 	break;
 
       case MessageEvent::Email:
-	m_smtp.SendEvent(ev);
+	m_smtp->SendEvent(ev);
 	break;
 
       default:
@@ -1646,8 +1679,9 @@ namespace ICQ2000 {
     return true;
   }
 
-  DirectClient* Client::ConnectDirect(const ContactRef& c) {
-    DirectClient *dc = m_dccache.getByContact(c);
+  DirectClient* Client::ConnectDirect(const ContactRef& c)
+  {
+    DirectClient *dc = m_dccache->getByContact(c);
     if (dc == NULL) {
       if (!m_out_dc) return NULL;
       /*
@@ -1658,8 +1692,8 @@ namespace ICQ2000 {
       if ( c->getExtIP() != c->getLanIP() && m_ext_ip != c->getExtIP() ) return NULL;
       if ( c->getLanIP() == 0 ) return NULL;
       SignalLog(LogEvent::INFO, "Establishing direct connection");
-      dc = new DirectClient(m_self, c, &m_message_handler,
-			    m_ext_ip, (m_in_dc ? m_listenServer.getPort() : 0), &m_translator);
+      dc = new DirectClient(m_self, c, m_message_handler,
+			    m_ext_ip, (m_in_dc ? m_listenServer->getPort() : 0), &m_translator);
       dc->logger.connect( this, &Client::dc_log_cb) ;
       dc->messageack.connect( this, &Client::dc_messageack_cb) ;
       dc->connected.connect( this, &Client::dc_connected_cb ) ;
@@ -1680,7 +1714,7 @@ namespace ICQ2000 {
 	return NULL;
       }
 
-      m_dccache[ dc->getfd() ] = dc;
+      (*m_dccache)[ dc->getfd() ] = dc;
     }
 
     return dc;
@@ -1748,7 +1782,7 @@ namespace ICQ2000 {
       SrvSendSNAC ssnac(sv->getMessage(), c->getNormalisedMobileNo(), m_self->getUIN(), "", sv->getRcpt());
 
       unsigned int reqid = NextRequestID();
-      m_reqidcache.insert( reqid, new SMSEventCacheValue( sv ) );
+      m_reqidcache->insert( reqid, new SMSEventCacheValue( sv ) );
       ssnac.setRequestID( reqid );
 
       FLAPwrapSNACandSend( ssnac );
@@ -1770,15 +1804,15 @@ namespace ICQ2000 {
     }
 
     ContactRef c = ev->getContact();
-    UINICQSubType *ist = m_message_handler.handleOutgoing(ev);
+    UINICQSubType *ist = m_message_handler->handleOutgoing(ev);
     ist->setAdvanced(true);
     
     MsgSendSNAC msnac(ist);
     msnac.setAdvanced(true);
     msnac.setSeqNum( c->nextSeqNum() );
-    ICBMCookie ck = m_cookiecache.generateUnique();
+    ICBMCookie ck = m_cookiecache->generateUnique();
     msnac.setICBMCookie( ck );
-    m_cookiecache.insert( ck, ev );
+    m_cookiecache->insert( ck, ev );
 
     msnac.set_capabilities( c->get_capabilities() );
     
@@ -1799,7 +1833,7 @@ namespace ICQ2000 {
     }
 
     ContactRef c = ev->getContact();
-    UINICQSubType *ist = m_message_handler.handleOutgoing(ev);
+    UINICQSubType *ist = m_message_handler->handleOutgoing(ev);
     ist->setAdvanced(false);
     
     MsgSendSNAC msnac(ist);
@@ -1821,9 +1855,10 @@ namespace ICQ2000 {
     delete ist;
   }
   
-  void Client::PingServer() {
+  void Client::PingServer()
+  {
     Buffer b(&m_translator);
-    Buffer::marker mk = FLAPHeader(b,0x05);
+    Buffer::marker mk = FLAPHeader(b,0x05,NextSeqNum());
     FLAPFooter(b,mk);
     Send(b);
   }
@@ -1876,7 +1911,7 @@ namespace ICQ2000 {
     ** needs recoding for groups **
     ServerBasedContactEvent *ev = new ServerBasedContactEvent(ServerBasedContactEvent::Upload, m_contact_tree );
     unsigned int reqid = NextRequestID();
-    m_reqidcache.insert( reqid, new ServerBasedContactCacheValue( ev ) );
+    m_reqidcache->insert( reqid, new ServerBasedContactCacheValue( ev ) );
     */
 
     // TODO ContactTree!
@@ -1899,7 +1934,7 @@ namespace ICQ2000 {
     ** needs recoding for groups **
     ServerBasedContactEvent *ev = new ServerBasedContactEvent(ServerBasedContactEvent::Remove, l);
     unsigned int reqid = NextRequestID();
-    m_reqidcache.insert( reqid, new ServerBasedContactCacheValue( ev ) );
+    m_reqidcache->insert( reqid, new ServerBasedContactCacheValue( ev ) );
 
     SBLRemoveEntrySNAC ssnac(l);
     ssnac.setRequestID( reqid );
@@ -2060,29 +2095,40 @@ namespace ICQ2000 {
 
   void Client::contactlist_cb(ContactListEvent *ev)
   {
-    if (ev->getType() == ContactListEvent::UserAdded) {
+    if (ev->getType() == ContactListEvent::UserAdded)
+    {
       UserAddedEvent *cev = static_cast<UserAddedEvent*>(ev);
       ContactRef c = cev->getContact();
-      if (c->isICQContact() && m_state == BOS_LOGGED_IN) {
+      if (c->isICQContact() && m_state == BOS_LOGGED_IN)
+      {
 	FLAPwrapSNACandSend( AddBuddySNAC(c) );
 
 	// fetch detailed userinfo from server
 	fetchDetailContactInfo(c);
       }
 
-    } else if (ev->getType() == ContactListEvent::UserRemoved) {
+    }
+    else if (ev->getType() == ContactListEvent::UserRemoved)
+    {
       UserRemovedEvent *cev = static_cast<UserRemovedEvent*>(ev);
       ContactRef c = cev->getContact();
-      if (c->isICQContact() && m_state == BOS_LOGGED_IN) {
+      if (c->isICQContact() && m_state == BOS_LOGGED_IN)
+      {
 	FLAPwrapSNACandSend( RemoveBuddySNAC(c) );
       }
 
       // remove all direct connections for that contact
-      m_dccache.removeContact(c);
+      m_dccache->removeContact(c);
 
-    } else if (ev->getType() == ContactListEvent::GroupAdded) {
-    } else if (ev->getType() == ContactListEvent::GroupRemoved) {
-    } else if (ev->getType() == ContactListEvent::CompleteUpdate) {
+    }
+    else if (ev->getType() == ContactListEvent::GroupAdded)
+    {
+    }
+    else if (ev->getType() == ContactListEvent::GroupRemoved)
+    {
+    }
+    else if (ev->getType() == ContactListEvent::CompleteUpdate)
+    {
     }
 
     // re-emit on the Client signal
@@ -2247,7 +2293,7 @@ namespace ICQ2000 {
     SignalLog(LogEvent::INFO, "Sending request Detailed Userinfo Request");
 
     unsigned int reqid = NextRequestID();
-    m_reqidcache.insert( reqid, new UserInfoCacheValue(c) );
+    m_reqidcache->insert( reqid, new UserInfoCacheValue(c) );
     SrvRequestDetailUserInfo ssnac( m_self->getUIN(), c->getUIN() );
     ssnac.setRequestID( reqid );
     FLAPwrapSNACandSend( ssnac );
@@ -2270,7 +2316,7 @@ namespace ICQ2000 {
     SearchResultEvent *ev = new SearchResultEvent( SearchResultEvent::ShortWhitepage );
 
     unsigned int reqid = NextRequestID();
-    m_reqidcache.insert( reqid, new SearchCacheValue( ev ) );
+    m_reqidcache->insert( reqid, new SearchCacheValue( ev ) );
 
     SrvRequestShortWP ssnac( m_self->getUIN(), nickname, firstname, lastname );
     ssnac.setRequestID( reqid );
@@ -2292,7 +2338,7 @@ namespace ICQ2000 {
     SearchResultEvent *ev = new SearchResultEvent( SearchResultEvent::FullWhitepage );
 
     unsigned int reqid = NextRequestID();
-    m_reqidcache.insert( reqid, new SearchCacheValue( ev ) );
+    m_reqidcache->insert( reqid, new SearchCacheValue( ev ) );
 
     unsigned short min_age, max_age;
 
@@ -2343,7 +2389,7 @@ namespace ICQ2000 {
     SearchResultEvent *ev = new SearchResultEvent( SearchResultEvent::UIN );
 
     unsigned int reqid = NextRequestID();
-    m_reqidcache.insert( reqid, new SearchCacheValue( ev ) );
+    m_reqidcache->insert( reqid, new SearchCacheValue( ev ) );
 
     SrvRequestSimpleUserInfo ssnac( m_self->getUIN(), uin );
     ssnac.setRequestID( reqid );
@@ -2358,7 +2404,7 @@ namespace ICQ2000 {
   {
     SearchResultEvent *ev = new SearchResultEvent( SearchResultEvent::Keyword );
     unsigned int reqid = NextRequestID();
-    m_reqidcache.insert( reqid, new SearchCacheValue( ev ) );
+    m_reqidcache->insert( reqid, new SearchCacheValue( ev ) );
     
     SrvRequestKeywordSearch ssnac( m_self->getUIN(), keyword );
     ssnac.setRequestID( reqid );
@@ -2373,7 +2419,7 @@ namespace ICQ2000 {
   {
     SearchResultEvent *ev = new SearchResultEvent( SearchResultEvent::RandomChat );
     unsigned int reqid = NextRequestID();
-    m_reqidcache.insert( reqid, new SearchCacheValue( ev ) );
+    m_reqidcache->insert( reqid, new SearchCacheValue( ev ) );
     
     SrvRequestRandomChat ssnac( m_self->getUIN(), group );
     ssnac.setRequestID( reqid );
@@ -2559,19 +2605,19 @@ namespace ICQ2000 {
   }
 
   void Client::setSMTPServerHost(const string& host) {
-    m_smtp.setServerHost(host);
+    m_smtp->setServerHost(host);
   }
 
   string Client::getSMTPServerHost() const {
-    return m_smtp.getServerHost();
+    return m_smtp->getServerHost();
   }
 
   void Client::setSMTPServerPort(unsigned short port) {
-    m_smtp.setServerPort(port);
+    m_smtp->setServerPort(port);
   }
 
   unsigned short Client::getSMTPServerPort() const {
-    return m_smtp.getServerPort();
+    return m_smtp->getServerPort();
   }
 
   /**
@@ -2581,9 +2627,9 @@ namespace ICQ2000 {
    */
   void Client::setAcceptInDC(bool d) {
     m_in_dc = d;
-    if (!m_in_dc && m_listenServer.isStarted()) {
-      SignalRemoveSocket( m_listenServer.getSocketHandle() );
-      m_listenServer.Disconnect();
+    if (!m_in_dc && m_listenServer->isStarted()) {
+      SignalRemoveSocket( m_listenServer->getSocketHandle() );
+      m_listenServer->Disconnect();
     }
   }
   

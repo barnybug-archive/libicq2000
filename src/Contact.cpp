@@ -19,14 +19,16 @@
  *
  */
 
-#include <libicq2000/Contact.h>
+#include "Contact.h"
 
 #include "sstream_fix.h"
 #include <time.h>
 #include <ctype.h>
 
-#include <libicq2000/userinfoconstants.h>
-#include <libicq2000/events.h>
+#include "userinfoconstants.h"
+#include "Capabilities.h"
+
+#include "events.h"
 
 using std::string;
 using std::ostringstream;
@@ -48,7 +50,7 @@ namespace ICQ2000 {
 
   Contact::Contact(unsigned int uin)
     : count(0), m_virtualcontact(false), m_uin(uin), m_status(STATUS_OFFLINE), 
-      m_invisible(false), m_seqnum(0xffff)
+      m_invisible(false), m_capabilities( new Capabilities() ), m_seqnum(0xffff)
   {
     m_main_home_info.alias = UINtoString(m_uin);
     Init();
@@ -56,13 +58,20 @@ namespace ICQ2000 {
 
   Contact::Contact(const string& a)
     : count(0), m_virtualcontact(true), m_uin(nextImaginaryUIN()),
-      m_status(STATUS_OFFLINE), m_invisible(false), m_seqnum(0xffff)
+      m_status(STATUS_OFFLINE), m_invisible(false), m_capabilities( new Capabilities() ),
+      m_seqnum(0xffff)
   {
     m_main_home_info.alias = a;
     Init();
   }
 
-  void Contact::Init() {
+  Contact::~Contact()
+  {
+    delete m_capabilities;
+  }
+
+  void Contact::Init()
+  {
     m_tcp_version = 0;
     m_ext_ip = 0;
     m_lan_ip = 0;
@@ -140,10 +149,10 @@ namespace ICQ2000 {
   }
 
   bool Contact::get_accept_adv_msgs() const {
-    return (m_status != STATUS_OFFLINE && m_capabilities.get_accept_adv_msgs());
+    return (m_status != STATUS_OFFLINE && m_capabilities->get_accept_adv_msgs());
   }
 
-  Capabilities Contact::get_capabilities() const { return m_capabilities; }
+  Capabilities Contact::get_capabilities() const { return * m_capabilities; }
 
   unsigned int Contact::get_signon_time() const { return m_signon_time; }
 
@@ -210,13 +219,14 @@ namespace ICQ2000 {
     m_last_status_change_time = time(NULL);
 
     // clear dynamic fields on going OFFLINE
-    if (m_status == STATUS_OFFLINE) {
+    if (m_status == STATUS_OFFLINE)
+    {
       m_ext_ip = 0;
       m_lan_ip = 0;
       m_ext_port = 0;
       m_lan_port = 0;
       m_tcp_version = 0;
-      m_capabilities.clear();
+      m_capabilities->clear();
       m_last_online_time = time(NULL);
     }
 
@@ -314,7 +324,7 @@ namespace ICQ2000 {
 
   void Contact::set_capabilities(const Capabilities& c)
   {
-    m_capabilities = c;
+    (*m_capabilities) = c;
   }
 
   void Contact::set_signon_time(unsigned int t)

@@ -19,8 +19,8 @@
  *
  */
 
-#include <libicq2000/SMTPClient.h>
-#include <libicq2000/exceptions.h>
+#include "SMTPClient.h"
+#include "exceptions.h"
 
 #include "sstream_fix.h"
 

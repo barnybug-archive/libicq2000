@@ -24,7 +24,7 @@
 
 #include <string>
 
-#include <libicq2000/SNAC-base.h>
+#include "SNAC-base.h"
 
 namespace ICQ2000 {
 

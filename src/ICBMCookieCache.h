@@ -1,5 +1,5 @@
 /*
- * SNACs 
+ * ICBMCookieCache
  *
  * Copyright (C) 2001 Barnaby Gray <barnaby@beedesign.co.uk>
  *
@@ -19,23 +19,45 @@
  *
  */
 
-#ifndef SNAC_H
-#define SNAC_H
+#ifndef ICBMCOOKIECACHE_H
+#define ICBMCOOKIECACHE_H
 
-#include <libicq2000/buffer.h>
+#include "Cache.h"
+#include "ICBMCookie.h"
+#include "events.h"
 
-#include <libicq2000/SNAC-base.h>
-#include <libicq2000/SNAC-BUD.h>
-#include <libicq2000/SNAC-LOC.h>
-#include <libicq2000/SNAC-GEN.h>
-#include <libicq2000/SNAC-UIN.h>
-#include <libicq2000/SNAC-MSG.h>
-#include <libicq2000/SNAC-SRV.h>
-#include <libicq2000/SNAC-BOS.h>
-#include <libicq2000/SNAC-SBL.h>
+#include "libicq2000/sigslot.h"
 
 namespace ICQ2000 {
-  InSNAC* ParseSNAC(Buffer& b);
+
+  class ICBMCookieCache : public Cache<ICBMCookie, MessageEvent*> {
+   public:
+    ICBMCookieCache() { }
+    ~ICBMCookieCache()
+    {
+      removeAll();
+    }
+
+    void removeItem(const ICBMCookieCache::literator& l) {
+      delete ((*l).getValue());
+      Cache<ICBMCookie, MessageEvent*>::removeItem(l);
+    }
+
+    void expireItem(const ICBMCookieCache::literator& l) {
+      expired.emit( (*l).getValue() );
+      Cache<ICBMCookie, MessageEvent*>::expireItem(l);
+    }
+
+    ICBMCookie generateUnique() const {
+      ICBMCookie c;
+      c.generate();
+      while (exists(c)) c.generate();
+      return c;
+    }
+
+    sigslot::signal1<MessageEvent*> expired;
+
+  };
 }
 
 #endif

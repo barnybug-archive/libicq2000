@@ -85,7 +85,7 @@
 #include <set>
 #include <list>
 
-#if defined(SIGSLOT_PURE_ISO) || (!defined(WIN32) && !defined(__GNUG__) && !defined(SIGSLOT_USE_POSIX_THREADS))
+#if defined(SIGSLOT_PURE_ISO) || (!defined(WIN32) && !defined(SIGSLOT_USE_POSIX_THREADS))
 #	define _SIGSLOT_SINGLE_THREADED
 #elif defined(WIN32)
 #	define _SIGSLOT_HAS_WIN32_THREADS

@@ -24,8 +24,8 @@
 
 #include <string>
 
-#include <libicq2000/SNAC-base.h>
-#include <libicq2000/UserInfoBlock.h>
+#include "SNAC-base.h"
+#include "UserInfoBlock.h"
 
 namespace ICQ2000 {
 

@@ -19,9 +19,9 @@
  *
  */
 
-#include <libicq2000/SNAC-UIN.h>
+#include "SNAC-UIN.h"
 
-#include <libicq2000/buffer.h>
+#include "buffer.h"
 
 using std::string;
 

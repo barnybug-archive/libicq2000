@@ -19,10 +19,10 @@
  *
  */
 
-#include <libicq2000/UserInfoBlock.h>
+#include "UserInfoBlock.h"
 
-#include <libicq2000/Contact.h>
-#include <libicq2000/TLV.h>
+#include "Contact.h"
+#include "TLV.h"
 
 using std::string;
 

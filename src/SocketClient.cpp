@@ -19,7 +19,7 @@
  *
  */
 
-#include <libicq2000/SocketClient.h>
+#include "SocketClient.h"
 
 #include "sstream_fix.h"
 

@@ -19,7 +19,7 @@
  *
  */
 
-#include <libicq2000/Xml.h>
+#include "Xml.h"
 
 using std::string;
 using std::list;

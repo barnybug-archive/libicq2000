@@ -19,9 +19,9 @@
  *
  */
 
-#include <libicq2000/SNAC-base.h>
+#include "SNAC-base.h"
 
-#include <libicq2000/buffer.h>
+#include "buffer.h"
 
 namespace ICQ2000 {
 
@@ -73,6 +73,7 @@ namespace ICQ2000 {
     b.advance(b.size());
   }
 
+  Buffer& operator<<(Buffer& b, const ICQ2000::OutSNAC& snac) { snac.Output(b); return b; }
+
 }
 
-Buffer& operator<<(Buffer& b, const ICQ2000::OutSNAC& snac) { snac.Output(b); return b; }

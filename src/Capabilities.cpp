@@ -19,7 +19,7 @@
  *
  */
 
-#include <libicq2000/Capabilities.h>
+#include "Capabilities.h"
 
 using std::set;
 

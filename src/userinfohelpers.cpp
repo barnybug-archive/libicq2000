@@ -19,7 +19,7 @@
  *
  */
 
-#include <libicq2000/userinfohelpers.h>
+#include "userinfohelpers.h"
 
 #include "sstream_fix.h"
 

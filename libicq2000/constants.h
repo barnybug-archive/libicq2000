@@ -23,9 +23,11 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-namespace ICQ2000 {
+namespace ICQ2000
+{
   
-enum Status {
+enum Status
+{
   STATUS_ONLINE,
   STATUS_AWAY,
   STATUS_NA,

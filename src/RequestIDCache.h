@@ -22,7 +22,7 @@
 #ifndef REQUESTIDCACHE_H
 #define REQUESTIDCACHE_H
 
-#include <libicq2000/Cache.h>
+#include "Cache.h"
 
 #include "libicq2000/sigslot.h"
 

@@ -19,10 +19,10 @@
  *
  */
 
-#include <libicq2000/MessageHandler.h>
-#include <libicq2000/ContactTree.h>
-#include <libicq2000/SNAC-MSG.h>
-#include <libicq2000/SNAC-SRV.h>
+#include "MessageHandler.h"
+#include "ContactTree.h"
+#include "SNAC-MSG.h"
+#include "SNAC-SRV.h"
 #include "sstream_fix.h"
 
 using std::string;

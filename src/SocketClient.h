@@ -26,8 +26,8 @@
 
 #include "libicq2000/sigslot.h"
 
-#include <libicq2000/socket.h>
-#include <libicq2000/events.h>
+#include "socket.h"
+#include "events.h"
 
 namespace ICQ2000 {
 

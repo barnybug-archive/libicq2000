@@ -1,5 +1,5 @@
 /*
- * ICBMCookieCache
+ * SeqNumCache
  *
  * Copyright (C) 2001 Barnaby Gray <barnaby@beedesign.co.uk>
  *
@@ -19,45 +19,32 @@
  *
  */
 
-#ifndef ICBMCOOKIECACHE_H
-#define ICBMCOOKIECACHE_H
+#ifndef SEQNUMCACHE_H
+#define SEQNUMCACHE_H
 
-#include <libicq2000/Cache.h>
-#include <libicq2000/ICBMCookie.h>
-#include <libicq2000/events.h>
+#include "Cache.h"
+#include "events.h"
 
 #include "libicq2000/sigslot.h"
 
 namespace ICQ2000 {
 
-  class ICBMCookieCache : public Cache<ICBMCookie, MessageEvent*> {
+  class SeqNumCache : public Cache<unsigned short, MessageEvent*> {
    public:
-    ICBMCookieCache() { }
-    ~ICBMCookieCache()
+    SeqNumCache() { }
+    ~SeqNumCache()
     {
       removeAll();
     }
-
-    void removeItem(const ICBMCookieCache::literator& l) {
-      delete ((*l).getValue());
-      Cache<ICBMCookie, MessageEvent*>::removeItem(l);
-    }
-
-    void expireItem(const ICBMCookieCache::literator& l) {
+    
+    void expireItem(const SeqNumCache::literator& l) {
       expired.emit( (*l).getValue() );
-      Cache<ICBMCookie, MessageEvent*>::expireItem(l);
-    }
-
-    ICBMCookie generateUnique() const {
-      ICBMCookie c;
-      c.generate();
-      while (exists(c)) c.generate();
-      return c;
+      Cache<unsigned short, MessageEvent*>::expireItem(l);
     }
 
     sigslot::signal1<MessageEvent*> expired;
-
   };
+  
 }
 
 #endif

@@ -26,14 +26,18 @@
 #include <list>
 #include <string>
 
-#include "libicq2000/sigslot.h"
+#include <libicq2000/sigslot.h>
 
 #include <libicq2000/constants.h>
 #include <libicq2000/ref_ptr.h>
 
-#include <libicq2000/Capabilities.h>
-
-namespace ICQ2000 {
+namespace ICQ2000
+{
+  /* predeclare classes */
+  class Capabilities;
+  class MessageEvent;
+  class StatusChangeEvent;
+  class UserInfoChangeEvent;
 
   // -- Status Codes Flags --
   const unsigned short STATUS_FLAG_ONLINE = 0x0000;
@@ -44,18 +48,16 @@ namespace ICQ2000 {
   const unsigned short STATUS_FLAG_FREEFORCHAT = 0x0020;
   const unsigned short STATUS_FLAG_INVISIBLE = 0x0100;
 
-  class MessageEvent;
-  class StatusChangeEvent;
-  class UserInfoChangeEvent;
-
-  class Contact {
+  class Contact
+  {
    public:
     // reference count
     unsigned int count;
 
     // Inner classes for various sections of Contact details
 
-    class MainHomeInfo {
+    class MainHomeInfo
+    {
       std::string cellular, normalised_cellular;
       // cellular private - access must be through
       // get/setMobileNo for consistency
@@ -76,7 +78,8 @@ namespace ICQ2000 {
       std::string getNormalisedMobileNo() const;
     };
 
-    class HomepageInfo {
+    class HomepageInfo
+    {
     public:
       HomepageInfo();
 
@@ -89,7 +92,8 @@ namespace ICQ2000 {
       std::string getLanguage(int l) const;
     };
 
-    class EmailInfo {
+    class EmailInfo
+    {
     private:
       std::list<std::string> email_list;
 
@@ -99,7 +103,8 @@ namespace ICQ2000 {
       void addEmailAddress(const std::string&);
     };
   
-    class WorkInfo {
+    class WorkInfo
+    {
     public:
       WorkInfo();
     
@@ -108,7 +113,8 @@ namespace ICQ2000 {
       std::string company_name, company_dept, company_position, company_web;
     };
 
-    class BackgroundInfo {
+    class BackgroundInfo
+    {
     public:
       typedef std::pair<unsigned short, std::string> School;
       std::list<School> schools;   // school names
@@ -118,8 +124,9 @@ namespace ICQ2000 {
       void addSchool(unsigned short cat, const std::string& s);
     };
 
-    class PersonalInterestInfo {
-    public:
+    class PersonalInterestInfo
+    {
+     public:
       typedef std::pair<unsigned short, std::string> Interest;
       std::list<Interest> interests;
 
@@ -145,7 +152,7 @@ namespace ICQ2000 {
     bool m_server_based;
     unsigned int m_ext_ip, m_lan_ip;
     unsigned short m_ext_port, m_lan_port, m_group_id, m_tag_id;
-    Capabilities m_capabilities;
+    Capabilities * m_capabilities;
     unsigned int m_signon_time, m_last_online_time, m_last_status_change_time;
     unsigned int m_last_message_time, m_last_away_msg_check_time;
 
@@ -168,6 +175,8 @@ namespace ICQ2000 {
 
     Contact(unsigned int uin);
     Contact(const std::string& a);
+
+    ~Contact();
 
     unsigned int getUIN() const;
     void setUIN(unsigned int uin);

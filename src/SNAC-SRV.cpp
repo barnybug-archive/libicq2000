@@ -19,15 +19,15 @@
  *
  */
 
-#include <libicq2000/SNAC-SRV.h>
+#include "SNAC-SRV.h"
 
 #include <memory>
 #include "sstream_fix.h"
 
-#include <libicq2000/TLV.h>
-#include <libicq2000/Xml.h>
+#include "TLV.h"
+#include "Xml.h"
 
-#include <libicq2000/time_extra.h>
+#include "time_extra.h"
 
 using std::string;
 using std::auto_ptr;

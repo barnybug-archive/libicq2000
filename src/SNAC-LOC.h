@@ -1,5 +1,5 @@
 /*
- * SeqNumCache
+ * SNAC - Location services
  *
  * Copyright (C) 2001 Barnaby Gray <barnaby@beedesign.co.uk>
  *
@@ -19,32 +19,35 @@
  *
  */
 
-#ifndef SEQNUMCACHE_H
-#define SEQNUMCACHE_H
+#ifndef SNAC_LOC_H
+#define SNAC_LOC_H
 
-#include <libicq2000/Cache.h>
-#include <libicq2000/events.h>
-
-#include "libicq2000/sigslot.h"
+#include "SNAC-base.h"
 
 namespace ICQ2000 {
 
-  class SeqNumCache : public Cache<unsigned short, MessageEvent*> {
-   public:
-    SeqNumCache() { }
-    ~SeqNumCache()
-    {
-      removeAll();
-    }
-    
-    void expireItem(const SeqNumCache::literator& l) {
-      expired.emit( (*l).getValue() );
-      Cache<unsigned short, MessageEvent*>::expireItem(l);
-    }
+  // Locate (Family 0x0002)
+  const unsigned short SNAC_LOC_Error = 0x0001;
+  const unsigned short SNAC_LOC_RightsReq = 0x0002;
+  const unsigned short SNAC_LOC_Rights = 0x0003;
+  const unsigned short SNAC_LOC_SetUserInfo = 0x0004;
 
-    sigslot::signal1<MessageEvent*> expired;
+  // ----------------- Location (Family 0x0002) SNACs -------------
+
+  class LOCFamilySNAC : virtual public SNAC {
+   public:
+    unsigned short Family() const { return SNAC_FAM_LOC; }
   };
-  
+
+  class SetUserInfoSNAC : public LOCFamilySNAC, public OutSNAC {
+   protected:
+    void OutputBody(Buffer& b) const;
+
+   public:
+    SetUserInfoSNAC() { }
+    unsigned short Subtype() const { return SNAC_LOC_SetUserInfo; }
+  };
+
 }
 
 #endif

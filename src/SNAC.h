@@ -1,5 +1,5 @@
 /*
- * SNAC - Location services
+ * SNACs 
  *
  * Copyright (C) 2001 Barnaby Gray <barnaby@beedesign.co.uk>
  *
@@ -19,35 +19,23 @@
  *
  */
 
-#ifndef SNAC_LOC_H
-#define SNAC_LOC_H
+#ifndef SNAC_H
+#define SNAC_H
 
-#include <libicq2000/SNAC-base.h>
+#include "buffer.h"
+
+#include "SNAC-base.h"
+#include "SNAC-BUD.h"
+#include "SNAC-LOC.h"
+#include "SNAC-GEN.h"
+#include "SNAC-UIN.h"
+#include "SNAC-MSG.h"
+#include "SNAC-SRV.h"
+#include "SNAC-BOS.h"
+#include "SNAC-SBL.h"
 
 namespace ICQ2000 {
-
-  // Locate (Family 0x0002)
-  const unsigned short SNAC_LOC_Error = 0x0001;
-  const unsigned short SNAC_LOC_RightsReq = 0x0002;
-  const unsigned short SNAC_LOC_Rights = 0x0003;
-  const unsigned short SNAC_LOC_SetUserInfo = 0x0004;
-
-  // ----------------- Location (Family 0x0002) SNACs -------------
-
-  class LOCFamilySNAC : virtual public SNAC {
-   public:
-    unsigned short Family() const { return SNAC_FAM_LOC; }
-  };
-
-  class SetUserInfoSNAC : public LOCFamilySNAC, public OutSNAC {
-   protected:
-    void OutputBody(Buffer& b) const;
-
-   public:
-    SetUserInfoSNAC() { }
-    unsigned short Subtype() const { return SNAC_LOC_SetUserInfo; }
-  };
-
+  InSNAC* ParseSNAC(Buffer& b);
 }
 
 #endif

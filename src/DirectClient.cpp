@@ -19,10 +19,10 @@
  *
  */
 
-#include <libicq2000/DirectClient.h>
+#include "DirectClient.h"
 
-#include <libicq2000/ICQ.h>
-#include <libicq2000/constants.h>
+#include "ICQ.h"
+#include "constants.h"
 
 #include "sstream_fix.h"
 

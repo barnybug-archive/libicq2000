@@ -19,7 +19,7 @@
  *
  */ 
 
-#include <libicq2000/ICQ.h>
+#include "ICQ.h"
 
 #include "sstream_fix.h"
 #include <memory>

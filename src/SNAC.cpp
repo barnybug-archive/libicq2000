@@ -19,7 +19,7 @@
  *
  */
 
-#include <libicq2000/SNAC.h>
+#include "SNAC.h"
 
 namespace ICQ2000 {
 

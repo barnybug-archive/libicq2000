@@ -25,11 +25,11 @@
 #include <string>
 #include <list>
 
-#include <libicq2000/Xml.h>
-#include <libicq2000/buffer.h>
-#include <libicq2000/exceptions.h>
-#include <libicq2000/constants.h>
-#include <libicq2000/Contact.h>
+#include "Xml.h"
+#include "buffer.h"
+#include "exceptions.h"
+#include "constants.h"
+#include "Contact.h"
 
 namespace ICQ2000 {
 

@@ -31,8 +31,10 @@
 #include <string>
 #include <exception>
 
-namespace ICQ2000 {
-  class TranslatorException : public std::exception {
+namespace ICQ2000
+{
+  class TranslatorException : public std::exception
+  {
    private:
     std::string m_errortext;
     
@@ -43,7 +45,8 @@ namespace ICQ2000 {
     const char* what() const throw();
   };
 
-  class Translator{
+  class Translator
+  {
    public:
     Translator();
     void setDefaultTranslationMap();

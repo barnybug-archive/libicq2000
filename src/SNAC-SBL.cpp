@@ -22,8 +22,8 @@
  *
  */
 
-#include <libicq2000/SNAC-SBL.h>
-#include <libicq2000/TLV.h>
+#include "SNAC-SBL.h"
+#include "TLV.h"
 
 using std::string;
 

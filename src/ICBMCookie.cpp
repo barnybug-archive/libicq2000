@@ -19,7 +19,7 @@
  *
  */
 
-#include <libicq2000/ICBMCookie.h>
+#include "ICBMCookie.h"
 
 #include <stdlib.h>
 
@@ -55,8 +55,9 @@ namespace ICQ2000 {
     return *this;
   }
  
+  Buffer& operator<<(Buffer& b, const ICQ2000::ICBMCookie& c) { c.Output(b); return b; }
+
+  Buffer& operator>>(Buffer& b, ICQ2000::ICBMCookie& c) { c.Parse(b); return b; }
+
 }
 
-Buffer& operator<<(Buffer& b, const ICQ2000::ICBMCookie& c) { c.Output(b); return b; }
-
-Buffer& operator>>(Buffer& b, ICQ2000::ICBMCookie& c) { c.Parse(b); return b; }

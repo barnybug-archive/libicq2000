@@ -19,8 +19,8 @@
  *
  */
 
-#include <libicq2000/ContactTree.h>
-#include <libicq2000/events.h>
+#include "ContactTree.h"
+#include "events.h"
 
 namespace ICQ2000 {
 

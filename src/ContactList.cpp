@@ -19,8 +19,8 @@
  *
  */
 
-#include <libicq2000/ContactList.h>
-#include <libicq2000/events.h>
+#include "ContactList.h"
+#include "events.h"
 
 using std::string;
 

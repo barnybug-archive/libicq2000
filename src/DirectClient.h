@@ -28,16 +28,16 @@
 
 #include <stdlib.h>
 
-#include <libicq2000/socket.h>
-#include <libicq2000/buffer.h>
-#include <libicq2000/events.h>
-#include <libicq2000/exceptions.h>
-#include <libicq2000/Contact.h>
-#include <libicq2000/ContactTree.h>
-#include <libicq2000/SeqNumCache.h>
-#include <libicq2000/Translator.h>
-#include <libicq2000/SocketClient.h>
-#include <libicq2000/MessageHandler.h>
+#include "socket.h"
+#include "buffer.h"
+#include "events.h"
+#include "exceptions.h"
+#include "Contact.h"
+#include "ContactTree.h"
+#include "SeqNumCache.h"
+#include "Translator.h"
+#include "SocketClient.h"
+#include "MessageHandler.h"
 
 namespace ICQ2000 {
 

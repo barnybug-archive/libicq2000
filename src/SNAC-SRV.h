@@ -24,10 +24,10 @@
 
 #include <string>
 #include <time.h>
-#include <libicq2000/SNAC-base.h>
-#include <libicq2000/ICQ.h>
-#include <libicq2000/constants.h>
-#include <libicq2000/Contact.h>
+#include "SNAC-base.h"
+#include "ICQ.h"
+#include "constants.h"
+#include "Contact.h"
 
 namespace ICQ2000 {
 

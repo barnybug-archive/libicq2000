@@ -19,7 +19,7 @@
  *
  */
 
-#include <libicq2000/TLV.h>
+#include "TLV.h"
 
 using std::string;
 using std::map;
@@ -660,6 +660,7 @@ namespace ICQ2000 {
     return tlvmap[type];
   }
 
+  Buffer& operator<<(Buffer& b, const ICQ2000::OutTLV& tlv) { tlv.Output(b); return b; }
+
 }
 
-Buffer& operator<<(Buffer& b, const ICQ2000::OutTLV& tlv) { tlv.Output(b); return b; }
