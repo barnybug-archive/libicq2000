@@ -693,6 +693,9 @@ namespace ICQ2000
     unsigned short length;
     length = b.remains();
 
+    m_ev->setPos(m_ev->getPos()+length);
+    m_ev->setTotalPos(m_ev->getTotalPos()+length);
+
     while ( length>0 )
     {
         b.Unpack( m_const_buf, min(length, (unsigned short)MAX_FileChunk) );
@@ -701,9 +704,7 @@ namespace ICQ2000
     }
     m_fout.flush();  //prob. isn't needed.. but I feel safer ;)
 
-    m_ev->setPos(m_ev->getPos()+length);
-    m_ev->setTotalPos(m_ev->getTotalPos()+length);
-    if (m_ev->getTotalPos() >= m_ev->getTotalSize())
+   if (m_ev->getTotalPos() >= m_ev->getTotalSize())
     {
       m_ev->setState(FileTransferEvent::COMPLETE);
       throw DisconnectedException("FileTransfer is Complete");
