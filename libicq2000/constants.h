@@ -49,7 +49,7 @@ static const unsigned int String_Limit = 16384; // A sensible limit
 static const unsigned int Incoming_Packet_Limit = 65535;
  
 enum RandomChatGroup {
-  group_GeneralChat,
+  group_GeneralChat = 1,
   group_Romance,
   group_Games,
   group_Students,
