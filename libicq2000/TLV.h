@@ -80,7 +80,7 @@ namespace ICQ2000 {
   const unsigned short TLV_SignupDate = 0x0002;
   const unsigned short TLV_SignonDate = 0x0003;
   const unsigned short TLV_Port = 0x0004; // ??
-  const unsigned short TLV_Unknown0005 = 0x0005;
+  const unsigned short TLV_UserInfoCapabilities = 0x0005;
   const unsigned short TLV_Status = 0x0006;
   const unsigned short TLV_Unknown = 0x0008; // ??
   const unsigned short TLV_IPAddress = 0x000a;
@@ -387,7 +387,16 @@ namespace ICQ2000 {
     unsigned short Type() const { return TLV_Port; }
   };
 
-  class CapabilitiesTLV : public OutTLV, public InTLV {
+  class UserInfoCapabilitiesTLV : public OutTLV {
+   public:
+    UserInfoCapabilitiesTLV() { }
+    unsigned short Type() const { return TLV_UserInfoCapabilities; }
+    unsigned short Length() const { return 32; }
+
+    void OutputValue(Buffer& b) const;
+  };
+
+  class CapabilitiesTLV : public InTLV {
    private:
     bool m_accept_adv_msgs;
     
@@ -397,7 +406,6 @@ namespace ICQ2000 {
     unsigned short Length() const { return 32; }
     bool getAcceptAdvMsgs() const;
 
-    void OutputValue(Buffer& b) const;
     void ParseValue(Buffer& b);
   };
 

@@ -28,7 +28,7 @@ namespace ICQ2000 {
   // --------------- Location (Family 0x0002) SNACs ----------------
 
   void SetUserInfoSNAC::OutputBody(Buffer& b) const {
-    CapabilitiesTLV ctlv;
+    UserInfoCapabilitiesTLV ctlv;
     b << ctlv;
   }
 

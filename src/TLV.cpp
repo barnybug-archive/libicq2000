@@ -230,9 +230,9 @@ namespace ICQ2000 {
 
   }
 
-  // ----------------- Capabilities TLV -----------
+  // ----------------- UserInfoCapabilities TLV -----------
 
-  void CapabilitiesTLV::OutputValue(Buffer& b) const {
+  void UserInfoCapabilitiesTLV::OutputValue(Buffer& b) const {
     b << Length();
     b << (unsigned int)0x09461349
       << (unsigned int)0x4c7f11d1
@@ -243,6 +243,8 @@ namespace ICQ2000 {
       << (unsigned int)0x82224445
       << (unsigned int)0x53540000;
   }
+
+  // ----------------- Capabilities TLV -----------
 
   void CapabilitiesTLV::ParseValue(Buffer& b) {
     unsigned short l;
