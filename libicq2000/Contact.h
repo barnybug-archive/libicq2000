@@ -38,14 +38,24 @@ namespace ICQ2000 {
   // DetailedUserInfo classes
 
   class MainHomeInfo {
+    string cellular, normalised_cellular;
+    // cellular private - access must be through
+    // get/setMobileNo for consistency
+    
+    void normaliseMobileNo();
+
    public:
     MainHomeInfo();
 
-    string alias, firstname, lastname, email, city, state, phone, fax, street, cellular, zip;
+    string alias, firstname, lastname, email, city, state, phone, fax, street, zip;
     unsigned short country;
     signed char timezone;
 
     string getCountry() const;
+    string getMobileNo() const;
+    void setMobileNo(const string& s);
+
+    string getNormalisedMobileNo() const;
   };
 
   class HomepageInfo {
@@ -146,6 +156,7 @@ namespace ICQ2000 {
     void setUIN(unsigned int uin);
     string getStringUIN() const;
     string getMobileNo() const;
+    string getNormalisedMobileNo() const;
     string getAlias() const;
     string getFirstName() const;
     string getLastName() const;

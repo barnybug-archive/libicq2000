@@ -23,6 +23,7 @@
 
 #include "sstream_fix.h"
 #include <time.h>
+#include <ctype.h>
 
 #include <libicq2000/userinfoconstants.h>
 #include <libicq2000/events.h>
@@ -51,7 +52,7 @@ namespace ICQ2000 {
       m_mobilecontact(true), m_uin(nextImaginaryUIN()) {
 
     m_main_home_info.alias = a;
-    m_main_home_info.cellular = m;
+    m_main_home_info.setMobileNo(m);
     Init();
   }
 
@@ -87,7 +88,9 @@ namespace ICQ2000 {
 
   string Contact::getStatusStr() const { return Status_text[m_status]; }
 
-  string Contact::getMobileNo() const { return m_main_home_info.cellular; }
+  string Contact::getMobileNo() const { return m_main_home_info.getMobileNo(); }
+
+  string Contact::getNormalisedMobileNo() const { return m_main_home_info.getNormalisedMobileNo(); }
 
   string Contact::getFirstName() const { return m_main_home_info.firstname; }
 
@@ -118,7 +121,8 @@ namespace ICQ2000 {
   bool Contact::getAuthReq() const { return m_authreq; }
 
   void Contact::setMobileNo(const string& mn) {
-    m_main_home_info.cellular = mn;
+    m_main_home_info.setMobileNo(mn);
+    
     if (!mn.empty()) m_mobilecontact = true;
     else m_mobilecontact = false;
   }
@@ -234,6 +238,32 @@ namespace ICQ2000 {
     return Country_table[0].name;
   }
 
+  string MainHomeInfo::getMobileNo() const
+  {
+    return cellular;
+  }
+  
+  void MainHomeInfo::setMobileNo(const string& s)
+  {
+    cellular = s;
+    normaliseMobileNo();
+  }
+  
+  string MainHomeInfo::getNormalisedMobileNo() const
+  {
+    return normalised_cellular;
+  }
+
+  void MainHomeInfo::normaliseMobileNo()
+  {
+    normalised_cellular.erase();
+    string::iterator curr = cellular.begin();
+    while (curr != cellular.end()) {
+      if (isdigit(*curr)) normalised_cellular += *curr;
+      ++curr;
+    }
+  }
+  
   HomepageInfo::HomepageInfo()
     : age(0), sex(0), birth_year(0), birth_month(0), birth_day(0),
       lang1(0), lang2(0), lang3(0) { }

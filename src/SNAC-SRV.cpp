@@ -286,7 +286,7 @@ namespace ICQ2000 {
         b.PackUint16TranslatedNull(m_main_home_info.phone);     // phone
         b.PackUint16TranslatedNull(m_main_home_info.fax);       // fax
         b.PackUint16TranslatedNull(m_main_home_info.street);    // street
-        b.PackUint16TranslatedNull(m_main_home_info.cellular);  // cellular
+        b.PackUint16TranslatedNull(m_main_home_info.getMobileNo());  // cellular
         b.PackUint16TranslatedNull(m_main_home_info.zip);       // zip
         b << m_main_home_info.country;
         b << m_main_home_info.timezone;
@@ -631,7 +631,8 @@ namespace ICQ2000 {
       b.UnpackUint16TranslatedNull(m_main_home_info.phone);     // phone
       b.UnpackUint16TranslatedNull(m_main_home_info.fax);       // fax
       b.UnpackUint16TranslatedNull(m_main_home_info.street);    // street
-      b.UnpackUint16TranslatedNull(m_main_home_info.cellular);  // cellular
+      b.PackUint16TranslatedNull(s);  // cellular
+      m_main_home_info.setMobileNo(s);
       b.UnpackUint16TranslatedNull(m_main_home_info.zip);       // zip
       b >> m_main_home_info.country;
       unsigned char unk;

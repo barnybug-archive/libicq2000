@@ -32,7 +32,7 @@ namespace ICQ2000 {
   Contact& ContactList::operator[](const string& m) {
     iterator curr = begin();
     while (curr != end()) {
-      if ((*curr).getMobileNo() == m) return (*curr);
+      if ((*curr).getNormalisedMobileNo() == m) return (*curr);
       ++curr;
     }
 
@@ -66,7 +66,7 @@ namespace ICQ2000 {
   bool ContactList::exists(const string& m) {
     iterator curr = begin();
     while (curr != end()) {
-      if ((*curr).getMobileNo() == m) return true;
+      if ((*curr).getNormalisedMobileNo() == m) return true;
       ++curr;
     }
     return false;
