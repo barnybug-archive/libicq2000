@@ -117,6 +117,7 @@ namespace ICQ2000 {
     bool m_direct;
     unsigned int m_ext_ip, m_lan_ip;
     unsigned short m_ext_port, m_lan_port;
+    bool m_accept_adv_msgs;
 
     static unsigned int imag_uin;
     
@@ -173,6 +174,7 @@ namespace ICQ2000 {
     void setExtPort(unsigned short port);
     void setLanPort(unsigned short port);
     void setTCPVersion(unsigned char v);
+    void setAcceptAdvMsgs(bool b);
    
     void setMainHomeInfo(const MainHomeInfo& m);
     void setHomepageInfo(const HomepageInfo& s);

@@ -68,6 +68,7 @@ namespace ICQ2000 {
     m_ext_port = 0;
     m_lan_port = 0;
     m_direct = true;
+    m_accept_adv_msgs = false;
   }
 
   unsigned int Contact::getUIN() const { return m_uin; }
@@ -103,7 +104,7 @@ namespace ICQ2000 {
   void Contact::setDirect(bool b) { m_direct = b; }
 
   bool Contact::acceptAdvancedMsgs() const {
-    return (m_tcp_version >= 7 && m_status != STATUS_OFFLINE);
+    return (m_tcp_version >= 7 && m_status != STATUS_OFFLINE && m_accept_adv_msgs);
   }
 
   bool Contact::isInvisible() const { return m_invisible; }
@@ -139,6 +140,8 @@ namespace ICQ2000 {
   void Contact::setLanPort(unsigned short port) { m_lan_port = port; }
 
   void Contact::setTCPVersion(unsigned char v) { m_tcp_version = v; }
+
+  void Contact::setAcceptAdvMsgs(bool b) { m_accept_adv_msgs = b; }
 
   void Contact::setMainHomeInfo(const MainHomeInfo& s) { m_main_home_info = s; }
 

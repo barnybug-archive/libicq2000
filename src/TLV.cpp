@@ -82,6 +82,9 @@ namespace ICQ2000 {
       case TLV_Port:
 	tlv = new PortTLV();
 	break;
+      case TLV_Capabilities:
+	tlv = new CapabilitiesTLV();
+	break;
       }
       break;
 
@@ -240,6 +243,22 @@ namespace ICQ2000 {
       << (unsigned int)0x82224445
       << (unsigned int)0x53540000;
   }
+
+  void CapabilitiesTLV::ParseValue(Buffer& b) {
+    unsigned short l;
+    b >> l;
+
+    // ICQ2001 sends out 64 bytes or so
+    // ICQ2000 sends out 32 bytes
+    // ICQLite sends out 16, so this is what we'll use for now until someone
+    // figures out what those capabilities mean
+    if (l > 16)
+      m_accept_adv_msgs = true;
+    else
+      m_accept_adv_msgs = false;
+  }
+
+  bool CapabilitiesTLV::getAcceptAdvMsgs() const { return m_accept_adv_msgs; }
 
   // ----------------- Status TLV -----------------
 

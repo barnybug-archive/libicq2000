@@ -629,6 +629,10 @@ namespace ICQ2000 {
       c.setExtPort( userinfo.getExtPort() );
       c.setLanPort( userinfo.getLanPort() );
       c.setTCPVersion( userinfo.getTCPVersion() );
+      if (userinfo.getAcceptAdvMsgs() != UserInfoBlock::tri_unknown) {
+	c.setAcceptAdvMsgs( userinfo.getAcceptAdvMsgs() == UserInfoBlock::tri_true );
+      }
+      
       StatusChangeEvent ev(&c, c.getStatus(), old_st);
       contactlist.emit(&ev);
 
@@ -1694,21 +1698,49 @@ namespace ICQ2000 {
    *  will be initiated.
    *
    * @param st the status
+   * @param inv whether to be invisible or not
    */
-  void Client::setStatus(const Status st) {
+  void Client::setStatus(const Status st, bool inv) {
     if (m_state == BOS_LOGGED_IN) {
       if (st == STATUS_OFFLINE) {
 	Disconnect(DisconnectedEvent::REQUESTED);
 	return;
       }
 
+      /*
+       * The correct sequence of events are:
+       * - when going from visible to invisible
+       *   - send the Add to Visible list (or better named Set in this case)
+       *   - send set Status
+       * - when going from invisible to visible
+       *   - send set Status
+       *   - send the Add to Invisible list (or better named Set in this case)
+       */
+
       Buffer b(&m_translator);
       unsigned int d;
-      
+
+      if (!m_invisible && inv) {
+	// visible -> invisible
+	d = FLAPHeader(b,0x02);
+	AddVisibleSNAC avs;
+	b << sss;
+	FLAPFooter(b,d);
+      }
+	
       d = FLAPHeader(b,0x02);
-      SetStatusSNAC sss(MapStatusToICQStatus(st, m_invisible));
+      SetStatusSNAC sss(MapStatusToICQStatus(st, inv));
       b << sss;
       FLAPFooter(b,d);
+      
+      
+      if (m_visible && !inv) {
+	// invisible -> visible
+	d = FLAPHeader(b,0x02);
+	AddInvisibleSNAC ais;
+	b << sss;
+	FLAPFooter(b,d);
+      }
       
       Send(b);
     } else {

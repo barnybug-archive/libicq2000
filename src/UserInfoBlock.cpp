@@ -40,6 +40,7 @@ namespace ICQ2000 {
   unsigned short UserInfoBlock::getFirewall() const { return m_firewall; }
   unsigned char UserInfoBlock::getTCPVersion() const { return m_tcp_version; }
   unsigned short UserInfoBlock::getStatus() const { return m_status; }
+  UserInfoBlock::tristate UserInfoBlock::getAcceptAdvMsgs() const { return m_accept_adv_msgs; }
 
   void UserInfoBlock::Parse(Buffer& b) {
     // (byte)length, string screenname
@@ -108,6 +109,11 @@ namespace ICQ2000 {
     if (tlvlist.exists(TLV_Port)) {
       PortTLV *t = (PortTLV*)tlvlist[TLV_Port];
       m_ext_port = t->Value();
+    }
+
+    if (tlvlist.exists(TLV_Capabilities)) {
+      CapabilitiesTLV *t = (CapabilitiesTLV*)tlvlist[TLV_Capabilities];
+      m_accept_adv_msgs = (t->getAcceptAdvMsgs() ? tri_true : tri_false);
     }
 
   }

@@ -364,7 +364,7 @@ namespace ICQ2000 {
     void SendEvent(MessageEvent *ev);
 
     // -- Set Status --
-    void setStatus(const Status st);
+    void setStatus(const Status st, bool inv = false);
     Status getStatus() const;
 
     // -- Contact List --

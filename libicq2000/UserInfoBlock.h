@@ -33,6 +33,13 @@ namespace ICQ2000 {
    * encapsulate it here
    */
   class UserInfoBlock {
+   public:
+    enum tristate {
+      tri_unknown,
+      tri_true,
+      tri_false
+    };
+	
    protected:
     string m_screenname;
     unsigned short m_warninglevel, m_userClass;
@@ -43,9 +50,10 @@ namespace ICQ2000 {
     unsigned int m_lan_ip, m_ext_ip;
     unsigned short m_lan_port, m_ext_port, m_firewall;
     unsigned char m_tcp_version;
+    tristate m_accept_adv_msgs;
     
    public:
-    UserInfoBlock() { }
+    UserInfoBlock() : m_accept_adv_msgs(tri_unknown) { }
 
     string getScreenName() const;
     unsigned int getUIN() const;
@@ -56,6 +64,7 @@ namespace ICQ2000 {
     unsigned short getExtPort() const;
     unsigned short getFirewall() const;
     unsigned char getTCPVersion() const;
+    tristate getAcceptAdvMsgs() const;
     unsigned short getStatus() const;
 
     void Parse(Buffer& b);

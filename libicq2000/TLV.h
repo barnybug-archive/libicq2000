@@ -80,13 +80,13 @@ namespace ICQ2000 {
   const unsigned short TLV_SignupDate = 0x0002;
   const unsigned short TLV_SignonDate = 0x0003;
   const unsigned short TLV_Port = 0x0004; // ??
-  const unsigned short TLV_Capabilities = 0x0005;
+  const unsigned short TLV_Unknown0005 = 0x0005;
   const unsigned short TLV_Status = 0x0006;
   const unsigned short TLV_Unknown = 0x0008; // ??
   const unsigned short TLV_IPAddress = 0x000a;
   const unsigned short TLV_WebAddress = 0x000b;
   const unsigned short TLV_LANDetails = 0x000c;
-  const unsigned short TLV_Unknown000d = 0x000d;
+  const unsigned short TLV_Capabilities = 0x000d;
   const unsigned short TLV_TimeOnline = 0x000f;
 
   // Channel 0x0004
@@ -387,13 +387,18 @@ namespace ICQ2000 {
     unsigned short Type() const { return TLV_Port; }
   };
 
-  class CapabilitiesTLV : public OutTLV {
+  class CapabilitiesTLV : public OutTLV, public InTLV {
+   private:
+    bool m_accept_adv_msgs;
+    
    public:
     CapabilitiesTLV() { }
     unsigned short Type() const { return TLV_Capabilities; }
     unsigned short Length() const { return 32; }
+    bool getAcceptAdvMsgs() const;
 
     void OutputValue(Buffer& b) const;
+    void ParseValue(Buffer& b);
   };
 
   class RedirectTLV : public InTLV {
