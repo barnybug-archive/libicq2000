@@ -122,7 +122,7 @@ namespace ICQ2000 {
 
   unsigned char Contact::getTCPVersion() const { return m_tcp_version; }
 
-  bool Contact::getDirect() const { return m_direct; }
+  bool Contact::getDirect() const { return (m_direct && m_status != STATUS_OFFLINE); }
 
   void Contact::setDirect(bool b) { m_direct = b; }
 
