@@ -72,6 +72,17 @@ void Buffer::PackByteString(const string& s) {
   Pack(s);
 }
 
+void Buffer::UnpackCRLFString(string& s) {
+  vector<unsigned char>::iterator i;
+  int npos;
+
+  i = find(m_data.begin()+m_out_pos, m_data.end(), '\n');
+
+  if (i != m_data.end() ) {
+    Unpack(s, i-m_data.begin()-m_out_pos+1);
+  }
+}
+
 void Buffer::Pack(const string& s) {
   copy(s.begin(), s.end(), back_inserter(m_data));
 }

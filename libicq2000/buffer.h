@@ -105,6 +105,7 @@ class Buffer {
   void PackUint16StringNull(const string& s);
   void PackUint16TranslatedNull(const string& s);
   void PackByteString(const string& s);
+  void UnpackCRLFString(string& s);
 
   void Unpack(string& s, unsigned int size);
   void Unpack(unsigned char *const d, unsigned int size);
