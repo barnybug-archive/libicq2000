@@ -69,6 +69,11 @@ namespace ICQ2000 {
   const unsigned short STATUS_FLAG_FREEFORCHAT = 0x0020;
   const unsigned short STATUS_FLAG_INVISIBLE = 0x0100;
 
+  /**
+   *  The main library object.  This is the object the user interface
+   *  instantiates for a connection, hooks up to signal on and has the
+   *  methods to connect, disconnect and send events from.
+   */
   class Client : public SigC::Object {
    private:
     enum State { NOT_CONNECTED,
@@ -127,6 +132,8 @@ namespace ICQ2000 {
     void DisconnectBOS();
     void DisconnectInt();
 
+    // -- Ping server --
+    void PingServer();
 
     DirectClient* ConnectDirect(Contact *c);
     void DisconnectDirectConns();
@@ -146,7 +153,7 @@ namespace ICQ2000 {
     void SignalUserOffline(BuddyOfflineSNAC *snac);
     void SignalUserAdded(Contact *c);
     void SignalUserRemoved(Contact *c);
-    void SignalAddSocket(int fd, AddSocketHandleEvent::Mode m);
+    void SignalAddSocket(int fd, SocketEvent::Mode m);
     void SignalRemoveSocket(int fd);
     // ------------------ Outgoing packets -------------------
 
@@ -219,28 +226,141 @@ namespace ICQ2000 {
     Client(const unsigned int uin, const string& password);
     ~Client();
    
+    /**
+     *  Get the invisible status.
+     * @return whether you are invisible or not
+     */
     bool getInvisible() const { return m_invisible; }
+
+    /**
+     *  Set the invisible status
+     * @param i Invisible boolean
+     *
+     * @todo Need to send new status to server, and invisible/visible lists
+     */
     void setInvisible(bool i) { m_invisible = i; }
+
+    /**
+     *  Set your uin.
+     *  Use to set what the uin you would like to log in as, before connecting.
+     * @param uin your UIN
+     */
     void setUIN(unsigned int uin) { m_uin = uin; }
+
+    /**
+     *  Get your uin.
+     * @return your UIN
+     */
     unsigned int getUIN() const { return m_uin; }
+
+    /** 
+     *  Set the password to use at login.
+     * @param password your password
+     */
     void setPassword(const string& password) { m_password = password; }
+
+    /**
+     *  Get the password you set for login
+     * @return your password
+     */
     string getPassword() const { return m_password; }
 
     bool setTranslationMap(const string& szMapFileName);
-    const string& getTranslationMapFileName() { return m_translator.getMapFileName(); }
-    const string& getTranslationMapName() { return m_translator.getMapName(); }
-    bool usingDefaultMap() { return m_translator.usingDefaultMap(); }
+    const string& getTranslationMapFileName() const;
+    const string& getTranslationMapName() const;
+    bool usingDefaultMap() const;
 
     // -- Signals --
+    /**
+     *  The signal to connect to for listening to ConnectedEvent's.
+     *  A ConnectedEvent is signalled when the client is online proper.
+     * @see disconnected, ConnectedEvent
+     */
     Signal1<void,ConnectedEvent*> connected;
+
+    /**
+     *  The signal to connect to for listening to DisconnectedEvent's.
+     *  A DisconnectedEvent is signalled when you were disconnected
+     *  from the server.  This could have been because it was
+     *  requested, or the server might have chucked you off. More
+     *  information can be in the DisconnectedEvent.
+     *
+     *  DisconnectedEvent's don't necessarily match a ConnectedEvent,
+     *  if you try connecting with an incorrect password, you will
+     *  never get a ConnectedEvent before the DisconnectedEvent
+     *  signalling incorrect password.
+     * @see connected, DisconnectedEvent
+     */
     Signal1<void,DisconnectedEvent*> disconnected;
+
+    /**
+     *  The signal to connect to for listening to incoming
+     *  MessageEvent. This includes far more than just messages.
+     * @see MessageEvent
+     */
     Signal1<bool,MessageEvent*,StopOnTrueMarshal> messaged;
+
+    /**
+     *  The signal to connect to for listening to the acknowledgements
+     *  that the library will generate for when the remote client
+     *  sends back a message ack. Additionally it will it is used for
+     *  signalling to the Client message delivery failures and when
+     *  messages are being reattempted to be send through the server.
+     * @see messaged, MessageEvent
+     */
     Signal1<void,MessageEvent*> messageack;
+
+    /**
+     *  The signal to connect to for listening to Contact list events.
+     * @see ContactListEvent
+     */
     Signal1<void,ContactListEvent*> contactlist;
+
+    /**
+     *  The signal for when registering a new UIN has succeeded or
+     *  failed after a call to RegisterUIN().
+     * @see NewUINEvent, RegisterUIN
+     */
     Signal1<void,NewUINEvent*> newuin;
+
+    /**
+     *  The signal for when the server signals the rate at which the client
+     *  is sending has been changed.
+     * @see RateInfoChangeEvent
+     */
     Signal1<void,RateInfoChangeEvent*> rate;
+
+    /**
+     *  The signal for all logging messages that are passed back to
+     *  the client.  This leads to a very flexible logging system, as
+     *  the user interface may decide where to write the log message
+     *  to (stdout, a dialog box, etc..) and also may pick which type
+     *  of log messages to display and which to ignore.
+     * @see LogEvent
+     */
     Signal1<void,LogEvent*> logger;
+
+    /**
+     *  The signal for socket events. All clients must listen to this
+     *  and implement their particular scheme of blocking on multiple
+     *  sockets for read/write/exception, usually the select system
+     *  call in someway. Often toolkits will hide all the details of
+     *  select inside them, such as the way gtk or gtkmm do.
+     *
+     * @see SocketEvent
+     */
     Signal1<void,SocketEvent*> socket;
+
+    /**
+     *  Signal to listen to for when the server has accepted a status
+     *  change request. Your change in status has been acknowledged by
+     *  the server then, and other clients will see the new status. In
+     *  a User Interface the setting of the status should be done
+     *  separately from the updating the display of it. The updating
+     *  the display of it should only be done once you have received
+     *  this signal.
+     * @see MyStatusChangeEvent
+     */
     Signal1<void,MyStatusChangeEvent*> statuschanged;
     // -------------
 
@@ -249,18 +369,11 @@ namespace ICQ2000 {
     void SignalMessageQueueChanged(Contact *c);
     // ------------------------
 
-    // -- Ping server --
-    void PingServer();
-
     // -- Send calls --
     void SendEvent(MessageEvent *ev);
 
     // -- Set Status --
     void setStatus(const Status st);
-    /* This can be called when connected to set the initial status
-     * when you do connect, or can be called whilst connected to
-     * change status
-     */
     Status getStatus() const;
 
     // -- Contact List --
@@ -270,36 +383,20 @@ namespace ICQ2000 {
     void fetchSimpleContactInfo(Contact* c);
     void fetchDetailContactInfo(Contact* c);
 
-    void setLoginServerHost(const string& host) { m_authorizerHostname = host; }
-    string getLoginServerHost() const { return m_authorizerHostname; }
+    void setLoginServerHost(const string& host);
+    string getLoginServerHost() const;
 
-    void setLoginServerPort(const unsigned short& port) { m_authorizerPort = port; }
-    unsigned short getLoginServerPort() const { return m_authorizerPort; }
+    void setLoginServerPort(const unsigned short& port);
+    unsigned short getLoginServerPort() const;
 
-    void setBOSServerOverridePort(const bool& b) { m_bosOverridePort = b; }
-    bool getBOSServerOverridePort() const { return m_bosOverridePort; }
+    void setBOSServerOverridePort(const bool& b);
+    bool getBOSServerOverridePort() const;
 
-    void setBOSServerPort(const unsigned short& port) { m_bosPort = port; }
-    unsigned short getBOSServerPort() const { return m_bosPort; }
+    void setBOSServerPort(const unsigned short& port);
+    unsigned short getBOSServerPort() const;
 
-    /*
-     *  Poll must be called regularly (at least every 60 seconds)
-     *  but I recommended 5 seconds, so timeouts work with good
-     *  granularity.
-     *  It is not related to the socket callback - the client using
-     *  this library must select() on the sockets it gets signalled
-     *  and call socket_cb when select returns a status flag on one
-     *  of the sockets. ickle simply uses the gtk-- built in signal handlers
-     *  to do all this.
-     */
     void Poll();
     void socket_cb(int fd, SocketEvent::Mode m);
-
-    // might be useful for select calls within client
-    // or library, eg. gtkmm
-    // (deprecated - clients should do Client::socket.connect() and listen
-    //  for socket events now)
-    int getSocketHandle() { return m_serverSocket.getSocketHandle(); }
 
     void RegisterUIN();
 

@@ -103,12 +103,12 @@ namespace ICQ2000 {
 
     void Init();
 
-    void SignalAddSocket(int fd, AddSocketHandleEvent::Mode m);
+    void SignalAddSocket(int fd, SocketEvent::Mode m);
     void SignalRemoveSocket(int fd);
 
    public:
     DirectClient(TCPSocket *sock, ContactList *cl, unsigned int uin, unsigned int ext_ip, unsigned short server_port, Translator* translator);
-    DirectClient::DirectClient(Contact *c, unsigned int uin, unsigned int ext_ip, unsigned short server_port, Translator *translator);
+    DirectClient(Contact *c, unsigned int uin, unsigned int ext_ip, unsigned short server_port, Translator *translator);
     ~DirectClient();
 
     void Connect();

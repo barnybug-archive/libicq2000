@@ -57,9 +57,9 @@ namespace ICQ2000 {
     void ClientToServer(char &_cChar);
     static void CRLFtoLF(string& s);
     static void LFtoCRLF(string& s);
-    bool usingDefaultMap()  { return m_bDefault; }
-    const string& getMapFileName() { return m_szMapFileName; }
-    const string& getMapName() { return m_szMapName; }
+    bool usingDefaultMap() const { return m_bDefault; }
+    const string& getMapFileName() const { return m_szMapFileName; }
+    const string& getMapName() const { return m_szMapName; }
 
    protected:
     unsigned char serverToClientTab[256];

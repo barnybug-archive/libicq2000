@@ -33,14 +33,32 @@ using std::endl;
 
 namespace ICQ2000 {
 
+  /**
+   *  Constructor for creating the Client object.  Use this when
+   *  uin/password are unavailable at time of creation, they can
+   *  always be set later.
+   */
   Client::Client() : m_recv(&m_translator){
     Init();
   }
 
+  /**
+   *  Constructor for creating the Client object.  Use this when the
+   *  uin/password are available at time of creation, to save having
+   *  to set them later.
+   *
+   *  @param uin the owner's uin
+   *  @param password the owner's password
+   */
   Client::Client(const unsigned int uin, const string& password) : m_uin(uin), m_password(password), m_recv(&m_translator) {
     Init();
   }
 
+  /**
+   *  Destructor for the Client object.  This will free up all
+   *  resources used by Client, including any Contact objects. It also
+   *  automatically disconnects if you haven't done so already.
+   */
   Client::~Client() {
     if (m_cookie_data)
       delete [] m_cookie_data;
@@ -1237,10 +1255,15 @@ namespace ICQ2000 {
 
   // -----------------------------------------------------
 
-  /*
-   *  Poll must be called regularly (at least every 60 seconds)
-   *  but I recommended 5 seconds, so timeouts work with good
-   *  granularity.
+  /**
+   *  Perform any regular time dependant tasks.
+   *
+   *  Poll must be called regularly (at least every 60 seconds) but I
+   *  recommended 5 seconds, so timeouts work with good granularity.
+   *  It is not related to the socket callback and socket listening.
+   *  The client must call this Poll fairly regularly, to ensure that
+   *  timeouts on message sending works correctly, and that the server
+   *  is pinged once every 60 seconds.
    */
   void Client::Poll() {
     time_t now = time(NULL);
@@ -1250,12 +1273,23 @@ namespace ICQ2000 {
 
     }
 
-    // take the opportunity to clearout caches
     m_reqidcache.clearoutPoll();
     m_cookiecache.clearoutPoll();
     m_dccache.clearoutPoll();
   }
 
+  /**
+   *  Callback from client to tell library the socket is ready.  The
+   *  client must call this method when select says that the file
+   *  descriptor is available for mode (read, write or exception).
+   *  The client will know what socket descriptors to select on, and
+   *  with what mode from the SocketEvent's it receives. It is worth
+   *  looking at the shell.cpp example in the examples directory and
+   *  fully understanding how it works with select.
+   *
+   * @param fd the socket descriptor
+   * @param m the mode that the socket is available on
+   */
   void Client::socket_cb(int fd, SocketEvent::Mode m) {
 
     if ( fd == m_serverSocket.getSocketHandle() ) {
@@ -1375,11 +1409,23 @@ namespace ICQ2000 {
       ConnectAuthorizer(AUTH_AWAITING_CONN_ACK);
   }
 
+  /**
+   *  Register a new UIN. Although support for this has been coded
+   *  there isn't any support for settings your details yet, so being
+   *  able to create a new user is largely useless.
+   *
+   * @todo settings your user information
+   */
   void Client::RegisterUIN() {
     if (m_state == NOT_CONNECTED)
       ConnectAuthorizer(UIN_AWAITING_CONN_ACK);
   }
 
+  /**
+   *  Boolean to determine if you are connected or not.
+   *
+   * @return connected
+   */
   bool Client::isConnected() const {
     return (m_state == BOS_LOGGED_IN);
   }
@@ -1595,6 +1641,16 @@ namespace ICQ2000 {
     return true;
   }
 
+  /**
+   *  Used for sending a message event from the client.  The Client
+   *  should create the specific MessageEvent by dynamically
+   *  allocating it with new. The library will take care of deleting
+   *  it when appropriate. The MessageEvent will persist whilst the
+   *  message has not be confirmed as delivered or failed yet. Exactly
+   *  the same MessageEvent is signalled back in the messageack signal
+   *  callback, so a client could use pointer equality comparison to
+   *  match messages it has sent up to their acks.
+   */
   void Client::SendEvent(MessageEvent *ev) {
     Contact *c = ev->getContact();
     if (ev->getType() == MessageEvent::Normal
@@ -1614,6 +1670,16 @@ namespace ICQ2000 {
     Send(b);
   }
 
+  /**
+   *  Set your status. This is used to set your status, as well as to
+   *  connect and disconnect from the network. When you wish to
+   *  connect to the ICQ network, set status to something other than
+   *  STATUS_OFFLINE and connecting will be initiated. When you wish
+   *  to disconnect set the status to STATUS_OFFLINE and disconnection
+   *  will be initiated.
+   *
+   * @param st the status
+   */
   void Client::setStatus(const Status st) {
     if (m_state == BOS_LOGGED_IN) {
       if (st == STATUS_OFFLINE) {
@@ -1638,10 +1704,22 @@ namespace ICQ2000 {
     }
   }
 
+  /**
+   *  Get your current status.
+   *
+   * @return your current status
+   */
   Status Client::getStatus() const {
     return m_status;
   }
 
+  /**
+   *  Add a contact to your list.  The contact passed by reference
+   *  need only be a temporary. It is copied within the library before
+   *  returning.
+   *
+   * @param c the contact passed by reference.
+   */
   void Client::addContact(Contact& c) {
 
     if (!m_contact_list.exists(c.getUIN())) {
@@ -1666,6 +1744,11 @@ namespace ICQ2000 {
 
   }
 
+  /**
+   *  Remove a contact from your list.
+   *
+   * @param uin the uin of the contact to be removed
+   */
   void Client::removeContact(const unsigned int uin) {
     if (m_contact_list.exists(uin)) {
       Contact &c = m_contact_list[uin];
@@ -1722,16 +1805,40 @@ namespace ICQ2000 {
     contactlist.emit(&ev);
   }
 
+  /**
+   *  Method for indicating the User Info for a contact has changed.
+   *  The reason this is not automatically signalled when the set
+   *  methods are called on Contact are because large numbers of
+   *  setting contact properties, such as on startup of a client would
+   *  be very inefficient then. It is trusted that a Client will call
+   *  this method when it has finished changing properties on a
+   *  Contact, just as the library will.
+
+   * @param c the contact
+   */
   void Client::SignalUserInfoChange(Contact *c) {
     UserInfoChangeEvent ev(c);
     contactlist.emit(&ev);
   }
 
+  /**
+   *  Method for indicating that the queue of message events
+   *  automatically stored in a contact has changed.
+   *
+   * @todo This will probably change so that it isn't necessary to call this anymore.
+   */
   void Client::SignalMessageQueueChanged(Contact *c) {
     MessageQueueChangedEvent ev(c);
     contactlist.emit(&ev);
   }
 
+  /**
+   *  Get the Contact object for a given uin.
+   *
+   * @param uin the uin
+   * @return a pointer to the Contact object. NULL if no Contact with
+   * that uin exists on your list.
+   */
   Contact* Client::getContact(const unsigned int uin) {
     if (m_contact_list.exists(uin)) {
       return &m_contact_list[uin];
@@ -1740,6 +1847,15 @@ namespace ICQ2000 {
     }
   }
 
+  /**
+   *  Request the simple contact information for a Contact.  This
+   *  consists of the contact alias, firstname, lastname and
+   *  email. When the server has replied with the details the library
+   *  will signal a user info changed for this contact.
+   *
+   * @param c contact to fetch info for
+   * @see ContactListEvent
+   */
   void Client::fetchSimpleContactInfo(Contact *c) {
     Buffer b(&m_translator);
     unsigned int d;
@@ -1754,6 +1870,14 @@ namespace ICQ2000 {
     Send(b);
   }
 
+  /**
+   *  Request the detailed contact information for a Contact. When the
+   *  server has replied with the details the library will signal a
+   *  user info changed for this contact.
+   *
+   * @param c contact to fetch info for
+   * @see ContactListEvent
+   */
   void Client::fetchDetailContactInfo(Contact *c) {
     Buffer b(&m_translator);
     unsigned int d;
@@ -1832,6 +1956,11 @@ namespace ICQ2000 {
     return (st & STATUS_FLAG_INVISIBLE);
   }
 
+  /**
+   *  Set the translation map file to use for character set translation.
+   * @param szMapFileName the name of the translation map file
+   * @return whether setting translation map was a success
+   */
   bool Client::setTranslationMap(const string& szMapFileName) { 
     try{
       m_translator.setTranslationMap(szMapFileName);
@@ -1840,6 +1969,113 @@ namespace ICQ2000 {
       return false; 
     }
     return true;
+  }
+
+  /**
+   *  Get the File name of the translation map currently in use.
+   * @return filename of translation map
+   */
+  const string& Client::getTranslationMapFileName() const {
+    return m_translator.getMapFileName();
+  }
+
+  /**
+   *  Get the Name of the translation map currently in use.
+   * @return name of translation map
+   */
+  const string& Client::getTranslationMapName() const {
+    return m_translator.getMapName();
+  }
+
+  /**
+   *  Determine whether the default map (no translation) is in use.
+   * @return whether using the default map
+   */
+  bool Client::usingDefaultMap() const {
+    return m_translator.usingDefaultMap();
+  }
+
+  /**
+   *  set the hostname of the login server.
+   *  You needn't touch this normally, it will default automatically to login.icq.com.
+   *
+   * @param host The host name of the server
+   */
+  void Client::setLoginServerHost(const string& host) {
+    m_authorizerHostname = host;
+  }
+
+  /**
+   *  get the hostname for the currently set login server.
+   *
+   * @return the hostname
+   */
+  string Client::getLoginServerHost() const {
+    return m_authorizerHostname;
+  }
+  
+  /**
+   *  set the port on the login server to connect to
+   *
+   * @param port the port number
+   */
+  void Client::setLoginServerPort(const unsigned short& port) {
+    m_authorizerPort = port;
+  }
+
+  /**
+   *  get the currently set port on the login server.
+   *
+   * @return the port number
+   */
+  unsigned short Client::getLoginServerPort() const {
+    return m_authorizerPort;
+  }
+  
+  /**
+   *  set whether to override the port used to connect to the BOS
+   *  server.  If you would like to ignore the port that the login
+   *  server tells you to connect to on the BOS server and instead use
+   *  your own, set this to true and call setBOSServerPort with the
+   *  port you would like to use. This method is largely unnecessary,
+   *  if you set a different login port - for example to get through
+   *  firewalls that block 5190, the login server will accept it fine
+   *  and in the redirect message doesn't specify a port, so the
+   *  library will default to using the same one as it used to connect
+   *  to the login server anyway.
+   *
+   * @param b override redirect port
+   */
+  void Client::setBOSServerOverridePort(const bool& b) {
+    m_bosOverridePort = b;
+  }
+
+  /**
+   *  get whether the BOS redirect port will be overridden.
+   *
+   * @return override redirect port
+   */
+  bool Client::getBOSServerOverridePort() const {
+    return m_bosOverridePort;
+  }
+  
+  /**
+   *  set the port to use to connect to the BOS server. This will only
+   *  be used if you also called setBOSServerOverridePort(true).
+   *
+   * @param port the port number
+   */
+  void Client::setBOSServerPort(const unsigned short& port) {
+    m_bosPort = port;
+  }
+
+  /**
+   *  get the port that will be used on the BOS server.
+   *
+   * @return the port number
+   */
+  unsigned short Client::getBOSServerPort() const {
+    return m_bosPort;
   }
 
 }

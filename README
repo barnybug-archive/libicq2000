@@ -224,9 +224,8 @@ acknowledged/solved.
    - API                                                            -
    ------------------------------------------------------------------
 
-Documentation for the API is underdevelopment. I am going to use the
-tool doxygen to generate most of it directly from the sources, once
-I've commented them fully.
+You can find doxygen generated documentation on the libicq2000
+homepage (the API link on the right).
 
 The API should be more stable now, and I am aiming to avoid breaking
 backward compatability in future as much as possible from now onwards
