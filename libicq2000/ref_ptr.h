@@ -60,27 +60,17 @@ namespace ICQ2000 {
 	delete m_instance;
     }
     
-    Object* get()
+    Object* get() const
     {
       return m_instance;
     }
     
-    Object* operator->()
+    Object* operator->() const
     {
       return m_instance;
     }
 
-    const Object* operator->() const
-    {
-      return m_instance;
-    }
-
-    Object& operator*()
-    {
-      return *m_instance;
-    }
-
-    const Object& operator*() const
+    Object& operator*() const
     {
       return *m_instance;
     }
