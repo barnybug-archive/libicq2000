@@ -64,7 +64,7 @@ namespace ICQ2000 {
   }
 
   ContactRef ContactList::add(ContactRef ct) {
-    m_cmap.insert(make_pair(ct->getUIN(),ct));
+    m_cmap[ct->getUIN()] = ct;
 
     // fire off signal
     UserAddedEvent uev( ct );

@@ -25,6 +25,9 @@
 #include <libicq2000/SNAC-SRV.h>
 #include "sstream_fix.h"
 
+using std::string;
+using std::ostringstream;
+
 namespace ICQ2000 {
 
   MessageHandler::MessageHandler(ContactRef self, ContactList *cl)
