@@ -2067,7 +2067,10 @@ namespace ICQ2000 {
 
     if (!m_contact_list.exists(c->getUIN())) {
       m_contact_list.add(c);
+
+      if(!c->getServerBased())
       c->setServerSideInfo(m_default_group, 0);
+
       c->status_change_signal.connect( contact_status_change_signal.slot() );
       c->userinfo_change_signal.connect( contact_userinfo_change_signal.slot() );
     }

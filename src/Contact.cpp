@@ -292,6 +292,7 @@ namespace ICQ2000 {
   {
     m_group_id = group_id;
     m_tag_id = tag_id;
+    userinfo_change_emit(true);
   }
 
   unsigned short Contact::getServerSideGroupID() const {
@@ -300,11 +301,12 @@ namespace ICQ2000 {
 
   unsigned short Contact::getServerSideID() const {
     unsigned short r = m_tag_id;
-    if(!r) r = m_uin;
-
+    if(!r) {
+      r = m_uin;
     if(r > 50000) {
       r -= r-1000;
       r += rand()%1000;
+    }
     }
 
     return r;
