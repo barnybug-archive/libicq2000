@@ -39,24 +39,23 @@ namespace ICQ2000 {
    *  an imaginary UIN allocated to it.
    */
   Contact::Contact()
-    : m_virtualcontact(true), m_uin(nextImaginaryUIN()), m_status(STATUS_OFFLINE), 
-      m_invisible(false), m_seqnum(0xffff), count(0)
+    : count(0), m_virtualcontact(true), m_uin(nextImaginaryUIN()), m_status(STATUS_OFFLINE), 
+      m_invisible(false), m_seqnum(0xffff)
   {
     Init();
   }
 
   Contact::Contact(unsigned int uin)
-    : m_virtualcontact(false), m_uin(uin), m_status(STATUS_OFFLINE), 
-      m_invisible(false), m_seqnum(0xffff), count(0)
+    : count(0), m_virtualcontact(false), m_uin(uin), m_status(STATUS_OFFLINE), 
+      m_invisible(false), m_seqnum(0xffff)
   {
     m_main_home_info.alias = UINtoString(m_uin);
     Init();
   }
 
   Contact::Contact(const string& a)
-    : m_virtualcontact(true), m_uin(nextImaginaryUIN()),
-      m_status(STATUS_OFFLINE), m_invisible(false), m_seqnum(0xffff),
-      count(0)
+    : count(0), m_virtualcontact(true), m_uin(nextImaginaryUIN()),
+      m_status(STATUS_OFFLINE), m_invisible(false), m_seqnum(0xffff)
   {
     m_main_home_info.alias = a;
     Init();

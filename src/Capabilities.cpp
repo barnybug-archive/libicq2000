@@ -172,7 +172,7 @@ namespace ICQ2000 {
       b.Unpack(cap, sizeof_cap);
 
       // search for capability in list
-      for (int k = 0; k < sizeof(caps) / sizeof(Block); ++k)
+      for (unsigned int k = 0; k < sizeof(caps) / sizeof(Block); ++k)
 	if ( memcmp( caps[k].data, cap, sizeof_cap ) == 0 ) {
 	  set_capability_flag( caps[k].flag );
 	  break;
@@ -188,7 +188,7 @@ namespace ICQ2000 {
   {
     for (set<Flag>::const_iterator curr = m_flags.begin();
 	 curr != m_flags.end(); ++curr)
-      for (int i = 0; i < sizeof(caps) / sizeof(Block); ++i)
+      for (unsigned int i = 0; i < sizeof(caps) / sizeof(Block); ++i)
 	if ( caps[i].flag == *curr ) {
 	  b.Pack( caps[i].data, sizeof_cap );
 	  break;

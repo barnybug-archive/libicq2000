@@ -74,7 +74,6 @@ void Buffer::PackByteString(const string& s) {
 
 void Buffer::UnpackCRLFString(string& s) {
   vector<unsigned char>::iterator i;
-  int npos;
 
   i = find(m_data.begin()+m_out_pos, m_data.end(), '\n');
 

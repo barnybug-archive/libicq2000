@@ -59,7 +59,7 @@ namespace ICQ2000 {
     };
 
    private:
-    static const unsigned int sizeof_cap(16);
+    static const unsigned int sizeof_cap = 16;
 
     struct Block {
       Flag flag;

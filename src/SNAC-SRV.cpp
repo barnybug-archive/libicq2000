@@ -488,6 +488,11 @@ namespace ICQ2000 {
     m_icqsubtype = ICQSubType::ParseICQSubType(b, false, false);
     /* offline message is non-advanced, and not an ack */
     b.advance(2); // unknown
+
+    if (m_icqsubtype != NULL && dynamic_cast<UINICQSubType*>(m_icqsubtype) != NULL) {
+      UINICQSubType *ust = dynamic_cast<UINICQSubType*>(m_icqsubtype);
+      ust->setSource( m_sender_UIN );
+    }
   }
 
   void SrvResponseSNAC::ParseICQResponse(Buffer& b) {

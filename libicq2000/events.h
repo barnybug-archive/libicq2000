@@ -349,6 +349,7 @@ namespace ICQ2000 {
       Failed_NotConnected,     // you are not connected!
       Failed_ClientNotCapable, // remote client is not capable (away messages)
       Failed_Denied,           // denied outright
+      Failed_Ignored,          // ignore completely - send no ACKs back either
       Failed_Occupied,         // resend as to contactlist/urgent
       Failed_DND,              // resend as to contactlist/urgent
       Failed_SMTP

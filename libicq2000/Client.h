@@ -210,10 +210,6 @@ namespace ICQ2000 {
 
     // -------------------------------------------------------
 
-    ContactRef lookupICQ(unsigned int uin);
-    ContactRef lookupMobile(const string& m);
-    ContactRef lookupEmail(const string& email);
-
     ContactRef getUserInfoCacheContact(unsigned int reqid);
 
     void ICBMCookieCache_expired_cb(MessageEvent *ev);

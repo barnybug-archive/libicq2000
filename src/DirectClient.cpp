@@ -50,8 +50,8 @@ namespace ICQ2000 {
 			     ContactList *cl, unsigned int ext_ip, unsigned short server_port,
 			     Translator* translator)
     : m_state(WAITING_FOR_INIT), m_recv(translator),
-      m_self_contact(self), m_contact(NULL), m_message_handler(mh),
-      m_contact_list(cl), m_incoming(true), m_local_ext_ip(ext_ip),
+      m_self_contact(self), m_contact(NULL), m_contact_list(cl), 
+      m_message_handler(mh), m_incoming(true), m_local_ext_ip(ext_ip),
       m_local_server_port(server_port), m_translator(translator)
   {
     m_socket = sock;
@@ -64,7 +64,7 @@ namespace ICQ2000 {
   DirectClient::DirectClient(ContactRef self, ContactRef c, MessageHandler *mh, unsigned int ext_ip,
 			     unsigned short server_port, Translator *translator)
     : m_state(NOT_CONNECTED), m_recv(translator), m_self_contact(self), 
-      m_contact(c), m_incoming(false), m_message_handler(mh), m_local_ext_ip(ext_ip),
+      m_contact(c), m_message_handler(mh), m_incoming(false), m_local_ext_ip(ext_ip),
       m_local_server_port(server_port), m_translator(translator)
       
   {
@@ -448,8 +448,6 @@ namespace ICQ2000 {
     if (command == 0) throw ParseException("Invalid TCP Packet");
 
     unsigned short type = icqsubtype->getType();
-
-    MessageEvent *ev;
 
     switch(command) {
 

@@ -40,9 +40,10 @@ namespace ICQ2000 {
    *  always be set later.
    */
   Client::Client()
-    : m_recv(&m_translator), m_self( new Contact(0) ),
+    : m_self( new Contact(0) ),
+      m_message_handler(m_self, &m_contact_list),
       m_smtp(m_self, "localhost", 25, &m_translator),
-      m_message_handler(m_self, &m_contact_list)
+      m_recv(&m_translator)
   {
     Init();
   }
@@ -56,9 +57,10 @@ namespace ICQ2000 {
    *  @param password the owner's password
    */
   Client::Client(const unsigned int uin, const string& password)
-    : m_self( new Contact(uin) ), m_password(password), m_recv(&m_translator),
+    : m_self( new Contact(uin) ), m_password(password),
+      m_message_handler(m_self, &m_contact_list),
       m_smtp(m_self, "localhost", 25, &m_translator),
-      m_message_handler(m_self, &m_contact_list)
+      m_recv(&m_translator)
   {
     Init();
   }
@@ -226,7 +228,6 @@ namespace ICQ2000 {
 
   void Client::DisconnectDirectConn(int fd) {
     if (m_dccache.exists(fd)) {
-      DirectClient *dc = m_dccache[fd];
       m_dccache.remove(fd);
     } else if (m_smtp.getfd() == fd) {
       SignalRemoveSocket( m_smtp.getfd() );
@@ -274,68 +275,8 @@ namespace ICQ2000 {
     ICQSubType *st = snac->getICQSubType();
     if (st == NULL) return;
 
-    unsigned short type = st->getType();
-    switch(st->getType()) {
-    case MSG_Type_Normal:
-    case MSG_Type_URL:
-    case MSG_Type_AuthReq:
-    case MSG_Type_AuthRej:
-    case MSG_Type_AuthAcc:
-    case MSG_Type_AutoReq_Away:
-    case MSG_Type_AutoReq_Occ:
-    case MSG_Type_AutoReq_NA:
-    case MSG_Type_AutoReq_DND:
-    case MSG_Type_AutoReq_FFC:
-    case MSG_Type_UserAdd:
-    {
-      MessageEvent *ev = NULL;
-      UINICQSubType *ist = static_cast<UINICQSubType*>(st);
-      bool ack = m_message_handler.handleIncoming( ist ) && ist->isAdvanced();
-      if (ack) SendAdvancedACK(snac);
-    }
-    break;
-      
-    case MSG_Type_EmailEx:
-      {
-	// these come from 'magic' UIN 10
-	EmailExICQSubType *subtype = static_cast<EmailExICQSubType*>(st);
-	contact = lookupEmail( subtype->getEmail() );
-	EmailExEvent eee(contact,
-			 subtype->getEmail(),
-			 subtype->getSender(),
-			 subtype->getMessage());
-	messaged.emit(&eee);
-      }
-      break;
-
-    case MSG_Type_SMS:
-      {
-	SMSICQSubType *sst = static_cast<SMSICQSubType*>(st);
-	
-	if (sst->getSMSType() == SMSICQSubType::SMS) {
-	  contact = lookupMobile(sst->getSender());
-	  SMSMessageEvent sme(contact,
-			      sst->getMessage(),
-			      sst->getSource(),
-			      sst->getSenders_network(),
-			      sst->getTime());
-	  messaged.emit(&sme);
-
-	} else if (sst->getSMSType() == SMSICQSubType::SMS_Receipt) {
-	  contact = lookupMobile(sst->getDestination());
-	  SMSReceiptEvent sre(contact,
-			      sst->getMessage(),
-			      sst->getMessageId(),
-			      sst->getSubmissionTime(),
-			      sst->getDeliveryTime(),
-			      sst->delivered());
-	  messaged.emit(&sre);
-	}
-      }
-      break;
-
-    }
-
+    bool ack = m_message_handler.handleIncoming( st );
+    if (ack) SendAdvancedACK(snac);
   }
 
 
@@ -418,62 +359,8 @@ namespace ICQ2000 {
 
     } else if (snac->getType() == SrvResponseSNAC::OfflineMessage) {
 
-      ICQSubType *st = snac->getICQSubType();
-
-      MessageEvent *e = NULL;
-      if (st->getType() == MSG_Type_Normal) {
-	ContactRef contact = lookupICQ(snac->getSenderUIN());
-
-	NormalICQSubType *nst = static_cast<NormalICQSubType*>(st);
-	e = new NormalMessageEvent(contact,
-				   nst->getMessage(),
-				   snac->getTime(), nst->isMultiParty() );
-      }
-      else if (st->getType() == MSG_Type_URL) {
-	ContactRef contact = lookupICQ(snac->getSenderUIN());
-
-	URLICQSubType *ust = static_cast<URLICQSubType*>(st);
-	e = new URLMessageEvent(contact,
-				ust->getMessage(),
-				ust->getURL(),
-				snac->getTime());
-      }
-      else if (st->getType() == MSG_Type_EmailEx) {
-	EmailExICQSubType *ust = static_cast<EmailExICQSubType*>(st);
-	ContactRef contact = lookupEmail( ust->getEmail() );
-
-	e = new EmailExEvent(contact, ust->getEmail(), ust->getSender(), ust->getMessage());
-      }
-      else if (st->getType() == MSG_Type_UserAdd) {
-	ContactRef contact = lookupICQ(snac->getSenderUIN());
-
-	UserAddICQSubType *ust = static_cast<UserAddICQSubType*>(st);
-	e = new UserAddEvent(contact);
-      }
-      else if (st->getType() == MSG_Type_AuthReq) {
-	ContactRef contact = lookupICQ(snac->getSenderUIN());
-
-        AuthReqICQSubType *ust = static_cast<AuthReqICQSubType*>(st);
-	e = new AuthReqEvent(contact, ust->getMessage(), snac->getTime());
-      }
-      else if (st->getType() == MSG_Type_AuthRej) {
-	ContactRef contact = lookupICQ(snac->getSenderUIN());
-
-        AuthRejICQSubType *ust = static_cast<AuthRejICQSubType*>(st);
-        e = new AuthAckEvent(contact, ust->getMessage(), false, 
-                             snac->getTime());
-      }
-      else if (st->getType() == MSG_Type_AuthAcc) {
-	ContactRef contact = lookupICQ(snac->getSenderUIN());
-
-        e = new AuthAckEvent(contact, true, snac->getTime());
-      }
-      
-      if (e != NULL) {
-        messaged.emit(e);
-	/* acks irrelevant here - offlines get no response back */
-	delete e;
-      }
+      // wow.. this is so much simpler now :-)
+      m_message_handler.handleIncoming(snac->getICQSubType(), snac->getTime());
       
     } else if (snac->getType() == SrvResponseSNAC::SMS_Error) {
       // mmm
@@ -2035,44 +1922,6 @@ namespace ICQ2000 {
     }
   }
   
-  ContactRef Client::lookupICQ(unsigned int uin) {
-    ContactRef ret;
-
-    if (m_contact_list.exists(uin)) {
-      ret = m_contact_list.lookup_uin(uin);
-    } else {
-      ret = ContactRef( new Contact(uin) );
-    }
-
-    return ret;
-  }
-
-  ContactRef Client::lookupMobile(const string& m) {
-    ContactRef ret;
-    
-    if (m_contact_list.mobile_exists(m)) {
-      ret = m_contact_list.lookup_mobile(m);
-    } else {
-      ret = ContactRef( new Contact(m) );
-      ret->setMobileNo(m);
-    }
-
-    return ret;
-  }
-
-  ContactRef Client::lookupEmail(const string& email) {
-    ContactRef ret;
-    
-    if (m_contact_list.email_exists(email)) {
-      ret = m_contact_list.lookup_email(email);
-    } else {
-      ret = ContactRef( new Contact(email) );
-      ret->setEmail(email);
-    }
-
-    return ret;
-  }
-
   void Client::SignalServerBasedContactList(const ContactList& l) {
     ServerBasedContactEvent ev(l);
     server_based_contact_list.emit(&ev);

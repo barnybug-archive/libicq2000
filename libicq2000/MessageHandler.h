@@ -22,6 +22,8 @@
 #ifndef MESSAGEHANDLER_H
 #define MESSAGEHANDLER_H
 
+#include <time.h>
+
 #include <sigc++/signal_system.h>
 
 #include <libicq2000/Contact.h>
@@ -30,16 +32,29 @@
 namespace ICQ2000 {
   
   class ContactList;
+  class ICQSubType;
   class UINICQSubType;
   class MessageEvent;
   class ICQMessageEvent;
 
+  /**
+   *  This is the central place all message signalling to the client
+   *  goes through. They can come from three sources: 1. A MessageSNAC
+   *  through the server, 2. A SrvResponseSNAC - offline message, 3. a
+   *  direct message
+   */
   class MessageHandler : public SigC::Object {
    private:
     ContactRef m_self_contact;
     ContactList *m_contact_list;
     
-    ICQMessageEvent* UINICQSubTypeToEvent(UINICQSubType *st, ContactRef contact);
+    MessageEvent* ICQSubTypeToEvent(ICQSubType *st, ContactRef& contact, bool& adv);
+    ICQMessageEvent* UINICQSubTypeToEvent(UINICQSubType *st, const ContactRef& contact);
+
+    ContactRef lookupUIN(unsigned int uin);
+    ContactRef lookupEmail(const std::string& email);
+    ContactRef lookupMobile(const std::string& m);
+
     UINICQSubType* EventToUINICQSubType(MessageEvent *ev);
 
     void SignalLog(LogEvent::LogType type, const std::string& msg);
@@ -48,7 +63,7 @@ namespace ICQ2000 {
     MessageHandler(ContactRef self, ContactList *cl);
 
     // incoming messages
-    bool handleIncoming(UINICQSubType* icq);
+    bool handleIncoming(ICQSubType* icq, time_t t = 0);
 
     // outgoing messages
     UINICQSubType* handleOutgoing(MessageEvent *ev);

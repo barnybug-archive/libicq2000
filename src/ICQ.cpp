@@ -545,12 +545,11 @@ namespace ICQ2000 {
 				       const string& lastname, const string& email, bool auth,
 				       const string& msg)
     : m_alias(alias), m_firstname(firstname), m_lastname(lastname),
-      m_email(email), m_auth(auth), m_message(msg)  { }
+      m_email(email), m_message(msg), m_auth(auth)  { }
 
   string AuthReqICQSubType::getMessage() const { return m_message; }
   
   void AuthReqICQSubType::ParseBodyUIN(Buffer& b) {
-    string::size_type pos = 0, lpos = 0;
     string text;
 
     b.UnpackUint16StringNull(text);
@@ -640,7 +639,6 @@ namespace ICQ2000 {
   EmailExICQSubType::EmailExICQSubType() { }
 
   void EmailExICQSubType::ParseBody(Buffer& b) {
-    string::size_type pos = 0, lpos = 0;
     string text;
 
     b.UnpackUint16StringNull(text);
@@ -682,7 +680,6 @@ namespace ICQ2000 {
 
   void UserAddICQSubType::ParseBodyUIN(Buffer& b)
   {
-    string::size_type pos = 0, lpos = 0;
     string text;
 
     b.UnpackUint16StringNull(text);

@@ -31,8 +31,8 @@ namespace ICQ2000 {
 
   SMTPClient::SMTPClient(ContactRef self, const string& server_name,
 			 unsigned short server_port, Translator* translator)
-    : m_state(NOT_CONNECTED), m_translator(translator), m_recv(translator),
-      m_server_name(server_name), m_server_port(server_port), m_timeout(30),
+    : m_state(NOT_CONNECTED), m_recv(translator), m_server_name(server_name),
+      m_server_port(server_port), m_timeout(30), m_translator(translator),
       m_self_contact(self)
   {
     m_socket = new TCPSocket();

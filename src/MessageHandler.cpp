@@ -42,89 +42,107 @@ namespace ICQ2000 {
    * (the actual ACK is sent in the caller - dependent on whether it
    *  was direct/thru server)
    */
-  bool MessageHandler::handleIncoming(UINICQSubType *ust)
+  bool MessageHandler::handleIncoming(ICQSubType *ist, time_t t)
   {
     ContactRef contact;
-    unsigned int uin = ust->getSource();
-
-    if (m_contact_list->exists(uin)) {
-      contact = m_contact_list->lookup_uin(uin);
-    } else {
-      contact = ContactRef( new Contact(uin) );
-    }
+    bool advanced, ack = false;
     
-    /* update the status of the contact with that sent in the packet */
-    unsigned short s = ust->getStatus();
-    contact->setStatus( Contact::MapICQStatusToStatus(s),
-			Contact::MapICQStatusToInvisible(s) );
-
-
-    ICQMessageEvent *ev = UINICQSubTypeToEvent(ust, contact);
-    if (ev->getType() != MessageEvent::AwayMessage) {
-      messaged.emit(ev);
-      contact->set_last_message_time( time(NULL) );
-    } else {
-      ev->setDelivered(true);
-      contact->set_last_away_msg_check_time( time(NULL) );
-    }
+    UINICQSubType *uist = dynamic_cast<UINICQSubType*>(ist);
+    MessageEvent *ev = ICQSubTypeToEvent(ist, contact, advanced);
+    ICQMessageEvent *mev = dynamic_cast<ICQMessageEvent*>(ev);
 
     Status st = m_self_contact->getStatus();
 
-    /* request away message if we are not online */
-    if (st != STATUS_ONLINE) {
-      want_auto_resp.emit(ev);
-    }
-
-    /* update the UINICQSubType */
-
-    ust->setACK(true);
-
-    if (ev->isDelivered()) {
-      /* set accept-status of ACK */
-      switch(st) {
-      case STATUS_ONLINE:
-	ust->setStatus(AcceptStatus_Online);
-	break;
-      case STATUS_AWAY:
-	ust->setStatus(AcceptStatus_Away);
-	break;
-      case STATUS_NA:
-	ust->setStatus(AcceptStatus_NA);
-	break;
-      case STATUS_OCCUPIED:
-	ust->setStatus(AcceptStatus_Occ_Accept);
-	break;
-      default:
-	ust->setStatus(AcceptStatus_Online);
-      }
+    if (advanced) {
+      // update the status of the contact with that sent in the packet
+      unsigned short s = uist->getStatus();
+      contact->setStatus( Contact::MapICQStatusToStatus(s),
+			  Contact::MapICQStatusToInvisible(s) );
     } else {
-      MessageEvent::DeliveryFailureReason r = ev->getDeliveryFailureReason();
-      /* set accept-status of ACK */
-      switch(r) {
-      case MessageEvent::Failed_Denied:
-	ust->setStatus(AcceptStatus_Denied);
-	break;
-      case MessageEvent::Failed_Occupied:
-	ust->setStatus(AcceptStatus_Occupied);
-	break;
-      case MessageEvent::Failed_DND:
-	ust->setStatus(AcceptStatus_DND);
-	break;
-      default:
-	ust->setStatus(AcceptStatus_Denied);
-      }
+      /* mark all non-advanced (ICQ) messages when in Occupied/DND as 'to
+       * contact list', so they can be guaranteed to arrive, as they should
+       * never be turned down (no ack is sent back) */
+      if (mev != NULL && (st == STATUS_OCCUPIED || st == STATUS_DND))
+	mev->setToContactList(true);
     }
+    
+    if (t == 0) t = ev->getTime();
+    else ev->setTime(t);
 
-    /* away message is always sent to someone if you are away */
-    if (st != STATUS_ONLINE) {
-      ust->setAwayMessage( ev->getAwayMessage() );
+    if (ev->getType() != MessageEvent::AwayMessage) {
+      messaged.emit(ev);
+      contact->set_last_message_time( t );
     } else {
-      ust->setAwayMessage("");
+      ev->setDelivered(true);
+      contact->set_last_away_msg_check_time( t );
     }
 
+    if (advanced) {
+      /* All these operations only apply to advanced messages -
+       * UINICQSubType messages, those that are associated to a UIN and
+       * that were sent as an advanced message (through server or
+       * direct, NOT offline), and consequently will the ack'ed.
+       */
+
+      /* request away message if we are not online */
+      if (st != STATUS_ONLINE && advanced) {
+	want_auto_resp.emit(mev);
+	uist->setAwayMessage( mev->getAwayMessage() );
+      } else {
+	uist->setAwayMessage( "" );
+      }
+
+      /* update the UINICQSubType */
+	
+      uist->setACK(true);
+      ack = true;
+      
+      if (ev->isDelivered()) {
+	/* set accept-status of ACK */
+	switch(st) {
+	case STATUS_ONLINE:
+	  uist->setStatus(AcceptStatus_Online);
+	  break;
+	case STATUS_AWAY:
+	  uist->setStatus(AcceptStatus_Away);
+	  break;
+	case STATUS_NA:
+	  uist->setStatus(AcceptStatus_NA);
+	  break;
+	case STATUS_OCCUPIED:
+	  uist->setStatus(AcceptStatus_Occ_Accept);
+	  break;
+	default:
+	  uist->setStatus(AcceptStatus_Online);
+	}
+      } else {
+	MessageEvent::DeliveryFailureReason r = ev->getDeliveryFailureReason();
+	/* set accept-status of ACK */
+	switch(r) {
+	case MessageEvent::Failed_Denied:
+	  uist->setStatus(AcceptStatus_Denied);
+	  break;
+	case MessageEvent::Failed_Occupied:
+	  uist->setStatus(AcceptStatus_Occupied);
+	  break;
+	case MessageEvent::Failed_DND:
+	  uist->setStatus(AcceptStatus_DND);
+	  break;
+	case MessageEvent::Failed_Ignored:
+	  ack = false;
+	  break;
+	default:
+	  uist->setStatus(AcceptStatus_Denied);
+	}
+      }
+
+    }
+
+    // delete the temporary event
     delete ev;
 
-    return true;
+    // whether the message needs ack'ing
+    return ack;
   }
 
   /*
@@ -195,9 +213,9 @@ namespace ICQ2000 {
   }
   
   /**
-   *  Convert a UINICQSubType into an Event
+   *  Convert a UINICQSubType into an ICQMessageEvent
    */
-  ICQMessageEvent* MessageHandler::UINICQSubTypeToEvent(UINICQSubType *st, ContactRef contact)
+  ICQMessageEvent* MessageHandler::UINICQSubTypeToEvent(UINICQSubType *st, const ContactRef& contact)
   {
     ICQMessageEvent *e = NULL;
     unsigned short type = st->getType();
@@ -271,6 +289,72 @@ namespace ICQ2000 {
   }
   
   /**
+   *  Convert an ICQSubType into a MessageEvent
+   */
+  MessageEvent* MessageHandler::ICQSubTypeToEvent(ICQSubType *st, ContactRef& contact, bool& adv)
+  {
+    MessageEvent *e = NULL;
+
+    adv = false;
+
+    switch(st->getType()) {
+    case MSG_Type_Normal:
+    case MSG_Type_URL:
+    case MSG_Type_AuthReq:
+    case MSG_Type_AuthRej:
+    case MSG_Type_AuthAcc:
+    case MSG_Type_AutoReq_Away:
+    case MSG_Type_AutoReq_Occ:
+    case MSG_Type_AutoReq_NA:
+    case MSG_Type_AutoReq_DND:
+    case MSG_Type_AutoReq_FFC:
+    case MSG_Type_UserAdd:
+    {
+      UINICQSubType *ist = static_cast<UINICQSubType*>(st);
+      adv = ist->isAdvanced();
+      contact = lookupUIN( ist->getSource() );
+      e = UINICQSubTypeToEvent(ist, contact);
+      break;
+    }
+
+    case MSG_Type_EmailEx:
+    {
+      // these come from 'magic' UIN 10
+      EmailExICQSubType *subtype = static_cast<EmailExICQSubType*>(st);
+      contact = lookupEmail( subtype->getEmail() );
+      e = new EmailExEvent(contact,
+			   subtype->getEmail(),
+			   subtype->getSender(),
+			   subtype->getMessage());
+      break;
+    }
+
+    case MSG_Type_SMS:
+    {
+      SMSICQSubType *sst = static_cast<SMSICQSubType*>(st);
+      if (sst->getSMSType() == SMSICQSubType::SMS) {
+	contact = lookupMobile(sst->getSender());
+	e = new SMSMessageEvent(contact, sst->getMessage(),
+				sst->getSource(),sst->getSenders_network(),
+				sst->getTime());
+      } else if (sst->getSMSType() == SMSICQSubType::SMS_Receipt) {
+	contact = lookupMobile(sst->getDestination());
+	e = new SMSReceiptEvent(contact, sst->getMessage(),
+				sst->getMessageId(), sst->getSubmissionTime(),
+				sst->getDeliveryTime(), sst->delivered());
+      }
+      break;
+    }
+    
+    default:
+      break;
+
+    } // end of switch
+    
+    return e;
+  }
+  
+  /**
    * Convert a MessageEvent into a UINICQSubType
    */
   UINICQSubType* MessageHandler::EventToUINICQSubType(MessageEvent *ev)
@@ -332,6 +416,42 @@ namespace ICQ2000 {
     logger.emit(&ev);
   }
 
+  ContactRef MessageHandler::lookupUIN(unsigned int uin) {
+    ContactRef ret;
 
-  
+    if (m_contact_list->exists(uin)) {
+      ret = m_contact_list->lookup_uin(uin);
+    } else {
+      ret = ContactRef( new Contact(uin) );
+    }
+
+    return ret;
+  }
+
+  ContactRef MessageHandler::lookupMobile(const string& m) {
+    ContactRef ret;
+    
+    if (m_contact_list->mobile_exists(m)) {
+      ret = m_contact_list->lookup_mobile(m);
+    } else {
+      ret = ContactRef( new Contact(m) );
+      ret->setMobileNo(m);
+    }
+
+    return ret;
+  }
+
+  ContactRef MessageHandler::lookupEmail(const string& email) {
+    ContactRef ret;
+    
+    if (m_contact_list->email_exists(email)) {
+      ret = m_contact_list->lookup_email(email);
+    } else {
+      ret = ContactRef( new Contact(email) );
+      ret->setEmail(email);
+    }
+
+    return ret;
+  }
+
 }
