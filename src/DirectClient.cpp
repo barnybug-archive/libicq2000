@@ -28,6 +28,7 @@
 
 #include <stdlib.h>
 
+using std::endl;
 using std::ostringstream;
 using SigC::slot;
 
@@ -224,7 +225,7 @@ namespace ICQ2000 {
 	 * as it probably means they are faulty
 	 */
 	ostringstream ostr;
-	ostr  << "Buffer pointer not at end after parsing packet was: 0x" << hex << sb.pos()
+	ostr  << "Buffer pointer not at end after parsing packet was: 0x" << std::hex << sb.pos()
 	      << " should be: 0x" << sb.size();
 	SignalLog(LogEvent::WARN, ostr.str());
       }

@@ -303,7 +303,7 @@ namespace ICQ2000 {
     } else {
 
       ostringstream ostr;
-      ostr << "Message SNAC on unsupported channel: 0x" << hex << channel;
+      ostr << "Message SNAC on unsupported channel: 0x" << std::hex << channel;
       throw ParseException(ostr.str());
 
     }

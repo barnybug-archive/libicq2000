@@ -80,7 +80,7 @@ namespace ICQ2000 {
     default:
       {
 	ostringstream ostr;
-	ostr << "Unknown ICQ Subtype: 0x" << hex << (int) type;
+	ostr << "Unknown ICQ Subtype: 0x" << std::hex << (int) type;
 	throw ParseException(ostr.str());
       }
     }

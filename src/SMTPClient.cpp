@@ -26,6 +26,7 @@
 
 using std::string;
 using std::ostringstream;
+using std::endl;
 
 namespace ICQ2000 {
 
@@ -314,7 +315,7 @@ namespace ICQ2000 {
   string SMTPClient::getContactEmail(ContactRef cont) const {
     if(cont->getEmail().empty()) {
       ostringstream ostr;
-      ostr << dec << cont->getUIN() << "@pager.icq.com";
+      ostr << std::dec << cont->getUIN() << "@pager.icq.com";
       return ostr.str();
     } else {
       return cont->getEmail();

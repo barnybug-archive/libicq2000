@@ -24,15 +24,11 @@
 
 #include <vector>
 #include <iostream>
-#include <iomanip.h>
+#include <iomanip>
 #include <string>
 #include <iterator>
 
 #include <libicq2000/Translator.h>
-
-using std::vector;
-using std::string;
-using std::ostream;
 
 using ICQ2000::Translator;
 
@@ -49,9 +45,9 @@ class Buffer {
   };
 
  private:
-  typedef vector<unsigned char>::iterator iterator;
+  typedef std::vector<unsigned char>::iterator iterator;
 
-  vector<unsigned char> m_data;
+  std::vector<unsigned char> m_data;
   endian m_endn;
   size_type m_out_pos;
   Translator *m_translator;
@@ -90,7 +86,7 @@ class Buffer {
   Buffer& operator<<(signed char l) { return (*this) << (unsigned char)l; }
   Buffer& operator<<(signed short l) { return (*this) << (unsigned short)l; }
   Buffer& operator<<(signed int l) { return (*this) << (unsigned int)l; }
-  Buffer& operator<<(const string&);
+  Buffer& operator<<(const std::string&);
 
   Buffer& operator>>(unsigned char&);
   Buffer& operator>>(unsigned short&);
@@ -98,36 +94,36 @@ class Buffer {
   Buffer& operator>>(signed char& l) { return (*this) >> (unsigned char&)l; }
   Buffer& operator>>(signed short& l) { return (*this) >> (unsigned short&)l; }
   Buffer& operator>>(signed int& l) { return (*this) >> (unsigned int&)l; }
-  Buffer& operator>>(string&);
+  Buffer& operator>>(std::string&);
 
   void Pack(const unsigned char *d, unsigned int size);
-  void Pack(const string& s);
-  void PackUint16StringNull(const string& s);
-  void PackUint16TranslatedNull(const string& s);
-  void PackByteString(const string& s);
-  void UnpackCRLFString(string& s);
+  void Pack(const std::string& s);
+  void PackUint16StringNull(const std::string& s);
+  void PackUint16TranslatedNull(const std::string& s);
+  void PackByteString(const std::string& s);
+  void UnpackCRLFString(std::string& s);
 
-  void Unpack(string& s, unsigned int size);
+  void Unpack(std::string& s, unsigned int size);
   void Unpack(unsigned char *const d, unsigned int size);
   unsigned char UnpackChar();
-  void UnpackUint32String(string& s);
-  void UnpackUint16StringNull(string& s);
-  void UnpackUint16TranslatedNull(string& s);
-  void UnpackByteString(string& s);
+  void UnpackUint32String(std::string& s);
+  void UnpackUint16StringNull(std::string& s);
+  void UnpackUint16TranslatedNull(std::string& s);
+  void UnpackByteString(std::string& s);
 
   unsigned char& operator[](unsigned int p);
 
   void setTranslator(Translator *translator);
-  void ServerToClient(string& szString);
-  void ClientToServer(string& szString);
-  std::string ServerToClientCC(const string& szString);
-  std::string ClientToServerCC(const string& szString);
+  void ServerToClient(std::string& szString);
+  void ClientToServer(std::string& szString);
+  std::string ServerToClientCC(const std::string& szString);
+  std::string ClientToServerCC(const std::string& szString);
   void ServerToClient(char &_cChar);
   void ClientToServer(char &_cChar);
 
-  void dump(ostream& out);
+  void dump(std::ostream& out);
 };
 
-ostream& operator<<(ostream&,Buffer&);
+std::ostream& operator<<(std::ostream&,Buffer&);
 
 #endif

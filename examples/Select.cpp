@@ -132,7 +132,9 @@ bool Select::run(unsigned int interval)
   } else {
     // timeout
     return true;
-  }	
+  }
+
+  return false;
 }
 
 void Select::_disconnect(int fd)

@@ -57,8 +57,8 @@ namespace ICQ2000 {
   template < typename Key, typename Value >
   class Cache {
    protected:
-    typedef list< CacheItem<Key,Value> >::iterator literator;
-    typedef list< CacheItem<Key,Value> >::const_iterator citerator;
+    typedef typename list< CacheItem<Key,Value> >::iterator literator;
+    typedef typename list< CacheItem<Key,Value> >::const_iterator citerator;
 
     unsigned int m_timeout;
     

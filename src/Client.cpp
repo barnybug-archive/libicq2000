@@ -29,6 +29,7 @@
 
 #include <sigc++/bind.h>
 
+using std::string;
 using std::ostringstream;
 using std::endl;
 
@@ -986,7 +987,7 @@ namespace ICQ2000 {
 	ParseCh4(sb,seq_num);
 	break;
       default:
-	ostr << "FLAP on unrecognised channel 0x" << hex << (int)channel;
+	ostr << "FLAP on unrecognised channel 0x" << std::hex << (int)channel;
 	SignalLog(LogEvent::WARN, ostr.str());
 	break;
       }
@@ -997,7 +998,7 @@ namespace ICQ2000 {
 	 * as it probably means they are faulty
 	 */
 	ostringstream ostr;
-	ostr  << "Buffer pointer not at end after parsing FLAP was: 0x" << hex << sb.pos()
+	ostr  << "Buffer pointer not at end after parsing FLAP was: 0x" << std::hex << sb.pos()
 	      << " should be: 0x" << sb.size();
 	SignalLog(LogEvent::WARN, ostr.str());
       }
@@ -1150,7 +1151,7 @@ namespace ICQ2000 {
 
     if (dynamic_cast<RawSNAC*>(snac)) {
       ostringstream ostr;
-      ostr << "Unknown SNAC packet received - Family: 0x" << hex << snac->Family()
+      ostr << "Unknown SNAC packet received - Family: 0x" << std::hex << snac->Family()
 	   << " Subtype: 0x" << snac->Subtype();
       SignalLog(LogEvent::WARN, ostr.str());
     }
@@ -1174,7 +1175,7 @@ namespace ICQ2000 {
 	RedirectTLV *r = static_cast<RedirectTLV*>(tlvlist[TLV_Redirect]);
 	ostringstream ostr;
 	ostr << "Redirected to: " << r->getHost();
-	if (r->getPort() != 0) ostr << " port: " << dec << r->getPort();
+	if (r->getPort() != 0) ostr << " port: " << std::dec << r->getPort();
 	SignalLog(LogEvent::INFO, ostr.str());
 
 	m_bosHostname = r->getHost();
@@ -2144,7 +2145,7 @@ namespace ICQ2000 {
     return ev;
   }
 
-  SearchResultEvent* Client::searchForContacts(const std::string& keyword)
+  SearchResultEvent* Client::searchForContacts(const string& keyword)
   {
     SearchResultEvent *ev = new SearchResultEvent( SearchResultEvent::Keyword );
     unsigned int reqid = NextRequestID();

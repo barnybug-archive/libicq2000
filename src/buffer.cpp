@@ -24,6 +24,10 @@
 #include <algorithm>
 #include <ctype.h>
 
+using std::string;
+using std::endl;
+using std::ostream;
+
 Buffer::Buffer(Translator *translator) : m_data(), m_endn(BIG), m_out_pos(0), 
   m_translator(translator) { }
 
@@ -73,7 +77,7 @@ void Buffer::PackByteString(const string& s) {
 }
 
 void Buffer::UnpackCRLFString(string& s) {
-  vector<unsigned char>::iterator i;
+  iterator i;
 
   i = find(m_data.begin()+m_out_pos, m_data.end(), '\n');
 
@@ -122,8 +126,8 @@ void Buffer::Unpack(string& s, unsigned int size) {
 
   if (m_out_pos+size > m_data.size()) size = m_data.size()-m_out_pos;
 
-  vector<unsigned char>::iterator i = m_data.begin()+m_out_pos;
-  vector<unsigned char>::iterator end = m_data.begin()+m_out_pos+size;
+  iterator i = m_data.begin()+m_out_pos;
+  iterator end = m_data.begin()+m_out_pos+size;
 
   while (i != end) {
     s += *i;
@@ -305,12 +309,12 @@ void Buffer::setLittleEndian()
 
 void Buffer::dump(ostream& out) {
   char d[] = "123456789abcdef0";
-  out << hex << setfill('0');
+  out << std::hex << std::setfill('0');
   unsigned int m = ((m_data.size()+15)/16)*16;
   for (unsigned int a = 0; a < m; a++) {
-    if (a % 16 == 0) out << setw(4) << a << "  ";
+    if (a % 16 == 0) out << std::setw(4) << a << "  ";
     if (a < m_data.size()) {
-      out << setw(2) << (int)m_data[a] << " ";
+      out << std::setw(2) << (int)m_data[a] << " ";
       d[a%16] = isprint(m_data[a]) ? m_data[a] : '.';
     } else {
       out << "   ";
@@ -320,7 +324,11 @@ void Buffer::dump(ostream& out) {
   }
 }
 
-ostream& operator<<(ostream& out, Buffer& b) { b.dump(out); return out; }
+ostream& operator<<(ostream& out, Buffer& b)
+{
+  b.dump(out);
+  return out;
+}
 
 void Buffer::setTranslator(Translator *translator){
   m_translator=translator;
