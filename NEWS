@@ -1,7 +1,7 @@
 20th July 2002
 
 A minor bug-fix release of libicq2000, mainly for the benefit of the
-new release of ickle.
+new release of ickle. Lots of tidying up for gcc 3.1.
 
 26th April 2002
 
