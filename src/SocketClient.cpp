@@ -46,6 +46,8 @@ namespace ICQ2000 {
 
   TCPSocket* SocketClient::getSocket() const { return m_socket; }
   
+  void SocketClient::setClientBindHost(const std::string &host) { m_bindhost = host; }
+  
   // -- exceptions ------------------------------------------------------------
 
   SocketClientException::SocketClientException() { }

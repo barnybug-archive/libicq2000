@@ -37,6 +37,7 @@ namespace ICQ2000 {
     void SignalRemoveSocket(int fd);
 
     TCPSocket *m_socket;
+    std::string m_bindhost;
 
    public:
     virtual void Connect() = 0;
@@ -54,6 +55,7 @@ namespace ICQ2000 {
 
     int getfd() const;
     TCPSocket* getSocket() const;
+    void setClientBindHost(const std::string &host);
     virtual void clearoutMessagesPoll() = 0;
 
     virtual void SendEvent(MessageEvent* ev) = 0;

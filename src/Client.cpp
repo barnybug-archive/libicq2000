@@ -218,6 +218,7 @@ namespace ICQ2000
       }
       m_serverSocket->setRemoteHost(m_authorizerHostname.c_str());
       m_serverSocket->setRemotePort(m_authorizerPort);
+      m_serverSocket->setBindHost(m_client_bind_host.c_str());
 
       m_serverSocket->setBlocking(false);
 
@@ -252,6 +253,7 @@ namespace ICQ2000
     try {
       m_serverSocket->setRemoteHost(m_bosHostname.c_str());
       m_serverSocket->setRemotePort(m_bosPort);
+      m_serverSocket->setBindHost(m_client_bind_host.c_str());
 
       SignalLog(LogEvent::INFO, "Establishing TCP Connection to BOS Server");
       m_serverSocket->setBlocking(false);
@@ -1176,6 +1178,7 @@ namespace ICQ2000
     // startup listening server at this point, so we
     // know the listening port and ip
     if (m_in_dc) {
+      m_listenServer->setBindHost(m_client_bind_host.c_str());
       if (m_use_portrange) {
         m_listenServer->StartServer(m_lower_port, m_upper_port);
       } else {
@@ -3262,6 +3265,17 @@ namespace ICQ2000
   bool Client::getUsePortRange() const 
   {
     return m_use_portrange;
+  }
+
+  void Client::setClientBindHost(const std::string& host)
+  {
+    m_client_bind_host = host;
+    m_smtp->setClientBindHost(host);
+  }
+
+  std::string Client::getClientBindHost() const
+  {
+    return m_client_bind_host;
   }
 
   /** 

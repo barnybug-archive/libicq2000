@@ -28,13 +28,18 @@
 #include <list>
 #include <ctype.h>
 
+class XmlLeaf;
+
 class XmlNode {
  private:
   static std::string parseTag(std::string::iterator& curr, std::string::iterator end);
   static void skipWS(std::string::iterator& curr, std::string::iterator end);
 
+  void parseAttr(const std::string &t);
+
  protected:
   std::string tag;
+  std::list<std::pair<std::string, std::string> > attributes;
   
   XmlNode(const std::string& t);
 
@@ -46,6 +51,9 @@ class XmlNode {
 
   std::string getTag();
 
+  std::string getAttrib(const std::string &aname) const;
+  bool existsAttrib(const std::string& attrib) const;
+
   static XmlNode *parse(std::string::iterator& start, std::string::iterator end);
 
   static std::string quote(const std::string& s);
@@ -55,7 +63,20 @@ class XmlNode {
   virtual std::string toString(int n) = 0;
 };
 
-class XmlLeaf;
+class XmlLeaf : public XmlNode {
+ private:
+  std::string name, value;
+
+ public:
+  XmlLeaf(const std::string& t, const std::string& v);
+  ~XmlLeaf();
+
+  bool isBranch();
+  std::string getValue();
+
+  virtual std::string toString(int n);
+
+};
 
 class XmlBranch : public XmlNode {
  private:
@@ -67,27 +88,16 @@ class XmlBranch : public XmlNode {
 
   bool isBranch();
   bool exists(const std::string& tag);
-  XmlNode *getNode(const std::string& tag);
-  XmlBranch *getBranch(const std::string& tag);
+  XmlNode *getNode(const std::string& tag, int n = 0);
+  XmlBranch *getBranch(const std::string& tag, int n = 0);
   XmlLeaf *getLeaf(const std::string& tag);
+
+  std::list<std::string> getChildren() const;
 
   void pushnode(XmlNode *c);
 
   std::string toString(int n);
 
-};
-
-class XmlLeaf : public XmlNode {
- private:
-  std::string value;
- public:
-  XmlLeaf(const std::string& t, const std::string& v);
-  ~XmlLeaf();
-
-  bool isBranch();
-  std::string getValue();
-
-  std::string toString(int n);
 };
 
 #endif

@@ -2,6 +2,7 @@
  * XML Parser/Generator
  *
  * Copyright (C) 2001 Barnaby Gray <barnaby@beedesign.co.uk>
+ * improvements (C) 2003 Konstantin Klyagin <konst@konst.org.ua>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,10 +24,11 @@
 
 using std::string;
 using std::list;
+using std::pair;
 
 // ---------- XmlNode ---------------------------
 
-XmlNode::XmlNode(const string& t) : tag(t) { }
+XmlNode::XmlNode(const string& at) { parseAttr(at); }
 
 XmlNode::~XmlNode() { }
 
@@ -48,9 +50,13 @@ string XmlNode::quote(const string& a) {
   return 
     replace_all(
     replace_all(
+    replace_all(
+    replace_all(
     replace_all(a,
     "&", "&amp;"),
     "<", "&lt;"),
+    "\"", "&quot;"),
+    "`", "&apos;"),
     ">", "&gt;");
 }
 
@@ -58,24 +64,65 @@ string XmlNode::unquote(const string& a) {
   return 
     replace_all(
     replace_all(
+    replace_all(
+    replace_all(
+    replace_all(
+    replace_all(
     replace_all(a,
     "&lt;", "<"),
     "&gt;", ">"),
+    "&quot;", "\""),
+    "&apos;", "`"),
+    "&nbsp;", " "),
+    "&trade;", "(tm)"),
     "&amp;", "&");
 }
 
 XmlNode *XmlNode::parse(string::iterator& curr, string::iterator end) {
+  int npos;
+  string tag, tagname, cdata;
 
+  do {
   skipWS(curr,end);
   if (curr == end || *curr != '<') return NULL;
 
-  string tag = parseTag(curr,end);
+    tag = parseTag(curr, end);
+    tagname = tag;
+
   if (tag.empty() || tag[0] == '/') return NULL;
+
+  } while(tag[0] == '?' || tag[0] == '!');
+
+  if (*(tag.end()-1) == '/')
+    return new XmlLeaf(unquote(tag.substr(0, tag.size()-1)),"");
+
+  if ((npos = tagname.find_first_of(" \r\n\t")) != -1)
+    tagname.erase(npos);
 
   skipWS(curr,end);
   if (curr == end) return NULL;
   
-  if (*curr == '<') {
+  if (string(curr, end).substr(0, 9) == "<![CDATA[") {
+    string endtag;
+
+    curr += 9;
+    while (curr != end && endtag.size() < 3) {
+      if (*curr == ']' || *curr == '>') {
+	endtag += *curr;
+	if(endtag != string("]]>").substr(0, endtag.size())) {
+	  cdata += endtag;
+	  endtag = "";
+	}
+
+      } else {
+	cdata += *curr;
+      }
+
+      ++curr;
+    }
+  }
+
+  if (*curr == '<' && cdata.empty()) {
 
     XmlNode *p = NULL;
     while (curr != end) {
@@ -84,7 +131,7 @@ XmlNode *XmlNode::parse(string::iterator& curr, string::iterator end) {
       if (nexttag.empty()) { if (p != NULL) delete p; return NULL; }
       if (nexttag[0] == '/') {
 	// should be the closing </tag>
-	if (nexttag.size() == tag.size()+1 && nexttag.find(tag,1) == 1) {
+	if (nexttag.size() == tagname.size()+1 && nexttag.find(tagname,1) == 1) {
 	  // is closing tag
 	  if (p == NULL) p = new XmlLeaf(unquote(tag),"");
 	  return p;
@@ -113,10 +160,14 @@ XmlNode *XmlNode::parse(string::iterator& curr, string::iterator end) {
       value += *curr;
       curr++;
     }
+
     if(curr == end) return NULL;
     string nexttag = parseTag(curr,end);
     if (nexttag.empty() || nexttag[0] != '/') return NULL;
-    if (nexttag.size() == tag.size()+1 && nexttag.find(tag,1) == 1) {
+
+    if(value.empty()) value = cdata;
+
+    if (nexttag.size() == tagname.size()+1 && nexttag.find(tagname,1) == 1) {
       return new XmlLeaf(unquote(tag),unquote(value));
     } else {
       // error
@@ -145,6 +196,69 @@ void XmlNode::skipWS(string::iterator& curr, string::iterator end) {
   while(curr != end && isspace(*curr)) curr++;
 }
 
+void XmlNode::parseAttr(const string &at) {
+  string t(at);
+  string::iterator is = t.begin();
+  skipWS(is, t.end());
+  tag = "";
+
+  while(is != t.end() && !isspace(*is)) {
+    tag += *is;
+    is++;
+  }
+
+  char qchar;
+  string aname, aval;
+
+  while(is != t.end()) {
+    aname = aval = "";
+    skipWS(is, t.end());
+
+    while(is != t.end() && !isspace(*is) && *is != '=') {
+      aname += *is;
+      is++;
+    }
+
+    if(is == t.end()) break;
+
+    if(*is == '=') ++is;
+    skipWS(is, t.end());
+
+    if(is == t.end()) break;
+    if(*is != '"' && *is != '\'') break;
+
+    qchar = *is;
+    is++;
+
+    while(is != t.end() && *is != qchar) {
+      aval += *is;
+      is++;
+    }
+
+    if(is == t.end()) break;
+    is++;
+
+    attributes.push_back(make_pair(aname, aval));
+  }
+}
+
+bool XmlNode::existsAttrib(const std::string& attrib) const {
+  for(list<pair<string, string> >::const_iterator ia = attributes.begin(); ia != attributes.end(); ++ia) {
+    if(ia->first == attrib) return true;
+  }
+
+  return false;
+}
+
+std::string XmlNode::getAttrib(const string &aname) const {
+  for(list<pair<string, string> >::const_iterator ia = attributes.begin(); ia != attributes.end(); ++ia) {
+    if(ia->first == aname)
+      return ia->second;
+  }
+
+  return "";
+}
+
 // ----------- XmlBranch ------------------------
 
 XmlBranch::XmlBranch(const string& t) : XmlNode(t) { }
@@ -169,17 +283,22 @@ bool XmlBranch::exists(const string& tag) {
   return false;
 }
 
-XmlNode *XmlBranch::getNode(const string& tag) {
+XmlNode *XmlBranch::getNode(const string& tag, int n) {
+  int ncount = 0;
   list<XmlNode*>::iterator curr = children.begin();
+
   while (curr != children.end()) {
-    if ((*curr)->getTag() == tag) return (*curr);
+    if ((*curr)->getTag() == tag)
+      if (ncount++ == n)
+	return (*curr);
+
     curr++;
   }
   return NULL;
 }
 
-XmlBranch *XmlBranch::getBranch(const string& tag) {
-  XmlNode *t = getNode(tag);
+XmlBranch *XmlBranch::getBranch(const string& tag, int n) {
+  XmlNode *t = getNode(tag, n);
   if (t == NULL || dynamic_cast<XmlBranch*>(t) == NULL) return NULL;
   return dynamic_cast<XmlBranch*>(t);
 }
@@ -207,10 +326,22 @@ string XmlBranch::toString(int n) {
   return ret;
 }
 
+list<string> XmlBranch::getChildren() const {
+  list<string> r;
+
+  list<XmlNode*>::const_iterator curr = children.begin();
+  while (curr != children.end()) {
+    r.push_back((*curr)->getTag());
+    curr++;
+  }
+
+  return r;
+}
+
 // ----------- XmlLeaf --------------------------
 
 XmlLeaf::XmlLeaf(const string& t, const string& v)
-  : XmlNode(t), value(v) { }
+  : XmlNode(t), value(unquote(v)) { }
 
 XmlLeaf::~XmlLeaf() { }
 
@@ -219,6 +350,12 @@ bool XmlLeaf::isBranch() { return false; }
 string XmlLeaf::getValue() { return value; }
 
 string XmlLeaf::toString(int n) {
-  return string(n,'\t') + "<" + quote(tag) + ">" + quote(value) + "</" + quote(tag) + ">\n";
+  string r = string(n,'\t') + "<" + quote(tag);
+  list<pair<string, string> >::const_iterator ia = attributes.begin();
+  while(ia != attributes.end()) {
+    r += (string) " " + ia->first + "=\"" + ia->second + "\"";
+  }
+
+  return r + ">" + quote(value) + "</" + quote(tag) + ">\n";
 }
 

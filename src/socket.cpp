@@ -213,6 +213,14 @@ namespace ICQ2000
     return true;
   }
 
+  void TCPSocket::setBindHost(const char *host) {
+    memset(&localAddr, 0, sizeof(localAddr));
+    if(strlen(host)) {
+      localAddr.sin_addr.s_addr = gethostname(host);
+      localAddr.sin_port = 0;
+    }
+  }
+
   void TCPSocket::setRemoteHost(const char *host) {
     remoteAddr.sin_addr.s_addr = gethostname(host);
   }
@@ -351,6 +359,14 @@ namespace ICQ2000
   }
 
   bool TCPServer::isStarted() const { return m_socketDescriptor_valid; }
+
+  void TCPServer::setBindHost(const char *host) {
+    memset(&localAddr, 0, sizeof(localAddr));
+    if(strlen(host)) {
+      localAddr.sin_addr.s_addr = TCPSocket::gethostname(host);
+      localAddr.sin_port = 0;
+    }
+  }
 
   /**
    * SocketException class

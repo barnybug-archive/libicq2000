@@ -99,6 +99,8 @@ namespace ICQ2000
     unsigned short m_bosPort;
     bool m_bosOverridePort;
 
+    std::string m_client_bind_host;
+
     bool m_in_dc, m_out_dc;
 
     unsigned short m_client_seq_num;
@@ -506,6 +508,9 @@ namespace ICQ2000
 
     void setUsePortRange(bool b);
     bool getUsePortRange() const;
+
+    void setClientBindHost(const std::string& host);
+    std::string getClientBindHost() const;
 
     void setTypingNotifications(bool b);
 

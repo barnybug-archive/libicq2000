@@ -52,6 +52,7 @@ namespace ICQ2000 {
     try {
       m_socket->setRemoteHost( m_server_name.c_str() );
       m_socket->setRemotePort( m_server_port );
+      m_socket->setBindHost( m_bindhost.c_str() );
       m_socket->setBlocking(false);
       m_socket->Connect();
       SignalAddSocket( m_socket->getSocketHandle(), SocketEvent::WRITE );

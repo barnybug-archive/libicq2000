@@ -54,11 +54,11 @@ namespace ICQ2000
       CONNECTED
     };
   
+    static unsigned long gethostname(const char *hostname);
+  
    private:
     static const unsigned int max_receive_size = 4096;
   
-    unsigned long gethostname(const char *hostname);
-
     int m_socketDescriptor;
     bool m_socketDescriptor_valid;
     struct sockaddr_in remoteAddr, localAddr;
@@ -89,6 +89,7 @@ namespace ICQ2000
     void setRemoteHost(const char *host);
     void setRemotePort(unsigned short port);
     void setRemoteIP(unsigned int ip);
+    void setBindHost(const char *host);
   
     void setBlocking(bool b);
     bool isBlocking() const;
@@ -118,6 +119,8 @@ namespace ICQ2000
     void StartServer();
     void StartServer(unsigned short lower, unsigned short upper);
     void Disconnect();
+
+    void setBindHost(const char *host);
 
     bool isStarted() const;
 

@@ -910,7 +910,8 @@ namespace ICQ2000
       throw DisconnectedException("I/O error in SendPacket0x06");
     }
     
-    length = m_fin.readsome((char*)m_const_buf, 2048);
+    m_fin.read((char*)m_const_buf, 2048);
+    length = m_fin.gcount();
 
     b << (unsigned char)0x06;
     
