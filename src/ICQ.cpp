@@ -24,6 +24,8 @@
 #include "sstream_fix.h"
 #include <memory>
 
+#include <libicq2000/events.h>
+
 using std::ostringstream;
 using std::auto_ptr;
 
@@ -90,10 +92,14 @@ namespace ICQ2000 {
   }
 
   UINICQSubType::UINICQSubType()
-    : m_source(0), m_destination(0), m_ack(false), m_advanced(false), m_status(0) { }
+    : m_source(0), m_destination(0), m_ack(false),
+      m_advanced(false), m_status(0), m_urgent(false),
+      m_tocontactlist(false) { }
 
   UINICQSubType::UINICQSubType(unsigned int s, unsigned int d)
-    : m_source(s), m_destination(d), m_ack(false), m_advanced(false), m_status(0) { }
+    : m_source(s), m_destination(d), m_ack(false),
+      m_advanced(false), m_status(0), m_urgent(false),
+      m_tocontactlist(false) { }
 
   unsigned int UINICQSubType::getSource() const { return m_source; }
 
@@ -115,12 +121,34 @@ namespace ICQ2000 {
 
   void UINICQSubType::setStatus(unsigned short s) { m_status = s; }
 
+  bool UINICQSubType::isUrgent() const
+  {
+    return m_urgent;
+  }
+
+  void UINICQSubType::setUrgent(bool b)
+  {
+    m_urgent = b;
+  }
+
+  bool UINICQSubType::isToContactList() const
+  {
+    return m_tocontactlist;
+  }
+
+  void UINICQSubType::setToContactList(bool b)
+  {
+    m_tocontactlist = b;
+  }
+
   void UINICQSubType::ParseBody(Buffer& b)
   {
     if (m_advanced) {
-      unsigned short unknown;
+      unsigned short priority;
       b >> m_status
-	>> unknown;
+	>> priority;
+      m_urgent = priority & Priority_Urgent;
+      m_tocontactlist = priority & Priority_ToContactList;
     }
 
     ParseBodyUIN(b);
@@ -129,8 +157,16 @@ namespace ICQ2000 {
   void UINICQSubType::OutputBody(Buffer& b) const
   {
     if (m_advanced) {
-      b << (unsigned short)m_status
-	<< (unsigned short)(m_ack ? 0x0000: 0x0001);
+      b << (unsigned short)m_status;
+      unsigned short priority = 0x0000;
+
+      if (!m_ack) {
+	priority = Priority_Normal;
+	if (m_urgent) priority = Priority_Urgent;
+	if (m_tocontactlist) priority = Priority_ToContactList;
+      }
+
+      b << priority;
     }
 
     OutputBodyUIN(b);
@@ -140,8 +176,8 @@ namespace ICQ2000 {
     : m_multi(multi), m_foreground(0x00000000),
       m_background(0x00ffffff) { }
 
-  NormalICQSubType::NormalICQSubType(const string& msg, unsigned int uin)
-    : UINICQSubType(0, uin), m_message(msg), m_foreground(0x00000000),
+  NormalICQSubType::NormalICQSubType(const string& msg)
+    : m_message(msg), m_foreground(0x00000000),
       m_background(0x00ffffff) { }
 
   string NormalICQSubType::getMessage() const { return m_message; }
@@ -203,8 +239,8 @@ namespace ICQ2000 {
   URLICQSubType::URLICQSubType()
     { }
 
-  URLICQSubType::URLICQSubType(const string& msg, const string& url, unsigned int source, unsigned int destination)
-    : m_message(msg), m_url(url), UINICQSubType(source, destination) { }
+  URLICQSubType::URLICQSubType(const string& msg, const string& url)
+    : m_message(msg), m_url(url) { }
 
   string URLICQSubType::getMessage() const { return m_message; }
 
@@ -239,7 +275,7 @@ namespace ICQ2000 {
       b.PackUint16StringNull("");
     } else {
       ostringstream ostr;
-      string m_text=m_message;
+      string m_text = m_message;
       b.ClientToServer(m_text);
       ostr << m_text << (unsigned char)0xfe << m_url;
       m_text = ostr.str();
@@ -259,9 +295,9 @@ namespace ICQ2000 {
   AwayMsgSubType::AwayMsgSubType(unsigned char type)
    : m_type(type) { }
 
-  AwayMsgSubType::AwayMsgSubType(Status s, unsigned int uin)
-    : UINICQSubType(0, uin) {
-
+  AwayMsgSubType::AwayMsgSubType(Status s)
+  {
+    
     switch(s) {
     case STATUS_AWAY:
       m_type = MSG_Type_AutoReq_Away;
@@ -454,28 +490,20 @@ namespace ICQ2000 {
   AuthReqICQSubType::AuthReqICQSubType()
     { }
 
-  AuthReqICQSubType::AuthReqICQSubType(const string& msg, unsigned int source, 
-                                       unsigned int destination)
-    : UINICQSubType(source, destination), m_message(msg)  { }
+  AuthReqICQSubType::AuthReqICQSubType(const string& msg)
+    : m_message(msg)  { }
 
   string AuthReqICQSubType::getMessage() const { return m_message; }
   
   void AuthReqICQSubType::ParseBodyUIN(Buffer& b) {
-    unsigned char skip;
-
     /*
-    *
-    * Dunno what the hell is there in the
-    * first 6 bytes (konst).
-    *
-    */
+     *
+     * Dunno what the hell is there in the
+     * first 6 bytes (konst).
+     *
+     */
 
-    b>>skip;
-    b>>skip;
-    b>>skip;
-    b>>skip;
-    b>>skip;
-    b>>skip;
+    b.advance(6);
 
     /*
     *
@@ -503,9 +531,8 @@ namespace ICQ2000 {
   AuthRejICQSubType::AuthRejICQSubType()
     { }
 
-  AuthRejICQSubType::AuthRejICQSubType(const string& msg, unsigned int source, 
-                                       unsigned int destination)
-    : UINICQSubType(source, destination), m_message(msg)  { }
+  AuthRejICQSubType::AuthRejICQSubType(const string& msg)
+    : m_message(msg)  { }
 
   string AuthRejICQSubType::getMessage() const { return m_message; }
   
@@ -531,10 +558,6 @@ namespace ICQ2000 {
   AuthAccICQSubType::AuthAccICQSubType()
   { }
 
-  AuthAccICQSubType::AuthAccICQSubType(unsigned int source, 
-                                       unsigned int destination)
-    : UINICQSubType(source,destination) { }
-
   void AuthAccICQSubType::ParseBodyUIN(Buffer& b) {
   }
 
@@ -546,5 +569,86 @@ namespace ICQ2000 {
   }
 
   unsigned char AuthAccICQSubType::getType() const { return MSG_Type_AuthAcc; }
+
+  // helper
+
+  MessageEvent* UINICQSubTypeToEvent(UINICQSubType *st, Contact *contact)
+  {
+    ICQMessageEvent *e = NULL;
+    unsigned short type = st->getType();
+    
+    if (type == MSG_Type_Normal) {
+      NormalICQSubType *nst = static_cast<NormalICQSubType*>(st);
+      e = new NormalMessageEvent(contact,
+				 nst->getMessage(), nst->isMultiParty() );
+
+    } else if (type == MSG_Type_URL) {
+      URLICQSubType *ust = static_cast<URLICQSubType*>(st);
+      e = new URLMessageEvent(contact,
+			      ust->getMessage(),
+			      ust->getURL());
+
+    } else if (type == MSG_Type_AuthReq) {
+      AuthReqICQSubType *ust = static_cast<AuthReqICQSubType*>(st);
+      e = new AuthReqEvent(contact, ust->getMessage());
+
+    } else if (type == MSG_Type_AuthRej) {
+      AuthRejICQSubType *ust = static_cast<AuthRejICQSubType*>(st);
+      e = new AuthAckEvent(contact, ust->getMessage(), false);
+
+    } else if (type == MSG_Type_AuthAcc) {
+      AuthAccICQSubType *ust = static_cast<AuthAccICQSubType*>(st);
+      e = new AuthAckEvent(contact, true);
+    }
+
+    if (e != NULL) {
+      e->setUrgent( st->isUrgent() );
+      e->setToContactList( st->isToContactList() );
+    }
+    
+    return e;
+  }
+  
+  UINICQSubType* EventToUINICQSubType(MessageEvent *ev)
+  {
+    Contact *c = ev->getContact();
+    UINICQSubType *ist = NULL;
+
+    if (ev->getType() == MessageEvent::Normal) {
+
+      NormalMessageEvent *nv = static_cast<NormalMessageEvent*>(ev);
+      ist = new NormalICQSubType(nv->getMessage());
+
+    } else if (ev->getType() == MessageEvent::URL) {
+
+      URLMessageEvent *uv = static_cast<URLMessageEvent*>(ev);
+      ist = new URLICQSubType(uv->getMessage(), uv->getURL());
+
+    } else if (ev->getType() == MessageEvent::AwayMessage) {
+
+      ist = new AwayMsgSubType( c->getStatus() );
+
+    } else if (ev->getType() == MessageEvent::AuthReq) {
+
+      AuthReqEvent *uv = static_cast<AuthReqEvent*>(ev);
+      ist = new AuthReqICQSubType(uv->getMessage());
+
+    } else if (ev->getType() == MessageEvent::AuthAck) {
+
+      AuthAckEvent *uv = static_cast<AuthAckEvent*>(ev);
+      if(uv->isGranted())
+        ist = new AuthAccICQSubType();
+      else
+        ist = new AuthRejICQSubType(uv->getMessage());
+    }
+    
+    ICQMessageEvent *iev;
+    if (ist != NULL && (iev = dynamic_cast<ICQMessageEvent*>(ev)) != NULL) {
+      ist->setUrgent( iev->isUrgent() );
+      ist->setToContactList( iev->isToContactList() );
+    }
+    
+    return ist;
+  }
 
 }

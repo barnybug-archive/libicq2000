@@ -212,7 +212,6 @@ namespace ICQ2000 {
     void SendViaServer(MessageEvent *ev);
     void SendViaServerAdvanced(MessageEvent *ev);
     void SendViaServerNormal(MessageEvent *ev);
-    UINICQSubType* EventToUINICQSubType(MessageEvent *ev);
     
     void Connect();
     void Disconnect(DisconnectedEvent::Reason r = DisconnectedEvent::REQUESTED);

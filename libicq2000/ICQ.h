@@ -33,6 +33,9 @@ using std::string;
 
 namespace ICQ2000 {
 
+  class Contact;
+  class MessageEvent;
+  
   // ------------- TCP Command Types ------------------
 
   const unsigned short V6_TCP_START     = 0x07ee;
@@ -58,6 +61,10 @@ namespace ICQ2000 {
 
   const unsigned char MSG_Flag_AutoReq = 0x03;
   const unsigned char MSG_Flag_Multi   = 0x80;
+
+  const unsigned short Priority_Normal        = 0x0001;
+  const unsigned short Priority_Urgent        = 0x0002;
+  const unsigned short Priority_ToContactList = 0x0004;
 
   /* ICQSubtype classes
    * An attempt at clearing up the complete
@@ -94,6 +101,7 @@ namespace ICQ2000 {
    protected:
     unsigned int m_source, m_destination;
     bool m_advanced, m_ack;
+    bool m_urgent, m_tocontactlist;
     unsigned short m_status;
 
    public:
@@ -118,6 +126,10 @@ namespace ICQ2000 {
     void setAdvanced(bool b);
     void setACK(bool b);
     bool isACK() const;
+    void setUrgent(bool b);
+    bool isUrgent() const;
+    void setToContactList(bool b);
+    bool isToContactList() const;
   };
 
   class NormalICQSubType : public UINICQSubType {
@@ -128,7 +140,7 @@ namespace ICQ2000 {
     
    public:
     NormalICQSubType(bool multi);
-    NormalICQSubType(const string& msg, unsigned int destination);
+    NormalICQSubType(const string& msg);
 
     string getMessage() const;
     bool isMultiParty() const;
@@ -149,11 +161,10 @@ namespace ICQ2000 {
    private:
     string m_message;
     string m_url;
-    bool m_advanced;
     
    public:
     URLICQSubType();
-    URLICQSubType(const string& msg, const string& url, unsigned int source, unsigned int destination);
+    URLICQSubType(const string& msg, const string& url);
 
     string getMessage() const;
     void setMessage(const string& msg);
@@ -172,7 +183,7 @@ namespace ICQ2000 {
     string m_message;
 
    public:
-    AwayMsgSubType(Status s, unsigned int destination);
+    AwayMsgSubType(Status s);
     AwayMsgSubType(unsigned char m_type);
 
     void ParseBodyUIN(Buffer& b);
@@ -236,8 +247,7 @@ namespace ICQ2000 {
 
    public:
     AuthReqICQSubType();
-    AuthReqICQSubType(const string& msg, unsigned int source, 
-                      unsigned int destination);
+    AuthReqICQSubType(const string& msg);
 
     string getMessage() const;
 
@@ -251,7 +261,6 @@ namespace ICQ2000 {
   class AuthAccICQSubType : public UINICQSubType {
    public:
     AuthAccICQSubType();
-    AuthAccICQSubType(unsigned int source, unsigned int destination);
 
     void ParseBodyUIN(Buffer& b);
     void OutputBodyUIN(Buffer& b) const;
@@ -266,8 +275,7 @@ namespace ICQ2000 {
 
    public:
     AuthRejICQSubType();
-    AuthRejICQSubType(const string& msg, unsigned int source, 
-                      unsigned int destination);
+    AuthRejICQSubType(const string& msg);
 
     string getMessage() const;
     void setMessage(const string& msg);
@@ -278,6 +286,11 @@ namespace ICQ2000 {
     unsigned char getType() const;
 
   };
+
+  // helper
+
+  UINICQSubType* EventToUINICQSubType(MessageEvent *ev);
+  MessageEvent* UINICQSubTypeToEvent(UINICQSubType *st, Contact *contact);
 }
 
 #endif

@@ -470,19 +470,14 @@ namespace ICQ2000 {
 
     case V6_TCP_START:
 
-      if (type == MSG_Type_Normal) {
-	NormalICQSubType *nst = static_cast<NormalICQSubType*>(icqsubtype);
-	ev = new NormalMessageEvent(m_contact, nst->getMessage(), nst->isMultiParty());
+      if (type == MSG_Type_Normal
+	  || type == MSG_Type_URL) {
+	UINICQSubType *ist = static_cast<UINICQSubType*>(icqsubtype);
+	ev = UINICQSubTypeToEvent(ist,m_contact);
 	SignalMessageEvent(ev);
 
 	SendPacketAck(icqsubtype);
 
-      } else if (type == MSG_Type_URL) {
-	URLICQSubType *ust = static_cast<URLICQSubType*>(icqsubtype);
-	ev = new URLMessageEvent(m_contact, ust->getMessage(), ust->getURL());
-	SignalMessageEvent(ev);
-
-	SendPacketAck(icqsubtype);
       } else if (type == MSG_Type_AutoReq_Away
 	       || type == MSG_Type_AutoReq_Occ
 	       || type == MSG_Type_AutoReq_NA
@@ -720,16 +715,7 @@ namespace ICQ2000 {
 
     Contact *co = ev->getContact();
 
-    UINICQSubType *ist = NULL;
-    if (ev->getType() == MessageEvent::Normal) {
-      NormalMessageEvent *nv = static_cast<NormalMessageEvent*>(ev);
-      ist = new NormalICQSubType(nv->getMessage(), co->getUIN());
-    } else if (ev->getType() == MessageEvent::URL) {
-      URLMessageEvent *uv = static_cast<URLMessageEvent*>(ev);
-      ist = new URLICQSubType(uv->getMessage(), uv->getURL(), m_self_contact.getUIN(), co->getUIN());
-    } else if (ev->getType() == MessageEvent::AwayMessage) {
-      ist = new AwayMsgSubType( co->getStatus(), co->getUIN() );
-    }
+    UINICQSubType *ist = EventToUINICQSubType(ev);
     if (ist == NULL) return;
 
     ist->setAdvanced(true);

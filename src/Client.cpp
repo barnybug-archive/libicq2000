@@ -238,26 +238,18 @@ namespace ICQ2000 {
     if (st == NULL) return;
 
     unsigned short type = st->getType();
-    if (type == MSG_Type_Normal) {
-      NormalICQSubType *nst = static_cast<NormalICQSubType*>(st);
-      
-      contact = lookupICQ( nst->getSource() );
-      e = new NormalMessageEvent(contact,
-				 nst->getMessage(), nst->isMultiParty() );
-      
-      if (nst->isAdvanced()) SendAdvancedACK(snac);
+    if (type == MSG_Type_Normal
+	|| type == MSG_Type_URL
+	|| type == MSG_Type_AuthReq
+	|| type == MSG_Type_AuthRej
+	|| type == MSG_Type_AuthAcc) {
+      UINICQSubType *ist = static_cast<UINICQSubType*>(st);
+      contact = lookupICQ( ist->getSource() );
+      e = UINICQSubTypeToEvent(ist, contact);
 
-    } else if (type == MSG_Type_URL) {
-      URLICQSubType *ust = static_cast<URLICQSubType*>(st);
-      
-      contact = lookupICQ( ust->getSource() );
-      e = new URLMessageEvent(contact,
-			      ust->getMessage(),
-			      ust->getURL());
-
-      if (ust->isAdvanced()) SendAdvancedACK(snac);
-
-    } else if (type == MSG_Type_SMS) {
+      if (ist->isAdvanced()) SendAdvancedACK(snac);
+    }
+    else if (type == MSG_Type_SMS) {
       SMSICQSubType *sst = static_cast<SMSICQSubType*>(st);
       
       if (sst->getSMSType() == SMSICQSubType::SMS) {
@@ -278,25 +270,8 @@ namespace ICQ2000 {
 				sst->delivered());
       }
 
-    } else if (type == MSG_Type_AuthReq) {
-      AuthReqICQSubType *ust = static_cast<AuthReqICQSubType*>(st);
-      
-      contact = lookupICQ( ust->getSource() );
-      e = new AuthReqEvent(contact, ust->getMessage());
-
-    } else if (type == MSG_Type_AuthRej) {
-      AuthRejICQSubType *ust = static_cast<AuthRejICQSubType*>(st);
-    
-      contact = lookupICQ( ust->getSource() );
-      e = new AuthAckEvent(contact, ust->getMessage(), false);
-
-    } else if (type == MSG_Type_AuthAcc) {
-      AuthAccICQSubType *ust = static_cast<AuthAccICQSubType*>(st);
-    
-      contact = lookupICQ( ust->getSource() );
-      e = new AuthAckEvent(contact, true);
-
-    } else if (type == MSG_Type_AutoReq_Away
+    }
+    else if (type == MSG_Type_AutoReq_Away
 	       || type == MSG_Type_AutoReq_Occ
 	       || type == MSG_Type_AutoReq_NA
 	       || type == MSG_Type_AutoReq_DND
@@ -1804,42 +1779,6 @@ namespace ICQ2000 {
     messageack.emit(ev);
   }
   
-  UINICQSubType* Client::EventToUINICQSubType(MessageEvent *ev)
-  {
-    Contact *c = ev->getContact();
-    UINICQSubType *ist = NULL;
-
-    if (ev->getType() == MessageEvent::Normal) {
-
-      NormalMessageEvent *nv = static_cast<NormalMessageEvent*>(ev);
-      ist = new NormalICQSubType(nv->getMessage(), c->getUIN());
-
-    } else if (ev->getType() == MessageEvent::URL) {
-
-      URLMessageEvent *uv = static_cast<URLMessageEvent*>(ev);
-      ist = new URLICQSubType(uv->getMessage(), uv->getURL(), m_self.getUIN(), c->getUIN());
-
-    } else if (ev->getType() == MessageEvent::AwayMessage) {
-
-      ist = new AwayMsgSubType( c->getStatus(), c->getUIN() );
-
-    } else if (ev->getType() == MessageEvent::AuthReq) {
-
-      AuthReqEvent *uv = static_cast<AuthReqEvent*>(ev);
-      ist = new AuthReqICQSubType(uv->getMessage(), m_self.getUIN(), c->getUIN());
-
-    } else if (ev->getType() == MessageEvent::AuthAck) {
-
-      AuthAckEvent *uv = static_cast<AuthAckEvent*>(ev);
-      if(uv->isGranted())
-        ist = new AuthAccICQSubType(m_self.getUIN(), c->getUIN());
-      else
-        ist = new AuthRejICQSubType(uv->getMessage(), m_self.getUIN(), c->getUIN());
-
-    }
-    return ist;
-  }
-
   void Client::PingServer() {
     Buffer b(&m_translator);
     Buffer::marker mk = FLAPHeader(b,0x05);

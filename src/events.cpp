@@ -367,6 +367,60 @@ namespace ICQ2000 {
    */
   void MessageEvent::setDirect(bool f) { m_direct = f; }
 
+  // --------------- ICQ Message Event -------------------
+
+  /**
+   *  Constructor for a ICQMessageEvent
+   *
+   * @param c the contact related to this event
+   */
+  ICQMessageEvent::ICQMessageEvent(Contact *c)
+    : MessageEvent(c), m_urgent(false), m_tocontactlist(false) { }
+
+  /**
+   *  get whether the message was sent marked as urgent
+   *
+   * @return the urgency
+   */
+  bool ICQMessageEvent::isUrgent() const
+  {
+    return m_urgent;
+  }
+
+  /**
+   *  set whether the message shall be marked as urgent
+   */
+  void ICQMessageEvent::setUrgent(bool b)
+  {
+    m_urgent = b;
+  }
+
+  /**
+   *  get whether the message was sent 'to contact list'
+   *
+   * @return whether message was to contact list
+   */
+  bool ICQMessageEvent::isToContactList() const
+  {
+    return m_tocontactlist;
+  }
+
+  /**
+   *  set whether the message shall be marked as urgent
+   */
+  void ICQMessageEvent::setToContactList(bool b)
+  {
+    m_tocontactlist = b;
+  }
+
+  /**
+   *  get the uin of the sender.  This is really miss-named, if you
+   *  were sending the message, this would be the UIN of the recipient.
+   *
+   * @return the uin
+   */
+  unsigned int ICQMessageEvent::getSenderUIN() const { return m_contact->getUIN(); }
+
   // ---------------- Normal Message ---------------------
 
   /**
@@ -377,7 +431,7 @@ namespace ICQ2000 {
    * @param multi tag message as a multireceipt message
    */
   NormalMessageEvent::NormalMessageEvent(Contact* c, const string& msg, bool multi)
-    : MessageEvent(c), m_message(msg), m_multi(multi), m_offline(false),
+    : ICQMessageEvent(c), m_message(msg), m_multi(multi), m_offline(false),
       m_foreground(0x00000000), m_background(0x00ffffff) {
     setDirect(false);
   }
@@ -391,7 +445,7 @@ namespace ICQ2000 {
    * @param t the time the message was sent
    */
   NormalMessageEvent::NormalMessageEvent(Contact *c, const string& msg, time_t t, bool multi)
-    : MessageEvent(c), m_message(msg), m_offline(true), m_multi(multi),
+    : ICQMessageEvent(c), m_message(msg), m_offline(true), m_multi(multi),
       m_foreground(0x00000000), m_background(0x00ffffff) {
     setDirect(false);
     m_time = t;
@@ -406,21 +460,13 @@ namespace ICQ2000 {
    * @param bg background colour for the message
    */
   NormalMessageEvent::NormalMessageEvent(Contact *c, const string& msg, unsigned int fg, unsigned int bg)
-    : MessageEvent(c), m_message(msg), m_offline(false), m_multi(false) /* todo */,
+    : ICQMessageEvent(c), m_message(msg), m_offline(false), m_multi(false) /* todo */,
       m_foreground(fg), m_background(bg) {
     setDirect(true);
   }
 
   MessageEvent::MessageType NormalMessageEvent::getType() const { return MessageEvent::Normal; }
   
-  /**
-   *  get the uin of the sender.  This is really miss-named, if you
-   *  were sending the message, this would be the UIN of the recipient.
-   *
-   * @return the uni
-   */
-  unsigned int NormalMessageEvent::getSenderUIN() const { return m_contact->getUIN(); }
-
   /**
    *  get the message
    *
@@ -480,7 +526,7 @@ namespace ICQ2000 {
    * @param url the url
    */
   URLMessageEvent::URLMessageEvent(Contact* c, const string& msg, const string& url)
-    : MessageEvent(c), m_message(msg), m_url(url), m_offline(false) { }
+    : ICQMessageEvent(c), m_message(msg), m_url(url), m_offline(false) { }
 
   /**
    *  Construct an URLMessageEvent. This constructor is only used by the library.
@@ -491,20 +537,12 @@ namespace ICQ2000 {
    * @param t time of sending
    */
   URLMessageEvent::URLMessageEvent(Contact *c, const string& msg, const string& url, time_t t)
-    : MessageEvent(c), m_message(msg), m_url(url), m_offline(true) {
+    : ICQMessageEvent(c), m_message(msg), m_url(url), m_offline(true) {
     m_time = t;
   }
 
   MessageEvent::MessageType URLMessageEvent::getType() const { return MessageEvent::URL; }
   
-  /**
-   *  get the uin of the sender.  This is really miss-named, if you
-   *  were sending the message, this would be the UIN of the recipient.
-   *
-   * @return the uni
-   */
-  unsigned int URLMessageEvent::getSenderUIN() const { return m_contact->getUIN(); }
-
   /**
    *  get the message
    *
@@ -664,7 +702,7 @@ namespace ICQ2000 {
    * @param c the contact
    */
   AwayMessageEvent::AwayMessageEvent(Contact *c)
-    : MessageEvent(c) { }
+    : ICQMessageEvent(c) { }
 
   MessageEvent::MessageType AwayMessageEvent::getType() const { return MessageEvent::AwayMessage; }
 
@@ -691,7 +729,7 @@ namespace ICQ2000 {
    * @param msg authorisation message
    */
   AuthReqEvent::AuthReqEvent(Contact* c, const string& msg)
-    : MessageEvent(c), m_message(msg) {}
+    : ICQMessageEvent(c), m_message(msg) {}
     
   /**
    *  Constructor for the Authorisation Request
@@ -700,7 +738,7 @@ namespace ICQ2000 {
    * @param msg authorisation message
    */
   AuthReqEvent::AuthReqEvent(Contact* c, const string& msg, time_t t)
-    : MessageEvent(c), m_message(msg), m_offline(true) {
+    : ICQMessageEvent(c), m_message(msg), m_offline(true) {
     m_time=t;  
   }
 
@@ -722,15 +760,6 @@ namespace ICQ2000 {
    */
   bool AuthReqEvent::isOfflineMessage() const { return m_offline; }
     
-  /**
-   *  get the sender's uin
-   *
-   * @return the sender's uin
-   */
-  unsigned int AuthReqEvent::getSenderUIN() const { 
-    return m_contact->getUIN(); 
-  }
-
   // ---------------- Authorisation Acknowledgement ---------------
 
   /**
@@ -740,7 +769,7 @@ namespace ICQ2000 {
    * @param granted if authorisation was granted
    */
   AuthAckEvent::AuthAckEvent(Contact* c, bool granted)
-    : MessageEvent(c), m_offline(false), m_granted(granted) {}
+    : ICQMessageEvent(c), m_offline(false), m_granted(granted) {}
       
   /**
    *  Constructor for the Authorisation Acknowledgement
@@ -750,7 +779,7 @@ namespace ICQ2000 {
    * @param granted if authorisation was granted
    */
   AuthAckEvent::AuthAckEvent(Contact* c, const string& msg, bool granted)
-    : MessageEvent(c),  m_message(msg), m_offline(false), 
+    : ICQMessageEvent(c),  m_message(msg), m_offline(false), 
       m_granted(granted) {}
       
   /**
@@ -761,7 +790,7 @@ namespace ICQ2000 {
    * @param t time the message was sent
    */
   AuthAckEvent::AuthAckEvent(Contact* c, bool granted, time_t t)
-    : MessageEvent(c), m_offline(true), m_granted(granted) {
+    : ICQMessageEvent(c), m_offline(true), m_granted(granted) {
     m_time=t;  
   }
 
@@ -775,7 +804,7 @@ namespace ICQ2000 {
    */
   AuthAckEvent::AuthAckEvent(Contact* c, const string& msg,
                              bool granted, time_t t)
-    : MessageEvent(c), m_message(msg), m_offline(true), m_granted(granted) {
+    : ICQMessageEvent(c), m_message(msg), m_offline(true), m_granted(granted) {
     m_time=t;  
   }
   
@@ -792,15 +821,6 @@ namespace ICQ2000 {
     return m_granted; 
   }
   
-  /**
-   *  get the sender's uin
-   *
-   * @return the sender's uin
-   */
-  unsigned int AuthAckEvent::getSenderUIN() const { 
-    return m_contact->getUIN(); 
-  }
-
   /**
    *  get the authorisation message
    *

@@ -338,9 +338,26 @@ namespace ICQ2000 {
   };
 
   /**
+   *  Base class for ICQ messages (not SMS)
+   */
+  class ICQMessageEvent : public MessageEvent {
+   private:
+    bool m_urgent, m_tocontactlist;
+    
+   public:
+    ICQMessageEvent(Contact *c);
+    
+    bool isUrgent() const;
+    void setUrgent(bool b);
+    bool isToContactList() const;
+    void setToContactList(bool b);
+    unsigned int getSenderUIN() const;
+  };
+
+  /**
    *  A normal message
    */
-  class NormalMessageEvent : public MessageEvent {
+  class NormalMessageEvent : public ICQMessageEvent {
    private:
     string m_message;
     bool m_offline, m_multi;
@@ -353,7 +370,6 @@ namespace ICQ2000 {
 
     string getMessage() const;
     MessageType getType() const;
-    unsigned int getSenderUIN() const;
     bool isOfflineMessage() const;
     bool isMultiParty() const;
     unsigned int getForeground() const;
@@ -365,7 +381,7 @@ namespace ICQ2000 {
   /**
    *  An URL message
    */
-  class URLMessageEvent : public MessageEvent {
+  class URLMessageEvent : public ICQMessageEvent {
    private:
     string m_message, m_url;
     bool m_offline;
@@ -377,7 +393,6 @@ namespace ICQ2000 {
     string getMessage() const;
     string getURL() const;
     MessageType getType() const;
-    unsigned int getSenderUIN() const;
     bool isOfflineMessage() const;
   };
   
@@ -426,7 +441,7 @@ namespace ICQ2000 {
   /**
    *  An Away message
    */
-  class AwayMessageEvent : public MessageEvent {
+  class AwayMessageEvent : public ICQMessageEvent {
    private:
     Contact *m_contact;
     string m_message;
@@ -442,7 +457,7 @@ namespace ICQ2000 {
   /**
    *  An Authorisation Request
    */
-  class AuthReqEvent : public MessageEvent {
+  class AuthReqEvent : public ICQMessageEvent {
    private:
     string m_message;
     bool m_offline;
@@ -454,13 +469,12 @@ namespace ICQ2000 {
     string getMessage() const;
     MessageType getType() const;
     bool isOfflineMessage() const;
-    unsigned int getSenderUIN() const;
   };
   
   /**
    *  An Authorisation Acknowledge (success/failure)
    */
-  class AuthAckEvent : public MessageEvent {
+  class AuthAckEvent : public ICQMessageEvent {
    private:
     string m_message;
     bool m_offline;
@@ -476,7 +490,6 @@ namespace ICQ2000 {
     MessageType getType() const;
     bool isOfflineMessage() const;
     bool isGranted() const;
-    unsigned int getSenderUIN() const;
   };
 
   // --------------------- Self Events ----------------------
