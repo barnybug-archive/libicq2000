@@ -45,9 +45,9 @@
 #include <libicq2000/DCCache.h>
 #include <libicq2000/SMTPClient.h>
 #include <libicq2000/userinfoconstants.h>
+#include <libicq2000/MessageHandler.h>
 
 using std::string;
-using SigC::Signal1;
 
 namespace ICQ2000 {
   
@@ -80,7 +80,7 @@ namespace ICQ2000 {
 		 UIN_AWAITING_UIN_REPLY
     } m_state;
 
-    Contact m_self;
+    ContactRef m_self;
     string m_password;
     Status m_status_wanted;
     bool m_invisible_wanted;
@@ -100,6 +100,8 @@ namespace ICQ2000 {
     Translator m_translator;
 
     ContactList m_contact_list;
+
+    MessageHandler m_message_handler;
 
     unsigned char *m_cookie_data;
     unsigned short m_cookie_length;
@@ -133,7 +135,7 @@ namespace ICQ2000 {
     // -- Ping server --
     void PingServer();
 
-    DirectClient* ConnectDirect(Contact *c);
+    DirectClient* ConnectDirect(ContactRef c);
     void DisconnectDirectConns();
     void DisconnectDirectConn(int fd);
 
@@ -150,12 +152,15 @@ namespace ICQ2000 {
     void SignalLog(LogEvent::LogType type, const string& msg);
     void SignalUserOnline(BuddyOnlineSNAC *snac);
     void SignalUserOffline(BuddyOfflineSNAC *snac);
-    void SignalUserAdded(Contact *c);
     void SignalServerBasedContactList(const ContactList& l);
-    void SignalUserRemoved(Contact *c);
     void SignalAddSocket(int fd, SocketEvent::Mode m);
     void SignalRemoveSocket(int fd);
     // ------------------ Outgoing packets -------------------
+
+    // -------------- Callbacks from ContactList -------------
+    void contactlist_cb(ContactListEvent *ev);
+
+    // -------------- Callbacks from Contacts ----------------
 
     void SendAuthReq();
     void SendNewUINReq();
@@ -198,11 +203,11 @@ namespace ICQ2000 {
 
     // -------------------------------------------------------
 
-    Contact* lookupICQ(unsigned int uin);
-    Contact* lookupMobile(const string& m);
-    Contact* lookupEmail(const string& m);
+    ContactRef lookupICQ(unsigned int uin);
+    ContactRef lookupMobile(const string& m);
+    ContactRef lookupEmail(const string& email);
 
-    Contact* getUserInfoCacheContact(unsigned int reqid);
+    ContactRef getUserInfoCacheContact(unsigned int reqid);
 
     void ICBMCookieCache_expired_cb(MessageEvent *ev);
     void dccache_expired_cb(DirectClient *dc);
@@ -210,7 +215,6 @@ namespace ICQ2000 {
     void dc_connected_cb(DirectClient *dc);
     void dc_log_cb(LogEvent *ev);
     void dc_socket_cb(SocketEvent *ev);
-    void dc_messaged_cb(MessageEvent *ev);
     void dc_messageack_cb(MessageEvent *ev);
 
     bool SendDirect(MessageEvent *ev);
@@ -232,7 +236,7 @@ namespace ICQ2000 {
     void setPassword(const string& password);
     string getPassword() const;
 
-    Contact* getSelfContact();
+    ContactRef getSelfContact();
 
     bool setTranslationMap(const string& szMapFileName);
     const string& getTranslationMapFileName() const;
@@ -245,7 +249,7 @@ namespace ICQ2000 {
      *  A ConnectedEvent is signalled when the client is online proper.
      * @see disconnected, ConnectedEvent
      */
-    Signal1<void,ConnectedEvent*> connected;
+    SigC::Signal1<void,ConnectedEvent*> connected;
 
     /**
      *  The signal to connect to for listening to DisconnectedEvent's.
@@ -260,14 +264,14 @@ namespace ICQ2000 {
      *  signalling incorrect password.
      * @see connected, DisconnectedEvent
      */
-    Signal1<void,DisconnectedEvent*> disconnected;
+    SigC::Signal1<void,DisconnectedEvent*> disconnected;
 
     /**
      *  The signal to connect to for listening to incoming
      *  MessageEvent. This includes far more than just messages.
      * @see MessageEvent
      */
-    Signal1<bool,MessageEvent*,StopOnTrueMarshal> messaged;
+    SigC::Signal1<void,MessageEvent*> messaged;
 
     /**
      *  The signal to connect to for listening to the acknowledgements
@@ -277,27 +281,39 @@ namespace ICQ2000 {
      *  messages are being reattempted to be send through the server.
      * @see messaged, MessageEvent
      */
-    Signal1<void,MessageEvent*> messageack;
+    SigC::Signal1<void,MessageEvent*> messageack;
 
     /**
      *  The signal to connect to for listening to Contact list events.
      * @see ContactListEvent
      */
-    Signal1<void,ContactListEvent*> contactlist;
+    SigC::Signal1<void,ContactListEvent*> contactlist;
+
+    /**
+     *  The signal to connect to for listening for Contact Userinfo events.
+     * @see UserInfoChangeEvent
+     */
+    SigC::Signal1<void,UserInfoChangeEvent*> contact_userinfo_change_signal;
+
+    /**
+     *  The signal to connect to for listening for Contact Status change events.
+     * @see StatusChangeEvent
+     */
+    SigC::Signal1<void,StatusChangeEvent*> contact_status_change_signal;
 
     /**
      *  The signal for when registering a new UIN has succeeded or
      *  failed after a call to RegisterUIN().
      * @see NewUINEvent, RegisterUIN
      */
-    Signal1<void,NewUINEvent*> newuin;
+    SigC::Signal1<void,NewUINEvent*> newuin;
 
     /**
      *  The signal for when the server signals the rate at which the client
      *  is sending has been changed.
      * @see RateInfoChangeEvent
      */
-    Signal1<void,RateInfoChangeEvent*> rate;
+    SigC::Signal1<void,RateInfoChangeEvent*> rate;
 
     /**
      *  The signal for all logging messages that are passed back to
@@ -307,7 +323,7 @@ namespace ICQ2000 {
      *  of log messages to display and which to ignore.
      * @see LogEvent
      */
-    Signal1<void,LogEvent*> logger;
+    SigC::Signal1<void,LogEvent*> logger;
 
     /**
      *  The signal for socket events. All clients must listen to this
@@ -318,29 +334,27 @@ namespace ICQ2000 {
      *
      * @see SocketEvent
      */
-    Signal1<void,SocketEvent*> socket;
+    SigC::Signal1<void,SocketEvent*> socket;
 
     /**
-     *  Signal to listen to for self events. This includes when the
-     *  server has accepted a status change request and successful
-     *  fetching of my user info. Your change in status has been
-     *  acknowledged by the server then, and other clients will see
-     *  the new status. In a User Interface the setting of the status
-     *  should be done separately from the updating the display of
-     *  it. The updating the display of it should only be done once
-     *  you have received this signal.
-     *
-     * @see MyStatusChangeEvent, MyUserInfoChangeEvent
+     *  The signal to connect to for listening for Self Contact Userinfo events.
+     * @see UserInfoChangeEvent
      */
-    Signal1<void,SelfEvent*> self_event;
-    
+    SigC::Signal1<void,UserInfoChangeEvent*> self_contact_userinfo_change_signal;
+
+    /**
+     *  The signal to connect to for listening for Self Contact Status change events.
+     * @see StatusChangeEvent
+     */
+    SigC::Signal1<void,StatusChangeEvent*> self_contact_status_change_signal;
+
     /**
      *  Signal when someone requests your away message. The client
      *  should setMessage in the AutoMessageEvent to what your away
      *  message is. This allows dynamic away messages for different
      *  people.
      */
-    Signal1<void,AwayMessageEvent*> want_auto_resp;
+    SigC::Signal1<void,ICQMessageEvent*> want_auto_resp;
 
     /**
      *  Signal when a Search Result has been updated.  The last signal
@@ -348,16 +362,11 @@ namespace ICQ2000 {
      *  SearchResultEvent::isFinished() set to true. After this the
      *  event is finished and deleted from memory by the library.
      */
-    Signal1<void,SearchResultEvent*> search_result;
+    SigC::Signal1<void,SearchResultEvent*> search_result;
     
-    Signal1<void,ServerBasedContactEvent*> server_based_contact_list;
+    SigC::Signal1<void,ServerBasedContactEvent*> server_based_contact_list;
     
     // -------------
-
-    // -- Signal Dispatchers --
-    void SignalUserInfoChange(Contact *c);
-    void SignalMessageQueueChanged(Contact *c);
-    // ------------------------
 
     // -- Send calls --
     void SendEvent(MessageEvent *ev);
@@ -373,11 +382,14 @@ namespace ICQ2000 {
     void uploadSelfDetails();
     
     // -- Contact List --
-    void addContact(Contact& c);
+    void addContact(ContactRef c);
     void removeContact(const unsigned int uin);
-    Contact* getContact(const unsigned int uin);
-    void fetchSimpleContactInfo(Contact* c);
-    void fetchDetailContactInfo(Contact* c);
+    ContactRef getContact(const unsigned int uin);
+
+    ContactList& getContactList();
+
+    void fetchSimpleContactInfo(ContactRef c);
+    void fetchDetailContactInfo(ContactRef c);
     void fetchServerBasedContactList();
     void fetchSelfSimpleContactInfo();
     void fetchSelfDetailContactInfo();

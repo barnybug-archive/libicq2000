@@ -29,7 +29,7 @@ using std::ostringstream;
 
 namespace ICQ2000 {
 
-  SMTPClient::SMTPClient(Contact &self, const string& server_name,
+  SMTPClient::SMTPClient(ContactRef self, const string& server_name,
 			 unsigned short server_port, Translator* translator)
     : m_state(NOT_CONNECTED), m_translator(translator), m_recv(translator),
       m_server_name(server_name), m_server_port(server_port), m_timeout(30),
@@ -244,8 +244,7 @@ namespace ICQ2000 {
       b.Pack(aev->getSMTPTo());
 
     } else if(ev->getType() == MessageEvent::Email) {
-      Contact &cont = *ev->getContact();
-      b.Pack(getContactEmail(cont));
+      b.Pack(getContactEmail( ev->getContact() ));
 
     }
 
@@ -312,13 +311,13 @@ namespace ICQ2000 {
     if ( m_socket->getSocketHandle() > -1) SignalRemoveSocket( m_socket->getSocketHandle() );
   }
 
-  string SMTPClient::getContactEmail(const Contact &cont) const {
-    if(cont.getEmail().empty()) {
+  string SMTPClient::getContactEmail(ContactRef cont) const {
+    if(cont->getEmail().empty()) {
       ostringstream ostr;
-      ostr << dec << cont.getUIN() << "@pager.icq.com";
+      ostr << dec << cont->getUIN() << "@pager.icq.com";
       return ostr.str();
     } else {
-      return cont.getEmail();
+      return cont->getEmail();
     }
   }
 

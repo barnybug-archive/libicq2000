@@ -33,17 +33,17 @@ namespace ICQ2000 {
     : m_buddy_list() { 
     ContactList::const_iterator curr = l.begin();
     while (curr != l.end()) {
-      if ((*curr).isICQContact()) m_buddy_list.push_back((*curr).getStringUIN());
+      if ((*curr)->isICQContact()) m_buddy_list.push_back((*curr)->getStringUIN());
       ++curr;
     }
     
   }
 
-  AddBuddySNAC::AddBuddySNAC(const Contact& c)
-    : m_buddy_list(1, c.getStringUIN()) { }
+  AddBuddySNAC::AddBuddySNAC(const ContactRef& c)
+    : m_buddy_list(1, c->getStringUIN()) { }
 
-  void AddBuddySNAC::addBuddy(const Contact& c) {
-    m_buddy_list.push_back(c.getStringUIN());
+  void AddBuddySNAC::addBuddy(const ContactRef& c) {
+    m_buddy_list.push_back(c->getStringUIN());
   }
 
   void AddBuddySNAC::OutputBody(Buffer& b) const {
@@ -61,17 +61,17 @@ namespace ICQ2000 {
     : m_buddy_list() { 
     ContactList::const_iterator curr = l.begin();
     while (curr != l.end()) {
-      if ((*curr).isICQContact()) m_buddy_list.push_back((*curr).getStringUIN());
+      if ((*curr)->isICQContact()) m_buddy_list.push_back((*curr)->getStringUIN());
       ++curr;
     }
     
   }
 
-  RemoveBuddySNAC::RemoveBuddySNAC(const string& s)
-    : m_buddy_list(1, s) { }
+  RemoveBuddySNAC::RemoveBuddySNAC(const ContactRef& c)
+    : m_buddy_list(1, c->getStringUIN()) { }
 
-  void RemoveBuddySNAC::removeBuddy(const Contact& c) {
-    m_buddy_list.push_back(c.getStringUIN());
+  void RemoveBuddySNAC::removeBuddy(const ContactRef& c) {
+    m_buddy_list.push_back(c->getStringUIN());
   }
 
   void RemoveBuddySNAC::OutputBody(Buffer& b) const {

@@ -26,7 +26,10 @@
 #include <list>
 #include <string>
 
+#include <sigc++/signal_system.h>
+
 #include <libicq2000/constants.h>
+#include <libicq2000/ref_ptr.h>
 
 using std::list;
 using std::string;
@@ -43,89 +46,93 @@ namespace ICQ2000 {
   const unsigned short STATUS_FLAG_INVISIBLE = 0x0100;
 
   class MessageEvent;
-
-  // DetailedUserInfo classes
-
-  class MainHomeInfo {
-    string cellular, normalised_cellular;
-    // cellular private - access must be through
-    // get/setMobileNo for consistency
-    
-    void normaliseMobileNo();
-
-   public:
-    MainHomeInfo();
-
-    string alias, firstname, lastname, email, city, state, phone, fax, street, zip;
-    unsigned short country;
-    signed char timezone;
-
-    string getCountry() const;
-    string getMobileNo() const;
-    void setMobileNo(const string& s);
-
-    string getNormalisedMobileNo() const;
-  };
-
-  class HomepageInfo {
-   public:
-    HomepageInfo();
-
-    unsigned char age, sex;
-    string homepage;
-    unsigned short birth_year;
-    unsigned char birth_month, birth_day, lang1, lang2, lang3;
-
-    string getBirthDate() const;
-    string getLanguage(int l) const;
-  };
-
-  class EmailInfo {
-   private:
-    list<string> email_list;
-
-   public:
-    EmailInfo();
-
-    void addEmailAddress(const string&);
-  };
-  
-  class WorkInfo {
-   public:
-    WorkInfo();
-    
-    string city, state, street, zip;
-    unsigned short country;
-    string company_name, company_dept, company_position, company_web;
-  };
-
-  class BackgroundInfo {
-   public:
-    typedef std::pair<unsigned short, string> School;
-    list<School> schools;   // school names
-
-    BackgroundInfo();
-
-    void addSchool(unsigned short cat, const string& s);
-  };
-
-  class PersonalInterestInfo {
-   public:
-    typedef std::pair<unsigned short, string> Interest;
-    list<Interest> interests;
-
-    PersonalInterestInfo();
-    
-    void addInterest(unsigned short cat, const string& s);
-  };
+  class StatusChangeEvent;
+  class UserInfoChangeEvent;
 
   class Contact {
-   private:
+   public:
+    // reference count
+    unsigned int count;
+
+    // Inner classes for various sections of Contact details
+
+    class MainHomeInfo {
+      string cellular, normalised_cellular;
+      // cellular private - access must be through
+      // get/setMobileNo for consistency
+    
+      void normaliseMobileNo();
+
+    public:
+      MainHomeInfo();
+
+      string alias, firstname, lastname, email, city, state, phone, fax, street, zip;
+      unsigned short country;
+      signed char timezone;
+
+      string getCountry() const;
+      string getMobileNo() const;
+      void setMobileNo(const string& s);
+
+      string getNormalisedMobileNo() const;
+    };
+
+    class HomepageInfo {
+    public:
+      HomepageInfo();
+
+      unsigned char age, sex;
+      string homepage;
+      unsigned short birth_year;
+      unsigned char birth_month, birth_day, lang1, lang2, lang3;
+
+      string getBirthDate() const;
+      string getLanguage(int l) const;
+    };
+
+    class EmailInfo {
+    private:
+      list<string> email_list;
+
+    public:
+      EmailInfo();
+
+      void addEmailAddress(const string&);
+    };
+  
+    class WorkInfo {
+    public:
+      WorkInfo();
+    
+      string city, state, street, zip;
+      unsigned short country;
+      string company_name, company_dept, company_position, company_web;
+    };
+
+    class BackgroundInfo {
+    public:
+      typedef std::pair<unsigned short, string> School;
+      list<School> schools;   // school names
+
+      BackgroundInfo();
+
+      void addSchool(unsigned short cat, const string& s);
+    };
+
+    class PersonalInterestInfo {
+    public:
+      typedef std::pair<unsigned short, string> Interest;
+      list<Interest> interests;
+
+      PersonalInterestInfo();
+    
+      void addInterest(unsigned short cat, const string& s);
+    };
+
+  private:
     void Init();
     bool m_icqcontact;
     bool m_virtualcontact;
-
-    list<MessageEvent*> m_pending_msgs;
 
     // static fields
     unsigned int m_uin;
@@ -158,10 +165,7 @@ namespace ICQ2000 {
     Contact();
 
     Contact(unsigned int uin);
-    Contact(const string& a, const string& m);
     Contact(const string& a);
-
-    ~Contact();
 
     unsigned int getUIN() const;
     void setUIN(unsigned int uin);
@@ -172,6 +176,8 @@ namespace ICQ2000 {
     string getFirstName() const;
     string getLastName() const;
     string getEmail() const;
+
+    string getNameAlias() const;
 
     Status getStatus() const;
     string getStatusStr() const;
@@ -195,6 +201,7 @@ namespace ICQ2000 {
     bool getDirect() const;
     void setDirect(bool b);
 
+    void setStatus(Status st, bool i);
     void setStatus(Status st);
     void setInvisible(bool i);
     void setExtIP(unsigned int ip);
@@ -227,11 +234,10 @@ namespace ICQ2000 {
 
     unsigned short nextSeqNum();
 
-    unsigned int numberPendingMessages() const;
+    SigC::Signal1<void,StatusChangeEvent*> status_change_signal;
+    SigC::Signal1<void,UserInfoChangeEvent*> userinfo_change_signal;
 
-    void addPendingMessage(MessageEvent* e);
-    MessageEvent *getPendingMessage() const;
-    void erasePendingMessage(MessageEvent* e);
+    void userinfo_change_emit();
 
     static string UINtoString(unsigned int uin);
     static unsigned int StringtoUIN(const string& s);
@@ -241,9 +247,9 @@ namespace ICQ2000 {
     static bool MapICQStatusToInvisible(unsigned short st);
 
     static unsigned int nextImaginaryUIN();
-
   };
 
+  typedef ref_ptr<Contact> ContactRef;
 }
 
 #endif

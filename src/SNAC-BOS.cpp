@@ -36,7 +36,7 @@ namespace ICQ2000 {
     : m_buddy_list() { 
     ContactList::const_iterator curr = l.begin();
     while (curr != l.end()) {
-      if ((*curr).isICQContact()) m_buddy_list.push_back((*curr).getStringUIN());
+      if ((*curr)->isICQContact()) m_buddy_list.push_back((*curr)->getStringUIN());
       ++curr;
     }
     

@@ -38,6 +38,7 @@
 #include <libicq2000/SeqNumCache.h>
 #include <libicq2000/Translator.h>
 #include <libicq2000/SocketClient.h>
+#include <libicq2000/MessageHandler.h>
 
 using std::string;
 using std::list;
@@ -61,9 +62,10 @@ namespace ICQ2000 {
 
     Buffer m_recv;
 
-    Contact& m_self_contact;
-    Contact *m_contact;
+    ContactRef m_self_contact;
+    ContactRef m_contact;
     ContactList *m_contact_list;
+    MessageHandler *m_message_handler;
 
     bool m_incoming;
 
@@ -106,21 +108,15 @@ namespace ICQ2000 {
     void Init();
 
    public:
-    DirectClient(Contact& self, TCPSocket *sock, ContactList *cl, unsigned int ext_ip,
+    DirectClient(ContactRef self, TCPSocket *sock, MessageHandler *mh, ContactList *cl, unsigned int ext_ip,
 		 unsigned short server_port, Translator* translator);
-    DirectClient(Contact& self, Contact *c, unsigned int ext_ip,
+    DirectClient(ContactRef self, ContactRef c, MessageHandler *mh, unsigned int ext_ip,
 		 unsigned short server_port, Translator *translator);
     ~DirectClient();
 
     void Connect();
     void FinishNonBlockingConnect();
     void Recv();
-
-    // ------------------ Signal dispatchers -----------------
-    void SignalMessageEvent(MessageEvent *ev);
-    // ------------------  Signals ---------------------------
-    Signal1<void,MessageEvent*> messaged;
-    Signal1<void,AwayMessageEvent*> want_auto_resp;
 
     unsigned int getUIN() const;
     unsigned int getIP() const;
@@ -129,8 +125,8 @@ namespace ICQ2000 {
     TCPSocket* getSocket() const;
     void clearoutMessagesPoll();
 
-    void setContact(Contact* c);
-    Contact* getContact() const;
+    void setContact(ContactRef c);
+    ContactRef getContact() const;
     void SendEvent(MessageEvent* ev);
   };
 

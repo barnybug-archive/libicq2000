@@ -20,53 +20,67 @@
  */
 
 #include <libicq2000/ContactList.h>
+#include <libicq2000/events.h>
 
 namespace ICQ2000 {
 
   ContactList::ContactList() { }
 
-  Contact& ContactList::operator[](unsigned int uin) {
+  ContactList::ContactList(const ContactList& cl)
+    : m_cmap(cl.m_cmap)
+  { }
+
+  ContactRef ContactList::operator[](unsigned int uin)
+  {
     return lookup_uin(uin);
   }
 
-  Contact& ContactList::lookup_uin(unsigned int uin) {
-    return m_cmap[uin];
+  ContactRef ContactList::lookup_uin(unsigned int uin)
+  {
+    if (m_cmap.count(uin) != 0) return (*(m_cmap.find(uin))).second;
+    return NULL;
   }
-
-  Contact& ContactList::lookup_mobile(const string& m)
+  
+  ContactRef ContactList::lookup_mobile(const string& m)
   {
     iterator curr = begin();
     while (curr != end()) {
-      if ((*curr).getNormalisedMobileNo() == m) return (*curr);
+      if ((*curr)->getNormalisedMobileNo() == m) return (*curr);
       ++curr;
     }
 
-    Contact c(m,m);
-    add(c);
-    return m_cmap[c.getUIN()];
+    return NULL;
   }
 
-  Contact& ContactList::lookup_email(const string& em)
+  ContactRef ContactList::lookup_email(const string& em)
   {
     iterator curr = begin();
     while (curr != end()) {
-      if ((*curr).getEmail() == em) return (*curr);
+      if ((*curr)->getEmail() == em) return (*curr);
       ++curr;
     }
 
-    Contact c(em);
-    c.setEmail(em);
-    add(c);
-    return m_cmap[c.getUIN()];
+    return NULL;
   }
 
-  Contact& ContactList::add(const Contact& ct) {
-    m_cmap.insert(std::pair<unsigned int,Contact>(ct.getUIN(),ct));
-    return m_cmap[ct.getUIN()];
+  ContactRef ContactList::add(ContactRef ct) {
+    m_cmap.insert(make_pair(ct->getUIN(),ct));
+
+    // fire off signal
+    UserAddedEvent uev( ct );
+    contactlist_signal.emit( &uev );
+
+    return ct;
   }
 
   void ContactList::remove(unsigned int uin) {
-    m_cmap.erase(uin);
+    if (m_cmap.count(uin) != 0) {
+      // first fire off signal
+      UserRemovedEvent uev( m_cmap[uin] );
+      contactlist_signal.emit( &uev );
+
+      m_cmap.erase(uin);
+    }
   }
 
   bool ContactList::empty() const {
@@ -84,7 +98,7 @@ namespace ICQ2000 {
   bool ContactList::mobile_exists(const string& m) {
     iterator curr = begin();
     while (curr != end()) {
-      if ((*curr).getNormalisedMobileNo() == m) return true;
+      if ((*curr)->getNormalisedMobileNo() == m) return true;
       ++curr;
     }
     return false;
@@ -93,7 +107,7 @@ namespace ICQ2000 {
   bool ContactList::email_exists(const string& em) {
     iterator curr = begin();
     while (curr != end()) {
-      if ((*curr).getEmail() == em) return true;
+      if ((*curr)->getEmail() == em) return true;
       ++curr;
     }
     return false;
@@ -103,12 +117,12 @@ namespace ICQ2000 {
     return iterator(m_cmap.begin());
   }
 
-  ContactList::const_iterator ContactList::begin() const {
-    return const_iterator(m_cmap.begin());
-  }
-
   ContactList::iterator ContactList::end() {
     return iterator(m_cmap.end());
+  }
+
+  ContactList::const_iterator ContactList::begin() const {
+    return const_iterator(m_cmap.begin());
   }
 
   ContactList::const_iterator ContactList::end() const {

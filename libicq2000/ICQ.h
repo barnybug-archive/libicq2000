@@ -28,14 +28,12 @@
 #include <libicq2000/buffer.h>
 #include <libicq2000/exceptions.h>
 #include <libicq2000/constants.h>
+#include <libicq2000/Contact.h>
 
 using std::string;
 
 namespace ICQ2000 {
 
-  class Contact;
-  class MessageEvent;
-  
   // ------------- TCP Command Types ------------------
 
   const unsigned short V6_TCP_START     = 0x07ee;
@@ -67,6 +65,7 @@ namespace ICQ2000 {
   const unsigned short Priority_ToContactList = 0x0004;
 
   const unsigned short AcceptStatus_Online     = 0x0000; // accepted
+  const unsigned short AcceptStatus_Denied     = 0x0001; // not accepted - denied
   const unsigned short AcceptStatus_Away       = 0x0004; // accepted in away
   const unsigned short AcceptStatus_Occupied   = 0x0009; // not accepted in occupied
   const unsigned short AcceptStatus_DND        = 0x000a; // not accepted in DND
@@ -330,10 +329,6 @@ namespace ICQ2000 {
     unsigned char getType() const;
   };
 
-  // helper
-
-  UINICQSubType* EventToUINICQSubType(MessageEvent *ev);
-  MessageEvent* UINICQSubTypeToEvent(UINICQSubType *st, Contact *contact);
 }
 
 #endif

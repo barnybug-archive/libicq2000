@@ -45,6 +45,7 @@ namespace ICQ2000 {
 
     // ------------------ Signal dispatchers -----------------
     void SignalLog(LogEvent::LogType type, const std::string& msg);
+
     // ------------------  Signals ---------------------------
     SigC::Signal1<void,LogEvent*> logger;
     SigC::Signal1<void,MessageEvent*> messageack;

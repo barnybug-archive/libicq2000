@@ -153,39 +153,39 @@ namespace ICQ2000 {
   class SrvUpdateMainHomeInfo : public SrvFamilySNAC, public OutSNAC {
     private:
       unsigned int m_my_uin;
-      const MainHomeInfo& m_main_home_info;
+      const Contact::MainHomeInfo& m_main_home_info;
 
     protected:
       void OutputBody(Buffer& b) const;
 
     public:
-      SrvUpdateMainHomeInfo(unsigned int my_uin, const MainHomeInfo& main_home_info);
+      SrvUpdateMainHomeInfo(unsigned int my_uin, const Contact::MainHomeInfo& main_home_info);
       unsigned short Subtype() const { return SNAC_SRV_Send; }
  };
   
   class SrvUpdateWorkInfo : public SrvFamilySNAC, public OutSNAC {
     private:
       unsigned int m_my_uin;
-      const WorkInfo& m_work_info;
+      const Contact::WorkInfo& m_work_info;
 
     protected:
       void OutputBody(Buffer& b) const;
 
     public:
-      SrvUpdateWorkInfo(unsigned int my_uin, const WorkInfo& work_info);
+      SrvUpdateWorkInfo(unsigned int my_uin, const Contact::WorkInfo& work_info);
       unsigned short Subtype() const { return SNAC_SRV_Send; }
  };
   
   class SrvUpdateHomepageInfo : public SrvFamilySNAC, public OutSNAC {
     private:
       unsigned int m_my_uin;
-      const HomepageInfo& m_homepage_info;
+      const Contact::HomepageInfo& m_homepage_info;
 
     protected:
       void OutputBody(Buffer& b) const;
 
     public:
-      SrvUpdateHomepageInfo(unsigned int my_uin, const HomepageInfo& homepage_info);
+      SrvUpdateHomepageInfo(unsigned int my_uin, const Contact::HomepageInfo& homepage_info);
       unsigned short Subtype() const { return SNAC_SRV_Send; }
  };
   
@@ -266,12 +266,12 @@ namespace ICQ2000 {
     bool m_last_in_search;
 
     // DetailedUserInfo fields
-    MainHomeInfo m_main_home_info;
-    HomepageInfo m_homepage_info;
-    EmailInfo m_email_info;
-    WorkInfo m_work_info;
-    BackgroundInfo m_background_info;
-    PersonalInterestInfo m_personal_interest_info;
+    Contact::MainHomeInfo m_main_home_info;
+    Contact::HomepageInfo m_homepage_info;
+    Contact::EmailInfo m_email_info;
+    Contact::WorkInfo m_work_info;
+    Contact::BackgroundInfo m_background_info;
+    Contact::PersonalInterestInfo m_personal_interest_info;
     string m_about;
 
     bool m_authreq;
@@ -326,12 +326,12 @@ namespace ICQ2000 {
     unsigned short Subtype() const { return SNAC_SRV_Response; }
 
     // detailed user info structures
-    MainHomeInfo& getMainHomeInfo() { return m_main_home_info; }
-    HomepageInfo& getHomepageInfo() { return m_homepage_info; }
-    EmailInfo &getEmailInfo() { return m_email_info; }
-    WorkInfo &getWorkInfo() { return m_work_info; }
-    BackgroundInfo &getBackgroundInfo() { return m_background_info; }
-    PersonalInterestInfo &getPersonalInterestInfo() { return m_personal_interest_info; }
+    Contact::MainHomeInfo& getMainHomeInfo() { return m_main_home_info; }
+    Contact::HomepageInfo& getHomepageInfo() { return m_homepage_info; }
+    Contact::EmailInfo& getEmailInfo() { return m_email_info; }
+    Contact::WorkInfo& getWorkInfo() { return m_work_info; }
+    Contact::BackgroundInfo& getBackgroundInfo() { return m_background_info; }
+    Contact::PersonalInterestInfo& getPersonalInterestInfo() { return m_personal_interest_info; }
     string getAboutInfo() const { return m_about; }
   };
 

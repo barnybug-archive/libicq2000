@@ -24,8 +24,6 @@
 #include "sstream_fix.h"
 #include <memory>
 
-#include <libicq2000/events.h>
-
 using std::ostringstream;
 using std::auto_ptr;
 
@@ -691,85 +689,5 @@ namespace ICQ2000 {
   unsigned short UserAddICQSubType::Length() const { return 0; }
 
   unsigned char UserAddICQSubType::getType() const { return MSG_Type_UserAdd; }
-
-  // helper
-
-  MessageEvent* UINICQSubTypeToEvent(UINICQSubType *st, Contact *contact)
-  {
-    ICQMessageEvent *e = NULL;
-    unsigned short type = st->getType();
-    
-    if (type == MSG_Type_Normal) {
-      NormalICQSubType *nst = static_cast<NormalICQSubType*>(st);
-      e = new NormalMessageEvent(contact,
-				 nst->getMessage(), nst->isMultiParty() );
-
-    } else if (type == MSG_Type_URL) {
-      URLICQSubType *ust = static_cast<URLICQSubType*>(st);
-      e = new URLMessageEvent(contact,
-			      ust->getMessage(),
-			      ust->getURL());
-
-    } else if (type == MSG_Type_AuthReq) {
-      AuthReqICQSubType *ust = static_cast<AuthReqICQSubType*>(st);
-      e = new AuthReqEvent(contact, ust->getMessage());
-
-    } else if (type == MSG_Type_AuthRej) {
-      AuthRejICQSubType *ust = static_cast<AuthRejICQSubType*>(st);
-      e = new AuthAckEvent(contact, ust->getMessage(), false);
-
-    } else if (type == MSG_Type_AuthAcc) {
-      e = new AuthAckEvent(contact, true);
-    }
-
-    if (e != NULL) {
-      e->setUrgent( st->isUrgent() );
-      e->setToContactList( st->isToContactList() );
-    }
-    
-    return e;
-  }
-  
-  UINICQSubType* EventToUINICQSubType(MessageEvent *ev)
-  {
-    Contact *c = ev->getContact();
-    UINICQSubType *ist = NULL;
-
-    if (ev->getType() == MessageEvent::Normal) {
-
-      NormalMessageEvent *nv = static_cast<NormalMessageEvent*>(ev);
-      ist = new NormalICQSubType(nv->getMessage());
-
-    } else if (ev->getType() == MessageEvent::URL) {
-
-      URLMessageEvent *uv = static_cast<URLMessageEvent*>(ev);
-      ist = new URLICQSubType(uv->getMessage(), uv->getURL());
-
-    } else if (ev->getType() == MessageEvent::AwayMessage) {
-
-      ist = new AwayMsgSubType( c->getStatus() );
-
-    } else if (ev->getType() == MessageEvent::AuthReq) {
-
-      AuthReqEvent *uv = static_cast<AuthReqEvent*>(ev);
-      ist = new AuthReqICQSubType(uv->getMessage());
-
-    } else if (ev->getType() == MessageEvent::AuthAck) {
-
-      AuthAckEvent *uv = static_cast<AuthAckEvent*>(ev);
-      if(uv->isGranted())
-        ist = new AuthAccICQSubType();
-      else
-        ist = new AuthRejICQSubType(uv->getMessage());
-    }
-    
-    ICQMessageEvent *iev;
-    if (ist != NULL && (iev = dynamic_cast<ICQMessageEvent*>(ev)) != NULL) {
-      ist->setUrgent( iev->isUrgent() );
-      ist->setToContactList( iev->isToContactList() );
-    }
-    
-    return ist;
-  }
 
 }

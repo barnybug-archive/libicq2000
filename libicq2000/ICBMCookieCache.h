@@ -53,17 +53,6 @@ namespace ICQ2000 {
       return c;
     }
 
-    void removeContact(Contact *c) {
-      literator curr = m_list.begin();
-      literator next = curr;
-      while ( curr != m_list.end() ) {
-	++next;
-	MessageEvent *ev = (*curr).getValue();
-	if ( ev->getContact() == c ) removeItem(curr);
-	curr = next;
-      }
-    }
-
     Signal1<void,MessageEvent*> expired;
 
   };

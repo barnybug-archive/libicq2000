@@ -39,42 +39,27 @@ namespace ICQ2000 {
    *  an imaginary UIN allocated to it.
    */
   Contact::Contact()
-    : m_virtualcontact(true), m_uin(0), m_status(STATUS_OFFLINE), 
-      m_invisible(false), m_seqnum(0xffff)
+    : m_virtualcontact(true), m_uin(nextImaginaryUIN()), m_status(STATUS_OFFLINE), 
+      m_invisible(false), m_seqnum(0xffff), count(0)
   {
     Init();
   }
 
   Contact::Contact(unsigned int uin)
     : m_virtualcontact(false), m_uin(uin), m_status(STATUS_OFFLINE), 
-      m_invisible(false), m_seqnum(0xffff)
+      m_invisible(false), m_seqnum(0xffff), count(0)
   {
     m_main_home_info.alias = UINtoString(m_uin);
     Init();
   }
 
-  Contact::Contact(const string& a, const string& m)
-    : m_virtualcontact(true), m_uin(nextImaginaryUIN()),
-      m_status(STATUS_OFFLINE), m_invisible(false), m_seqnum(0xffff)
-  {
-    m_main_home_info.alias = a;
-    m_main_home_info.setMobileNo(m);
-    Init();
-  }
-
   Contact::Contact(const string& a)
     : m_virtualcontact(true), m_uin(nextImaginaryUIN()),
-      m_status(STATUS_OFFLINE), m_invisible(false), m_seqnum(0xffff)
+      m_status(STATUS_OFFLINE), m_invisible(false), m_seqnum(0xffff),
+      count(0)
   {
     m_main_home_info.alias = a;
     Init();
-  }
-
-  Contact::~Contact() {
-    while (!m_pending_msgs.empty()) {
-      delete m_pending_msgs.back();
-      m_pending_msgs.pop_back();
-    }
   }
 
   void Contact::Init() {
@@ -92,11 +77,28 @@ namespace ICQ2000 {
   void Contact::setUIN(unsigned int uin) {
     m_uin = uin;
     m_virtualcontact = false;
+    userinfo_change_emit();
   }
 
   string Contact::getStringUIN() const { return UINtoString(m_uin); }
 
   string Contact::getAlias() const { return m_main_home_info.alias; }
+
+  string Contact::getNameAlias() const 
+  {
+    string ret = getAlias();
+    if (ret.empty()) {
+      ret = getFirstName();
+      if (!ret.empty() && !getLastName().empty()) ret += " ";
+      ret += getLastName();
+    }
+    if (ret.empty()) {
+      if (isICQContact()) ret = getStringUIN();
+      else ret = getMobileNo();
+    }
+
+    return ret;
+  }
 
   Status Contact::getStatus() const { return m_status; }
 
@@ -124,7 +126,10 @@ namespace ICQ2000 {
 
   bool Contact::getDirect() const { return (m_direct && m_status != STATUS_OFFLINE); }
 
-  void Contact::setDirect(bool b) { m_direct = b; }
+  void Contact::setDirect(bool b) {
+    m_direct = b;
+    userinfo_change_emit();
+  }
 
   bool Contact::acceptAdvancedMsgs() const {
     return (m_tcp_version >= 7 && m_status != STATUS_OFFLINE && m_accept_adv_msgs);
@@ -136,19 +141,41 @@ namespace ICQ2000 {
 
   void Contact::setMobileNo(const string& mn) {
     m_main_home_info.setMobileNo(mn);
+    userinfo_change_emit();
   }
 
-  void Contact::setAlias(const string& al) { m_main_home_info.alias = al; }
+  void Contact::setAlias(const string& al) {
+    m_main_home_info.alias = al;
+    userinfo_change_emit();
+  }
 
-  void Contact::setFirstName(const string& fn) { m_main_home_info.firstname = fn; }
+  void Contact::setFirstName(const string& fn) {
+    m_main_home_info.firstname = fn;
+    userinfo_change_emit();
+  }
 
-  void Contact::setLastName(const string& ln) { m_main_home_info.lastname = ln; }
+  void Contact::setLastName(const string& ln) {
+    m_main_home_info.lastname = ln;
+    userinfo_change_emit();
+  }
 
-  void Contact::setEmail(const string& em) { m_main_home_info.email = em; }
+  void Contact::setEmail(const string& em) {
+    m_main_home_info.email = em;
+    userinfo_change_emit();
+  }
 
   void Contact::setStatus(Status st) {
-    m_status = st;
+    setStatus(st, m_invisible);
+  }
 
+  void Contact::setStatus(Status st, bool i) {
+    if (m_status == st && m_invisible == i) return;
+    
+    StatusChangeEvent sev(this, m_status, st);
+
+    m_status = st;
+    m_invisible = i;
+    
     // clear dynamic fields on going OFFLINE
     if (m_status == STATUS_OFFLINE) {
       m_ext_ip = 0;
@@ -158,12 +185,24 @@ namespace ICQ2000 {
       m_tcp_version = 0;
       m_accept_adv_msgs = false;
     }
-    
+
+    status_change_signal.emit( &sev );
   }
 
-  void Contact::setInvisible(bool inv) { m_invisible = inv; }
+  void Contact::userinfo_change_emit()
+  {
+    UserInfoChangeEvent ev(this);
+    userinfo_change_signal.emit(&ev);
+  }
 
-  void Contact::setAuthReq(bool b) { m_authreq = b; }
+  void Contact::setInvisible(bool inv) {
+    setStatus(m_status, inv);
+  }
+
+  void Contact::setAuthReq(bool b) {
+    m_authreq = b;
+    userinfo_change_emit();
+  }
 
   bool Contact::isICQContact() const { return !m_virtualcontact; }
 
@@ -175,63 +214,81 @@ namespace ICQ2000 {
     return !m_main_home_info.getNormalisedMobileNo().empty();
   }
 
-  void Contact::setExtIP(unsigned int ip) { m_ext_ip = ip; }
+  void Contact::setExtIP(unsigned int ip) { 
+    m_ext_ip = ip;
+    userinfo_change_emit();
+  }
 
-  void Contact::setLanIP(unsigned int ip) { m_lan_ip = ip; }
+  void Contact::setLanIP(unsigned int ip) {
+    m_lan_ip = ip;
+    userinfo_change_emit();
+  }
 
-  void Contact::setExtPort(unsigned short port) { m_ext_port = port; }
+  void Contact::setExtPort(unsigned short port) {
+    m_ext_port = port;
+    userinfo_change_emit();
+  }
 
-  void Contact::setLanPort(unsigned short port) { m_lan_port = port; }
+  void Contact::setLanPort(unsigned short port) {
+    m_lan_port = port;
+    userinfo_change_emit();
+  }
 
-  void Contact::setTCPVersion(unsigned char v) { m_tcp_version = v; }
+  void Contact::setTCPVersion(unsigned char v) {
+    m_tcp_version = v;
+    userinfo_change_emit();
+  }
 
   void Contact::setAcceptAdvMsgs(bool b) { m_accept_adv_msgs = b; }
 
-  void Contact::setMainHomeInfo(const MainHomeInfo& s) { m_main_home_info = s; }
+  void Contact::setMainHomeInfo(const MainHomeInfo& s) {
+    m_main_home_info = s;
+    userinfo_change_emit();
+  }
 
-  void Contact::setHomepageInfo(const HomepageInfo& s) { m_homepage_info = s; }
+  void Contact::setHomepageInfo(const HomepageInfo& s) {
+    m_homepage_info = s;
+    userinfo_change_emit();
+  }
 
-  void Contact::setEmailInfo(const EmailInfo& s) { m_email_info = s; }
+  void Contact::setEmailInfo(const EmailInfo& s) {
+    m_email_info = s;
+    userinfo_change_emit();
+  }
 
-  void Contact::setWorkInfo(const WorkInfo& s) { m_work_info = s; }
+  void Contact::setWorkInfo(const WorkInfo& s) {
+    m_work_info = s;
+    userinfo_change_emit();
+  }
 
-  void Contact::setInterestInfo(const PersonalInterestInfo& s) { m_personal_interest_info = s; }
+  void Contact::setInterestInfo(const PersonalInterestInfo& s) {
+    m_personal_interest_info = s;
+    userinfo_change_emit();
+  }
 
-  void Contact::setBackgroundInfo(const BackgroundInfo& b) { m_background_info = b; }
+  void Contact::setBackgroundInfo(const BackgroundInfo& b) {
+    m_background_info = b;
+    userinfo_change_emit();
+  }
 
-  void Contact::setAboutInfo(const string& about) { m_about = about; }
+  void Contact::setAboutInfo(const string& about) {
+    m_about = about;
+    userinfo_change_emit();
+  }
 
-  MainHomeInfo& Contact::getMainHomeInfo() { return m_main_home_info; }
+  Contact::MainHomeInfo& Contact::getMainHomeInfo() { return m_main_home_info; }
 
-  HomepageInfo& Contact::getHomepageInfo() { return m_homepage_info; }
+  Contact::HomepageInfo& Contact::getHomepageInfo() { return m_homepage_info; }
 
-  WorkInfo& Contact::getWorkInfo() { return m_work_info; }
+  Contact::WorkInfo& Contact::getWorkInfo() { return m_work_info; }
 
-  PersonalInterestInfo &Contact::getPersonalInterestInfo() { return m_personal_interest_info; }
+  Contact::PersonalInterestInfo& Contact::getPersonalInterestInfo() { return m_personal_interest_info; }
 
-  BackgroundInfo& Contact::getBackgroundInfo() { return m_background_info; }
+  Contact::BackgroundInfo& Contact::getBackgroundInfo() { return m_background_info; }
 
-  EmailInfo& Contact::getEmailInfo() { return m_email_info; }
+  Contact::EmailInfo& Contact::getEmailInfo() { return m_email_info; }
 
   const string& Contact::getAboutInfo() const { return m_about; }
-
-  unsigned int Contact::numberPendingMessages() const { return m_pending_msgs.size(); }
-
-  void Contact::addPendingMessage(MessageEvent* e) { return m_pending_msgs.push_back(e); }
-
-  MessageEvent *Contact::getPendingMessage() const { return m_pending_msgs.front(); }
-
-  void Contact::erasePendingMessage(MessageEvent* e) {
-    list<MessageEvent*>::iterator curr = m_pending_msgs.begin();
-    while (curr != m_pending_msgs.end()) {
-      if (*curr == e) {
-	m_pending_msgs.erase(curr);
-	delete e;
-	break;
-      }
-      ++curr;
-    }
-  }
 
   unsigned short Contact::nextSeqNum() {
     return --m_seqnum;
@@ -303,33 +360,33 @@ namespace ICQ2000 {
 
   // Extra Detailed info class implementations;
 
-  MainHomeInfo::MainHomeInfo()
+  Contact::MainHomeInfo::MainHomeInfo()
     : country(0), timezone(Timezone_unknown) { }
 
-  string MainHomeInfo::getCountry() const {
+  string Contact::MainHomeInfo::getCountry() const {
     for(unsigned short a = 0; a < Country_table_size; a++) {
       if (Country_table[a].code == country) return Country_table[a].name;
     }
     return Country_table[0].name;
   }
 
-  string MainHomeInfo::getMobileNo() const
+  string Contact::MainHomeInfo::getMobileNo() const
   {
     return cellular;
   }
   
-  void MainHomeInfo::setMobileNo(const string& s)
+  void Contact::MainHomeInfo::setMobileNo(const string& s)
   {
     cellular = s;
     normaliseMobileNo();
   }
   
-  string MainHomeInfo::getNormalisedMobileNo() const
+  string Contact::MainHomeInfo::getNormalisedMobileNo() const
   {
     return normalised_cellular;
   }
 
-  void MainHomeInfo::normaliseMobileNo()
+  void Contact::MainHomeInfo::normaliseMobileNo()
   {
     normalised_cellular.erase();
     string::iterator curr = cellular.begin();
@@ -339,11 +396,11 @@ namespace ICQ2000 {
     }
   }
   
-  HomepageInfo::HomepageInfo()
+  Contact::HomepageInfo::HomepageInfo()
     : age(0), sex(0), birth_year(0), birth_month(0), birth_day(0),
       lang1(0), lang2(0), lang3(0) { }
 
-  string HomepageInfo::getBirthDate() const {
+  string Contact::HomepageInfo::getBirthDate() const {
     if (birth_day == 0 || birth_year == 0) return "Unspecified";
 
     struct tm birthdate;
@@ -360,7 +417,7 @@ namespace ICQ2000 {
     return string(bday);
   }
 
-  string HomepageInfo::getLanguage(int l) const {
+  string Contact::HomepageInfo::getLanguage(int l) const {
     if (l < 1 || l > 3) return Language_table[0];
     unsigned char lang = 0;
     if (l == 1) lang = lang1;
@@ -370,24 +427,24 @@ namespace ICQ2000 {
     return Language_table[lang];
   }
 
-  EmailInfo::EmailInfo() { }
+  Contact::EmailInfo::EmailInfo() { }
 
-  void EmailInfo::addEmailAddress(const string& e) {
+  void Contact::EmailInfo::addEmailAddress(const string& e) {
     email_list.push_back(e);
   }
 
-  WorkInfo::WorkInfo()
+  Contact::WorkInfo::WorkInfo()
     : country(0) { }
     
-  BackgroundInfo::BackgroundInfo() { }
+  Contact::BackgroundInfo::BackgroundInfo() { }
 
-  void BackgroundInfo::addSchool(unsigned short cat, const string& s) {
+  void Contact::BackgroundInfo::addSchool(unsigned short cat, const string& s) {
     schools.push_back(School(cat, s));
   }
 
-  PersonalInterestInfo::PersonalInterestInfo() { }
+  Contact::PersonalInterestInfo::PersonalInterestInfo() { }
 
-  void PersonalInterestInfo::addInterest(unsigned short cat, const string& s) {
+  void Contact::PersonalInterestInfo::addInterest(unsigned short cat, const string& s) {
     interests.push_back(Interest(cat, s));
   }
 

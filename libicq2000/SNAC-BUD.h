@@ -56,9 +56,9 @@ namespace ICQ2000 {
    public:
     AddBuddySNAC();
     AddBuddySNAC(const ContactList& l);
-    AddBuddySNAC(const Contact& c);
+    AddBuddySNAC(const ContactRef& c);
 
-    void addBuddy(const Contact& c);
+    void addBuddy(const ContactRef& c);
 
     unsigned short Subtype() const { return SNAC_BUD_AddBuddy; }
   };
@@ -73,9 +73,9 @@ namespace ICQ2000 {
    public:
     RemoveBuddySNAC();
     RemoveBuddySNAC(const ContactList& l);
-    RemoveBuddySNAC(const string& s);
+    RemoveBuddySNAC(const ContactRef& c);
 
-    void removeBuddy(const Contact& c);
+    void removeBuddy(const ContactRef& c);
 
     unsigned short Subtype() const { return SNAC_BUD_RemoveBuddy; }
   };

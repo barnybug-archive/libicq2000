@@ -27,6 +27,7 @@
 #include <map>
 
 #include <libicq2000/Contact.h>
+#include <sigc++/signal_system.h>
 
 using std::list;
 using std::string;
@@ -34,41 +35,44 @@ using std::map;
 
 namespace ICQ2000 {
 
+  class ContactListEvent;
+
   class _ContactList_iterator {
   private:
-    map<unsigned int,Contact>::iterator iter;
+    map<unsigned int,ContactRef>::iterator iter;
   
   public:
-    _ContactList_iterator(map<unsigned int,Contact>::iterator i)
+    _ContactList_iterator(map<unsigned int,ContactRef>::iterator i)
       : iter(i) { }
   
     _ContactList_iterator& operator++() { ++iter; return *this; }
     _ContactList_iterator operator++(int) { return _ContactList_iterator(iter++); }
     bool operator==(const _ContactList_iterator& x) const { return iter == x.iter; }
     bool operator!=(const _ContactList_iterator& x) const { return iter != x.iter; }
-    Contact& operator*() const { return (*iter).second; }
+    ContactRef& operator*() { return (*iter).second; }
   };
 
   class _ContactList_const_iterator {
-  private:
-    map<unsigned int,Contact>::const_iterator iter;
+   private:
+    map<unsigned int,ContactRef>::const_iterator iter;
   
-  public:
-    _ContactList_const_iterator(map<unsigned int,Contact>::const_iterator i)
+   public:
+    _ContactList_const_iterator(map<unsigned int,ContactRef>::const_iterator i)
       : iter(i) { }
   
     _ContactList_const_iterator& operator++() { ++iter; return *this; }
     _ContactList_const_iterator operator++(int) { return _ContactList_const_iterator(iter++); }
     bool operator==(const _ContactList_const_iterator& x) const { return iter == x.iter; }
     bool operator!=(const _ContactList_const_iterator& x) const { return iter != x.iter; }
-    const Contact& operator*() const { return (*iter).second; }
+    const ContactRef& operator*() { return (*iter).second; }
   };
 
   class ContactList {
-  private:
-    map<unsigned int,Contact> m_cmap;
+   private:
+    map<unsigned int,ContactRef> m_cmap;
 
-    /* Mobile contacts are implemented as
+    /*
+     * Mobile contacts are implemented as
      * Contact's and should still have UINs.
      * Purely Mobile contacts will have imaginary UINs
      * (ones counting down from -1), this is the best I could
@@ -79,18 +83,18 @@ namespace ICQ2000 {
      */
 
 
-  public:
+   public:
     typedef _ContactList_iterator iterator;
     typedef _ContactList_const_iterator const_iterator;
 
     ContactList();
+    ContactList(const ContactList& cl);
 
-    Contact& operator[](unsigned int uin);
-    Contact& lookup_uin(unsigned int uin);
-    Contact& lookup_mobile(const std::string& m);
-    Contact& lookup_email(const std::string& em);
-
-    Contact& add(const Contact& ct);
+    ContactRef operator[](unsigned int uin);
+    ContactRef lookup_uin(unsigned int uin);
+    ContactRef lookup_mobile(const std::string& m);
+    ContactRef lookup_email(const std::string& em);
+    ContactRef add(ContactRef ct);
     void remove(unsigned int uin);
 
     unsigned int size() const;
@@ -101,9 +105,11 @@ namespace ICQ2000 {
     bool email_exists(const string& em);
 
     iterator begin();
-    const_iterator begin() const;
     iterator end();
+    const_iterator begin() const;
     const_iterator end() const;
+
+    SigC::Signal1<void,ContactListEvent*> contactlist_signal;
   };
 
 }

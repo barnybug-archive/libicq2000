@@ -263,7 +263,7 @@ namespace ICQ2000 {
    
   }
 
-  SrvUpdateMainHomeInfo::SrvUpdateMainHomeInfo(unsigned int my_uin, const MainHomeInfo& main_home_info)
+  SrvUpdateMainHomeInfo::SrvUpdateMainHomeInfo(unsigned int my_uin, const Contact::MainHomeInfo& main_home_info)
     : m_my_uin(my_uin), m_main_home_info(main_home_info) { }
     
   void SrvUpdateMainHomeInfo::OutputBody(Buffer& b) const {
@@ -298,7 +298,7 @@ namespace ICQ2000 {
         b.setAutoSizeMarker(m2);
     }
     
-  SrvUpdateWorkInfo::SrvUpdateWorkInfo(unsigned int my_uin, const WorkInfo& work_info)
+  SrvUpdateWorkInfo::SrvUpdateWorkInfo(unsigned int my_uin, const Contact::WorkInfo& work_info)
     : m_my_uin(my_uin), m_work_info(work_info) { }
     
   void SrvUpdateWorkInfo::OutputBody(Buffer& b) const {
@@ -330,7 +330,7 @@ namespace ICQ2000 {
         b.setAutoSizeMarker(m2);
     }
     
-  SrvUpdateHomepageInfo::SrvUpdateHomepageInfo(unsigned int my_uin, const HomepageInfo& homepage_info)
+  SrvUpdateHomepageInfo::SrvUpdateHomepageInfo(unsigned int my_uin, const Contact::HomepageInfo& homepage_info)
     : m_my_uin(my_uin), m_homepage_info(homepage_info) { }
     
   void SrvUpdateHomepageInfo::OutputBody(Buffer& b) const {

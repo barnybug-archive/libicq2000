@@ -18,4 +18,5 @@ SNAC-MSG.h SNAC-SRV.h SNAC-SBL.h SNAC-BOS.h events.h Xml.h Contact.h	\
 ContactList.h exceptions.h custom_marshal.h DirectClient.h ICQ.h	\
 UserInfoBlock.h ICBMCookie.h userinfoconstants.h Translator.h Cache.h	\
 RequestIDCache.h ICBMCookieCache.h SeqNumCache.h DCCache.h version.h	\
-userinfohelpers.h SocketClient.h SMTPClient.h time_extra.h
+userinfohelpers.h SocketClient.h SMTPClient.h time_extra.h		\
+MessageHandler.h ref_ptr.h

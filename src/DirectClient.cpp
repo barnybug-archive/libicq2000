@@ -46,12 +46,12 @@ namespace ICQ2000 {
   /*
    * Constructor when receiving an incoming connection
    */
-  DirectClient::DirectClient(Contact& self, TCPSocket *sock, ContactList *cl,
-			     unsigned int ext_ip, unsigned short server_port,
+  DirectClient::DirectClient(ContactRef self, TCPSocket *sock, MessageHandler *mh,
+			     ContactList *cl, unsigned int ext_ip, unsigned short server_port,
 			     Translator* translator)
     : m_state(WAITING_FOR_INIT), m_recv(translator),
-      m_self_contact(self), m_contact(NULL), m_contact_list(cl),
-      m_incoming(true), m_local_ext_ip(ext_ip),
+      m_self_contact(self), m_contact(NULL), m_message_handler(mh),
+      m_contact_list(cl), m_incoming(true), m_local_ext_ip(ext_ip),
       m_local_server_port(server_port), m_translator(translator)
   {
     m_socket = sock;
@@ -61,10 +61,10 @@ namespace ICQ2000 {
   /*
    * Constructor for making an outgoing connection
    */
-  DirectClient::DirectClient(Contact& self, Contact *c, unsigned int ext_ip,
+  DirectClient::DirectClient(ContactRef self, ContactRef c, MessageHandler *mh, unsigned int ext_ip,
 			     unsigned short server_port, Translator *translator)
     : m_state(NOT_CONNECTED), m_recv(translator), m_self_contact(self), 
-      m_contact(c), m_incoming(false), m_local_ext_ip(ext_ip),
+      m_contact(c), m_incoming(false), m_message_handler(mh), m_local_ext_ip(ext_ip),
       m_local_server_port(server_port), m_translator(translator)
       
   {
@@ -118,7 +118,7 @@ namespace ICQ2000 {
   }
   
   void DirectClient::expired_cb(MessageEvent *ev) {
-    if ( m_contact != NULL ) {
+    if ( m_contact.get() != NULL ) {
       ev->setFinished(false);
       ev->setDelivered(false);
       ev->setDirect(true);
@@ -144,10 +144,6 @@ namespace ICQ2000 {
       ostr << "Failed parsing: " << e.what();
       throw DisconnectedException( ostr.str() );
     }
-  }
-
-  void DirectClient::SignalMessageEvent(MessageEvent *ev) {
-    messaged.emit(ev);
   }
 
   void DirectClient::Parse() {
@@ -244,18 +240,18 @@ namespace ICQ2000 {
 
   void DirectClient::ConfirmUIN() {
     if ( m_contact_list->exists(m_remote_uin) ) {
-      Contact &c = (*m_contact_list)[ m_remote_uin ];
-      if ( (c.getExtIP() == m_local_ext_ip && c.getLanIP() == getIP() )
+      ContactRef c = (*m_contact_list)[ m_remote_uin ];
+      if ( (c->getExtIP() == m_local_ext_ip && c->getLanIP() == getIP() )
 	   /* They are behind the same masquerading box,
 	    * and the Lan IP matches
 	    */
-	       || c.getExtIP() == getIP()) {
-	m_contact = &c;
+	       || c->getExtIP() == getIP()) {
+	m_contact = c;
       } else {
 	// spoofing attempt most likely
 	ostringstream ostr;
 	ostr << "Refusing direct connection from someone that claims to be UIN "
-	     << m_remote_uin << " since their IP " << IPtoString( getIP() ) << " != " << IPtoString( c.getExtIP() );
+	     << m_remote_uin << " since their IP " << IPtoString( getIP() ) << " != " << IPtoString( c->getExtIP() );
 	throw DisconnectedException( ostr.str() );
       }
       
@@ -278,7 +274,7 @@ namespace ICQ2000 {
     b << (unsigned short)0x0000;
     b << (unsigned int)m_local_server_port;
 
-    b << m_self_contact.getUIN();
+    b << m_self_contact->getUIN();
     b.setBigEndian();
     b << m_local_ext_ip;
     b << m_socket->getLocalIP();
@@ -322,7 +318,7 @@ namespace ICQ2000 {
     
     unsigned int our_uin;
     b >> our_uin;
-    if (our_uin != m_self_contact.getUIN()) throw ParseException("Local UIN in Init Packet not same as our Local UIN");
+    if (our_uin != m_self_contact->getUIN()) throw ParseException("Local UIN in Init Packet not same as our Local UIN");
 
     // 00 00
     // xx xx       senders open port
@@ -452,6 +448,7 @@ namespace ICQ2000 {
     UINICQSubType *icqsubtype = dynamic_cast<UINICQSubType*>(i);
 
     icqsubtype->setSeqNum(seqnum);
+    icqsubtype->setSource( m_contact->getUIN() );
 
     if (command == 0) throw ParseException("Invalid TCP Packet");
 
@@ -464,30 +461,16 @@ namespace ICQ2000 {
     case V6_TCP_START:
 
       if (type == MSG_Type_Normal
-	  || type == MSG_Type_URL) {
+	  || type == MSG_Type_URL
+	  || type == MSG_Type_AutoReq_Away
+	  || type == MSG_Type_AutoReq_Occ
+	  || type == MSG_Type_AutoReq_NA
+	  || type == MSG_Type_AutoReq_DND
+	  || type == MSG_Type_AutoReq_FFC) {
+
 	UINICQSubType *ist = static_cast<UINICQSubType*>(icqsubtype);
-	ev = UINICQSubTypeToEvent(ist,m_contact);
-	SignalMessageEvent(ev);
-
-	SendPacketAck(icqsubtype);
-
-      } else if (type == MSG_Type_AutoReq_Away
-	       || type == MSG_Type_AutoReq_Occ
-	       || type == MSG_Type_AutoReq_NA
-	       || type == MSG_Type_AutoReq_DND
-	       || type == MSG_Type_AutoReq_FFC)
-      {
-        AwayMsgSubType *ast = static_cast<AwayMsgSubType*>(icqsubtype);
-	AwayMessageEvent aev(m_contact);
-	want_auto_resp.emit(&aev);
-        ast->setAwayMessage(aev.getMessage());
-
-	ostringstream ostr;
-	ostr << "Sending direct auto response to "
-	   << m_contact->getAlias() << " (" << m_contact->getStringUIN() << ")";
-	SignalLog(LogEvent::INFO, ostr.str());
-	
-        SendPacketAck(icqsubtype);
+	bool ack = m_message_handler->handleIncoming( ist );
+	if (ack) SendPacketAck(ist);
       }
 
       break;
@@ -495,27 +478,8 @@ namespace ICQ2000 {
     case V6_TCP_ACK:
       if ( m_msgcache.exists(seqnum) ) {
 	MessageEvent *ev = m_msgcache[seqnum];
-	ev->setFinished(true);
-	ev->setDelivered(true);
 	ev->setDirect(true);
-
-	if (ev->getType() == MessageEvent::AwayMessage) {
-	  AwayMessageEvent *aev = static_cast<AwayMessageEvent*>(ev);
-
-	  if (icqsubtype->getType() == MSG_Type_AutoReq_Away
-	      || icqsubtype->getType() == MSG_Type_AutoReq_Occ
-	      || icqsubtype->getType() == MSG_Type_AutoReq_NA
-	      || icqsubtype->getType() == MSG_Type_AutoReq_DND
-	      || icqsubtype->getType() == MSG_Type_AutoReq_FFC) {
-	    AwayMsgSubType *ast = static_cast<AwayMsgSubType*>(icqsubtype);
-	    aev->setMessage( ast->getAwayMessage() ); // fill out the away message in the ACK
-	  } else {
-	    SignalLog(LogEvent::WARN, "Away Message ACKed by remote client as wrong type");
-	  }
-	}
-
-	messageack.emit(ev);
-
+	m_message_handler->handleIncomingACK( ev, icqsubtype );
 	m_msgcache.remove(seqnum);
 	delete ev;
       } else {
@@ -693,8 +657,6 @@ namespace ICQ2000 {
       << (unsigned int)0x00000000
       << (unsigned int)0x00000000
       << (unsigned int)0x00000000;
-    icqsubtype->setACK(true);
-    icqsubtype->setStatus(0); // quick fix until accept-statuses are implemented
     
     icqsubtype->Output(b);
     Buffer c(m_translator);
@@ -707,12 +669,10 @@ namespace ICQ2000 {
 
     unsigned short seqnum = NextSeqNum();
 
-    UINICQSubType *ist = EventToUINICQSubType(ev);
+    UINICQSubType *ist = m_message_handler->handleOutgoing(ev);
     if (ist == NULL) return;
 
     ist->setAdvanced(true);
-    ist->setStatus( Contact::MapStatusToICQStatus( m_self_contact.getStatus(),
-						   m_self_contact.isInvisible() ) );
 
     b.setLittleEndian();
     b << (unsigned int)0x00000000 // checksum (filled in by Encrypt)
@@ -779,8 +739,8 @@ namespace ICQ2000 {
 
   TCPSocket* DirectClient::getSocket() const { return m_socket; }
 
-  void DirectClient::setContact(Contact *c) { m_contact = c; }
+  void DirectClient::setContact(ContactRef c) { m_contact = c; }
 
-  Contact* DirectClient::getContact() const { return m_contact; }
+  ContactRef DirectClient::getContact() const { return m_contact; }
 
 }

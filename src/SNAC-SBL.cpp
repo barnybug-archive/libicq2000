@@ -63,11 +63,11 @@ namespace ICQ2000 {
                 dataLength -= 2;
                 if (infoType==0x0131)	// UIN
                 {
-                    Contact c(Contact::StringtoUIN(name));
+                    ContactRef c(new Contact(Contact::StringtoUIN(name)));
                     string nickname;
                     b.Unpack(nickname, infoLength);
                     dataLength -= infoLength;
-                    c.setAlias(nickname);
+                    c->setAlias(nickname);
                     m_contacts.add(c);
                     break;
                 }

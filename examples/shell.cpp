@@ -104,9 +104,9 @@ class SimpleClient : public SigC::Object {
   // -- Callbacks --
   void connected_cb(ConnectedEvent *c);
   void disconnected_cb(DisconnectedEvent *c);
-  bool message_cb(MessageEvent *c);
+  void message_cb(MessageEvent *c);
   void logger_cb(LogEvent *c);
-  void contactlist_cb(ContactListEvent *c);
+  void contact_status_change_cb(StatusChangeEvent *ev);
   void socket_cb(SocketEvent *ev);
 };
 
@@ -121,7 +121,7 @@ SimpleClient::SimpleClient(unsigned int uin, const string& pass)
   icqclient.disconnected.connect(slot(this,&SimpleClient::disconnected_cb));
   icqclient.messaged.connect(slot(this,&SimpleClient::message_cb));
   icqclient.logger.connect(slot(this,&SimpleClient::logger_cb));
-  icqclient.contactlist.connect(slot(this,&SimpleClient::contactlist_cb));
+  icqclient.contact_status_change_signal.connect(slot(this,&SimpleClient::contact_status_change_cb));
   icqclient.socket.connect(slot(this,&SimpleClient::socket_cb));
 }
 
@@ -286,7 +286,7 @@ void SimpleClient::disconnected_cb(DisconnectedEvent *c) {
   }
 }
 
-bool SimpleClient::message_cb(MessageEvent *c) {
+void SimpleClient::message_cb(MessageEvent *c) {
 
   if (c->getType() == MessageEvent::Normal) {
 
@@ -338,7 +338,6 @@ bool SimpleClient::message_cb(MessageEvent *c) {
     }
   }
 
-  return true;
 }
 
 void SimpleClient::logger_cb(LogEvent *c) {
@@ -361,38 +360,35 @@ void SimpleClient::logger_cb(LogEvent *c) {
   cout << "[39m";
 }
 
-void SimpleClient::contactlist_cb(ContactListEvent *c) {
-  if (c->getType() == ContactListEvent::StatusChange) {
-    StatusChangeEvent *u = static_cast<StatusChangeEvent*>(c);
-    cout << "ickle-shell: User " << u->getUIN() << " went ";
-    switch(u->getStatus()) {
-    case STATUS_ONLINE:
-      cout << "online";
-      break;
-    case STATUS_DND:
-      cout << "DND";
-      break;
-    case STATUS_NA:
-      cout << "NA";
-      break;
-    case STATUS_OCCUPIED:
-      cout << "occupied";
-      break;
-    case STATUS_FREEFORCHAT:
-      cout << "free for chat";
-      break;
-    case STATUS_AWAY:
-      cout << "away";
-      break;
-    case STATUS_OFFLINE:
-      cout << "offline";
-      break;
-    default:
-      cout << "unknown";
-    }
-    cout << endl;
-
+void SimpleClient::contact_status_change_cb(StatusChangeEvent *ev)
+{
+  cout << "ickle-shell: User " << ev->getUIN() << " went ";
+  switch(ev->getStatus()) {
+  case STATUS_ONLINE:
+    cout << "online";
+    break;
+  case STATUS_DND:
+    cout << "DND";
+    break;
+  case STATUS_NA:
+    cout << "NA";
+    break;
+  case STATUS_OCCUPIED:
+    cout << "occupied";
+    break;
+  case STATUS_FREEFORCHAT:
+    cout << "free for chat";
+    break;
+  case STATUS_AWAY:
+    cout << "away";
+    break;
+  case STATUS_OFFLINE:
+    cout << "offline";
+    break;
+  default:
+    cout << "unknown";
   }
+  cout << endl;
 }
 
 // ------------------------------------------------------

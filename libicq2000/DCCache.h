@@ -45,14 +45,14 @@ namespace ICQ2000 {
       Cache<int, DirectClient*>::expireItem(l);
     }
 
-    void removeContact(Contact *c) {
+    void removeContact(ContactRef c) {
       literator curr = m_list.begin();
       literator next = curr;
       while ( curr != m_list.end() ) {
 	DirectClient *dc = (*curr).getValue();
 	++next;
-	if ( dc->getContact() == c ) {
-	  dc->setContact(NULL); // invalidate contact so the DC doesn't attempt to redeliver
+	if ( dc->getContact()->getUIN() == c->getUIN() ) {
+	  dc->setContact( ContactRef() ); // invalidate contact so the DC doesn't attempt to redeliver
 	  removeItem(curr);
 	}
 	curr = next;

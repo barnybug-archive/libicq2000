@@ -25,7 +25,9 @@
 
 namespace ICQ2000 {
 
-  // --------------- Event ---------------------------
+  // ============================================================================
+  //  Event base class
+  // ============================================================================
 
   /**
    *  Base constructor for events, timestamp set to now.
@@ -54,7 +56,9 @@ namespace ICQ2000 {
    */
   void Event::setTime(time_t t) { m_time = t; }
 
-  // --------------- Socket Event --------------------
+  // ============================================================================
+  //  Socket Event
+  // ============================================================================
 
   /**
    *  Base constructor for socket events.
@@ -120,14 +124,18 @@ namespace ICQ2000 {
   RemoveSocketHandleEvent::RemoveSocketHandleEvent(int fd)
     : SocketEvent(fd) { }
 
-  // --------------- Connnected Event ----------------
+  // ============================================================================
+  //  Connected Event
+  // ============================================================================
 
   /**
    *  Simple constructor for a ConnectedEvent.
    */
   ConnectedEvent::ConnectedEvent() { }
 
-  // --------------- Disconnected Event --------------
+  // ============================================================================
+  //  Disconnected Event
+  // ============================================================================
 
   /**
    *  Constructor for a DisconnectedEvent.
@@ -141,7 +149,9 @@ namespace ICQ2000 {
    */
   DisconnectedEvent::Reason DisconnectedEvent::getReason() const { return m_reason; }
   
-  // --------------- Log Event -----------------------
+  // ============================================================================
+  //  Log Event
+  // ============================================================================
 
   /**
    *  Constructor for a LogEvent.
@@ -166,21 +176,23 @@ namespace ICQ2000 {
    */
   string LogEvent::getMessage() const { return m_msg; }
 
-  // --------------- ContactList Event ---------------
+  // ============================================================================
+  //  Contact List Event
+  // ============================================================================
 
   /**
    *  Base constructor for contact list events.
    *
    * @param c the contact
    */
-  ContactListEvent::ContactListEvent(Contact *c) { m_contact = c; }
+  ContactListEvent::ContactListEvent(ContactRef c) { m_contact = c; }
 
   /**
    *  get the contact
    *
    * @return the contact
    */
-  Contact *ContactListEvent::getContact() const { return m_contact; }
+  ContactRef ContactListEvent::getContact() const { return m_contact; }
 
   /**
    *  get the uin of the contact. This could be done just as easily,
@@ -195,7 +207,71 @@ namespace ICQ2000 {
    */
   ContactListEvent::~ContactListEvent() { }
 
-  // ----------------- StatusChange Event ----------------
+  // ============================================================================
+  //  UserAdded Event
+  // ============================================================================
+
+  /**
+   *  Constructor for UserAddedEvent
+   *
+   * @param contact the contact that has just been added
+   */
+  UserAddedEvent::UserAddedEvent(ContactRef contact) : ContactListEvent(contact) { }
+  ContactListEvent::EventType UserAddedEvent::getType() const { return UserAdded; }
+
+  // ============================================================================
+  //  UserRemoved Event
+  // ============================================================================
+
+  /**
+   *  Constructor for UserRemovedEvent
+   *
+   * @param contact the contact that is about to be removed
+   */
+  UserRemovedEvent::UserRemovedEvent(ContactRef contact) : ContactListEvent(contact) { }
+  ContactListEvent::EventType UserRemovedEvent::getType() const { return UserRemoved; }
+
+  // ============================================================================
+  //  ServerBasedContactEvent
+  // ============================================================================
+
+  ServerBasedContactEvent::ServerBasedContactEvent(const ContactList& l) : m_clist(l) { }
+  ContactList& ServerBasedContactEvent::getContactList() { return m_clist; }
+
+  // ============================================================================
+  //  Contact Event
+  // ============================================================================
+
+  /**
+   *  Base constructor for contact list events.
+   *
+   * @param c the contact
+   */
+  ContactEvent::ContactEvent(ContactRef c) { m_contact = c; }
+
+  /**
+   *  get the contact
+   *
+   * @return the contact
+   */
+  ContactRef ContactEvent::getContact() const { return m_contact; }
+
+  /**
+   *  get the uin of the contact. This could be done just as easily,
+   *  with getContact()->getUIN(), provided for convenience.
+   *
+   * @return
+   */
+  unsigned int ContactEvent::getUIN() const { return m_contact->getUIN(); }
+    
+  /**
+   *  Destructor for ContactEvent
+   */
+  ContactEvent::~ContactEvent() { }
+
+  // ============================================================================
+  //  Status Change Event
+  // ============================================================================
 
   /**
    *  Constructor for StatusChangeEvent
@@ -204,10 +280,10 @@ namespace ICQ2000 {
    * @param st the new status
    * @param old_st the old status
    */
-  StatusChangeEvent::StatusChangeEvent(Contact* contact, Status st, Status old_st)
-    : ContactListEvent(contact), m_status(st), m_old_status(old_st) { }
+  StatusChangeEvent::StatusChangeEvent(ContactRef contact, Status st, Status old_st)
+    : ContactEvent(contact), m_status(st), m_old_status(old_st) { }
   
-  ContactListEvent::EventType StatusChangeEvent::getType() const { return StatusChange; }
+  ContactEvent::EventType StatusChangeEvent::getType() const { return StatusChange; }
 
   /**
    *  get the new status of the contact
@@ -223,42 +299,21 @@ namespace ICQ2000 {
    */
   Status StatusChangeEvent::getOldStatus() const { return m_old_status; }
 
-  // ----------------- UserAdded Event -------------------
-
-  /**
-   *  Constructor for UserAddedEvent
-   *
-   * @param contact the contact that has just been added
-   */
-  UserAddedEvent::UserAddedEvent(Contact* contact) : ContactListEvent(contact) { }
-  ContactListEvent::EventType UserAddedEvent::getType() const { return UserAdded; }
-
-  // ----------------- ServerBasedContact Event -------------------
-
-  ServerBasedContactEvent::ServerBasedContactEvent(const ContactList& l) : m_clist(l) { }
-  ContactList& ServerBasedContactEvent::getContactList() { return m_clist; }
-
-  // ----------------- UserRemoved Event -------------------
-
-  /**
-   *  Constructor for UserRemovedEvent
-   *
-   * @param contact the contact that is about to be removed
-   */
-  UserRemovedEvent::UserRemovedEvent(Contact* contact) : ContactListEvent(contact) { }
-  ContactListEvent::EventType UserRemovedEvent::getType() const { return UserRemoved; }
-
-  // ----------------- UserInfoChange Event -------------------
+  // ============================================================================
+  //  User Info Change Event
+  // ============================================================================
 
   /**
    *  Constructor for UserInfoChangeEvent
    *
    * @param contact the contact whose information has changed
    */
-  UserInfoChangeEvent::UserInfoChangeEvent(Contact* contact) : ContactListEvent(contact) { }
-  ContactListEvent::EventType UserInfoChangeEvent::getType() const { return UserInfoChange; }
+  UserInfoChangeEvent::UserInfoChangeEvent(ContactRef contact) : ContactEvent(contact) { }
+  ContactEvent::EventType UserInfoChangeEvent::getType() const { return UserInfoChange; }
 
-  // ----------------- SearchResult Event -------------------
+  // ============================================================================
+  //  Search Result Event
+  // ============================================================================
 
   /**
    *  Constructor for a SearchResultEvent
@@ -268,11 +323,11 @@ namespace ICQ2000 {
       m_last_contact(NULL), m_more_results(0)
   { }
 
-  Contact* SearchResultEvent::getLastContactAdded() const { return m_last_contact; }
+  ContactRef SearchResultEvent::getLastContactAdded() const { return m_last_contact; }
   
   ContactList& SearchResultEvent::getContactList() { return m_clist; }
   
-  void SearchResultEvent::setLastContactAdded(Contact *c) { m_last_contact = c; }
+  void SearchResultEvent::setLastContactAdded(ContactRef c) { m_last_contact = c; }
   
   SearchResultEvent::SearchType SearchResultEvent::getSearchType() const { return m_searchtype; }
   
@@ -288,24 +343,18 @@ namespace ICQ2000 {
   
   void SearchResultEvent::setNumberMoreResults(unsigned int m) { m_more_results = m; }
 
-  // ----------------- MessageQueueChangedEvent -------------------
-
-  /**
-   *  Constructor for MessageQueueChangedEvent
-   *
-   * @param contact the contact whose message queue changed
-   */
-  MessageQueueChangedEvent::MessageQueueChangedEvent(Contact* contact) : ContactListEvent(contact) { }
-  ContactListEvent::EventType MessageQueueChangedEvent::getType() const { return MessageQueueChanged; }
-
-  // --------------- Message Event -------------------
+  // ============================================================================
+  //  Message Event
+  // ============================================================================
 
   /**
    *  Constructor for a MessageEvent
    *
    * @param c the contact related to this event
    */
-  MessageEvent::MessageEvent(Contact *c) : m_contact(c) { }
+  MessageEvent::MessageEvent(ContactRef c)
+    : m_contact(c)
+  { }
 
   /**
    *  Destructor for MessageEvent
@@ -317,7 +366,7 @@ namespace ICQ2000 {
    *
    * @return the contact related to the event
    */
-  Contact* MessageEvent::getContact() { return m_contact; }
+  ContactRef MessageEvent::getContact() { return m_contact; }
 
   /**
    *  get if a message event is finished.  This is used in the message
@@ -390,14 +439,16 @@ namespace ICQ2000 {
     return m_failure_reason;
   }
 
-  // --------------- ICQ Message Event -------------------
+  // ============================================================================
+  //  ICQ Message Event
+  // ============================================================================
 
   /**
    *  Constructor for a ICQMessageEvent
    *
    * @param c the contact related to this event
    */
-  ICQMessageEvent::ICQMessageEvent(Contact *c)
+  ICQMessageEvent::ICQMessageEvent(ContactRef c)
     : MessageEvent(c), m_urgent(false), m_tocontactlist(false) { }
 
   /**
@@ -412,6 +463,7 @@ namespace ICQ2000 {
 
   /**
    *  set whether the message shall be marked as urgent
+   * @param b urgent
    */
   void ICQMessageEvent::setUrgent(bool b)
   {
@@ -444,7 +496,23 @@ namespace ICQ2000 {
    */
   unsigned int ICQMessageEvent::getSenderUIN() const { return m_contact->getUIN(); }
 
-  // ---------------- Normal Message ---------------------
+  /**
+   *  get the away message
+   *
+   * @return the away message
+   */
+  string ICQMessageEvent::getAwayMessage() const { return m_away_message; }
+
+  /**
+   *  set the away message
+   *
+   * @param msg the away message
+   */
+  void ICQMessageEvent::setAwayMessage(const string& msg) { m_away_message = msg; }
+
+  // ============================================================================
+  //  Normal Message
+  // ============================================================================
 
   /**
    *  Construct a NormalMessageEvent.
@@ -453,7 +521,7 @@ namespace ICQ2000 {
    * @param msg the message
    * @param multi tag message as a multireceipt message
    */
-  NormalMessageEvent::NormalMessageEvent(Contact* c, const string& msg, bool multi)
+  NormalMessageEvent::NormalMessageEvent(ContactRef c, const string& msg, bool multi)
     : ICQMessageEvent(c), m_message(msg), m_offline(false), m_multi(multi),
       m_foreground(0x00000000), m_background(0x00ffffff) {
     setDirect(false);
@@ -467,7 +535,7 @@ namespace ICQ2000 {
    * @param multi tag message as a multireceipt message
    * @param t the time the message was sent
    */
-  NormalMessageEvent::NormalMessageEvent(Contact *c, const string& msg, time_t t, bool multi)
+  NormalMessageEvent::NormalMessageEvent(ContactRef c, const string& msg, time_t t, bool multi)
     : ICQMessageEvent(c), m_message(msg), m_offline(true), m_multi(multi),
       m_foreground(0x00000000), m_background(0x00ffffff) {
     setDirect(false);
@@ -482,7 +550,7 @@ namespace ICQ2000 {
    * @param fg foreground colour for the message
    * @param bg background colour for the message
    */
-  NormalMessageEvent::NormalMessageEvent(Contact *c, const string& msg, unsigned int fg, unsigned int bg)
+  NormalMessageEvent::NormalMessageEvent(ContactRef c, const string& msg, unsigned int fg, unsigned int bg)
     : ICQMessageEvent(c), m_message(msg), m_offline(false), m_multi(false) /* todo */,
       m_foreground(fg), m_background(bg) {
     setDirect(true);
@@ -539,7 +607,9 @@ namespace ICQ2000 {
    */
   void NormalMessageEvent::setBackground(unsigned int b) { m_background = b; }
 
-  // ---------------- URL Message ---------------------
+  // ============================================================================
+  //  URL Message
+  // ============================================================================
 
   /**
    *  Construct an URLMessageEvent
@@ -548,7 +618,7 @@ namespace ICQ2000 {
    * @param msg the message
    * @param url the url
    */
-  URLMessageEvent::URLMessageEvent(Contact* c, const string& msg, const string& url)
+  URLMessageEvent::URLMessageEvent(ContactRef c, const string& msg, const string& url)
     : ICQMessageEvent(c), m_message(msg), m_url(url), m_offline(false) { }
 
   /**
@@ -559,7 +629,7 @@ namespace ICQ2000 {
    * @param url the url
    * @param t time of sending
    */
-  URLMessageEvent::URLMessageEvent(Contact *c, const string& msg, const string& url, time_t t)
+  URLMessageEvent::URLMessageEvent(ContactRef c, const string& msg, const string& url, time_t t)
     : ICQMessageEvent(c), m_message(msg), m_url(url), m_offline(true) {
     m_time = t;
   }
@@ -587,7 +657,9 @@ namespace ICQ2000 {
    */
   bool URLMessageEvent::isOfflineMessage() const { return m_offline; }
 
-  // ---------------- SMS Message ------------------------
+  // ============================================================================
+  //  SMS Message
+  // ============================================================================
 
   /**
    *  Construct an SMSMessageEvent.
@@ -600,7 +672,7 @@ namespace ICQ2000 {
    *
    * @todo fix parsing of time
    */
-  SMSMessageEvent::SMSMessageEvent(Contact *c, const string& msg, const string& source,
+  SMSMessageEvent::SMSMessageEvent(ContactRef c, const string& msg, const string& source,
 				   const string& senders_network, const string& time)
     : MessageEvent(c), m_message(msg), m_source(source),
       m_senders_network(senders_network) {
@@ -614,7 +686,7 @@ namespace ICQ2000 {
    * @param msg the message
    * @param rcpt whether to request a delivery receipt
    */
-  SMSMessageEvent::SMSMessageEvent(Contact *c, const string& msg, bool rcpt)
+  SMSMessageEvent::SMSMessageEvent(ContactRef c, const string& msg, bool rcpt)
     : MessageEvent(c), m_message(msg), m_rcpt(rcpt) { }
 
   MessageEvent::MessageType SMSMessageEvent::getType() const { return MessageEvent::SMS; }
@@ -667,7 +739,9 @@ namespace ICQ2000 {
 
   string SMSMessageEvent::getSMTPSubject() const { return m_smtp_subject; }
 
-  // ---------------- SMS Receipt ------------------------
+  // ============================================================================
+  //  SMS Receipt Event
+  // ============================================================================
 
   /**
    *  Construct an SMSReceiptEvent
@@ -679,7 +753,7 @@ namespace ICQ2000 {
    * @param delivery_time time of delivery
    * @param del if the message was delivered
    */
-  SMSReceiptEvent::SMSReceiptEvent(Contact *c, const string& msg, const string& message_id,
+  SMSReceiptEvent::SMSReceiptEvent(ContactRef c, const string& msg, const string& message_id,
 				   const string& submission_time, const string& delivery_time, bool del)
     : MessageEvent(c), m_message(msg), m_message_id(message_id),
       m_submission_time(submission_time), m_delivery_time(delivery_time), m_delivered(del) { }
@@ -729,33 +803,23 @@ namespace ICQ2000 {
   bool SMSReceiptEvent::delivered() const { return m_delivered; }
 
 
-  // ---------------- Away Message -----------------------
+  // ============================================================================
+  //  Away Message
+  // ============================================================================
 
   /**
    *  Construct an Away message
    *
    * @param c the contact
    */
-  AwayMessageEvent::AwayMessageEvent(Contact *c)
+  AwayMessageEvent::AwayMessageEvent(ContactRef c)
     : ICQMessageEvent(c) { }
 
   MessageEvent::MessageType AwayMessageEvent::getType() const { return MessageEvent::AwayMessage; }
 
-  /**
-   *  get the away message
-   *
-   * @return the away message
-   */
-  string AwayMessageEvent::getMessage() const { return m_message; }
-
-  /**
-   *  set the away message
-   *
-   * @param msg the away message
-   */
-  void AwayMessageEvent::setMessage(const string& msg) { m_message = msg; }
-
-  // ---------------- Authorisation Request -----------------------
+  // ============================================================================
+  //  Authorisation Request
+  // ============================================================================
 
   /**
    *  Constructor for the Authorisation Request
@@ -763,7 +827,7 @@ namespace ICQ2000 {
    * @param c the contact
    * @param msg authorisation message
    */
-  AuthReqEvent::AuthReqEvent(Contact* c, const string& msg)
+  AuthReqEvent::AuthReqEvent(ContactRef c, const string& msg)
     : ICQMessageEvent(c), m_message(msg) {}
     
   /**
@@ -772,7 +836,7 @@ namespace ICQ2000 {
    * @param c the contact
    * @param msg authorisation message
    */
-  AuthReqEvent::AuthReqEvent(Contact* c, const string& msg, time_t t)
+  AuthReqEvent::AuthReqEvent(ContactRef c, const string& msg, time_t t)
     : ICQMessageEvent(c), m_message(msg), m_offline(true) {
     m_time=t;  
   }
@@ -795,7 +859,9 @@ namespace ICQ2000 {
    */
   bool AuthReqEvent::isOfflineMessage() const { return m_offline; }
     
-  // ---------------- Authorisation Acknowledgement ---------------
+  // ============================================================================
+  //  Authorisation Acknowledgement
+  // ============================================================================
 
   /**
    *  Constructor for the Authorisation Acknowledgement
@@ -803,7 +869,7 @@ namespace ICQ2000 {
    * @param c the contact
    * @param granted if authorisation was granted
    */
-  AuthAckEvent::AuthAckEvent(Contact* c, bool granted)
+  AuthAckEvent::AuthAckEvent(ContactRef c, bool granted)
     : ICQMessageEvent(c), m_offline(false), m_granted(granted) {}
       
   /**
@@ -813,7 +879,7 @@ namespace ICQ2000 {
    * @param msg the authorisation message
    * @param granted if authorisation was granted
    */
-  AuthAckEvent::AuthAckEvent(Contact* c, const string& msg, bool granted)
+  AuthAckEvent::AuthAckEvent(ContactRef c, const string& msg, bool granted)
     : ICQMessageEvent(c),  m_message(msg), m_offline(false), 
       m_granted(granted) {}
       
@@ -824,7 +890,7 @@ namespace ICQ2000 {
    * @param granted if authorisation was granted
    * @param t time the message was sent
    */
-  AuthAckEvent::AuthAckEvent(Contact* c, bool granted, time_t t)
+  AuthAckEvent::AuthAckEvent(ContactRef c, bool granted, time_t t)
     : ICQMessageEvent(c), m_offline(true), m_granted(granted) {
     m_time=t;  
   }
@@ -837,7 +903,7 @@ namespace ICQ2000 {
    * @param granted if authorisation was granted
    * @param t time the message was sent
    */
-  AuthAckEvent::AuthAckEvent(Contact* c, const string& msg,
+  AuthAckEvent::AuthAckEvent(ContactRef c, const string& msg,
                              bool granted, time_t t)
     : ICQMessageEvent(c), m_message(msg), m_offline(true), m_granted(granted) {
     m_time=t;  
@@ -870,9 +936,11 @@ namespace ICQ2000 {
    */
   bool AuthAckEvent::isOfflineMessage() const { return m_offline; }
 
-  // ---------------- E-mail express -------------------
+  // ============================================================================
+  //  E-mail Express message
+  // ============================================================================
 
-  EmailExEvent::EmailExEvent(Contact* c, const string &email,
+  EmailExEvent::EmailExEvent(ContactRef c, const string &email,
 			     const string &sender, const string &msg)
   : MessageEvent(c), m_sender(sender), m_email(email), m_message(msg) {
   }
@@ -887,17 +955,21 @@ namespace ICQ2000 {
 
   unsigned int EmailExEvent::getSenderUIN() const { return m_contact->getUIN(); }
 
-  // ---------------- "You were added" message -------------------
+  // ============================================================================
+  //  "You were added" message
+  // ============================================================================
 
-  UserAddEvent::UserAddEvent(Contact* c) : MessageEvent(c) { }
+  UserAddEvent::UserAddEvent(ContactRef c) : MessageEvent(c) { }
 
   MessageEvent::MessageType UserAddEvent::getType() const { return MessageEvent::UserAdd; }
 
   unsigned int UserAddEvent::getSenderUIN() const { return m_contact->getUIN(); }
 
-  // ---------------- E-mail message -----------------------------
+  // ============================================================================
+  //  Email Message
+  // ============================================================================
 
-  EmailMessageEvent::EmailMessageEvent(Contact *c, const string &msg)
+  EmailMessageEvent::EmailMessageEvent(ContactRef c, const string &msg)
   : MessageEvent(c), m_message(msg) {
   }
 
@@ -905,65 +977,9 @@ namespace ICQ2000 {
 
   EmailMessageEvent::MessageType EmailMessageEvent::getType() const { return MessageEvent::Email; }
 
-  // ---------------- Self Event -------------------------
-
-  SelfEvent::SelfEvent(Contact *self)
-    : m_self_contact(self) { }
-
-  SelfEvent::~SelfEvent() { }
-
-  Contact* SelfEvent::getSelfContact() const
-  {
-    return m_self_contact;
-  }
-
-  // ---------------- My Status Change -------------------
-
-  /**
-   *  Constructor for MyStatusChangeEvent
-   *
-   * @param s your status
-   */
-  MyStatusChangeEvent::MyStatusChangeEvent(Contact *self)
-    : SelfEvent(self)
-  {
-  }
-  
-
-  /**
-   *  get your status
-   *
-   * @return your status
-   */
-  Status MyStatusChangeEvent::getStatus() const { return m_self_contact->getStatus(); }
-
-  /**
-   *  get your invisibility
-   *
-   * @return your invisibility
-   */
-  bool MyStatusChangeEvent::getInvisible() const { return m_self_contact->isInvisible(); }
-
-  SelfEvent::EventType MyStatusChangeEvent::getType() const 
-  {
-    return SelfEvent::MyStatusChange;
-  }
-
-  // ---------------- My User Info Change -------------------
-
-  /**
-   *  Constructor for MyUserInfoChangeEvent
-   *
-   */
-  MyUserInfoChangeEvent::MyUserInfoChangeEvent(Contact *self)
-    : SelfEvent(self) { }
-
-  SelfEvent::EventType MyUserInfoChangeEvent::getType() const 
-  {
-    return SelfEvent::MyUserInfoChange;
-  }
-
-  // ---------------- New UIN ----------------------------
+  // ============================================================================
+  //  New UIN
+  // ============================================================================
 
   /**
    *  Constructor for a NewUINEvent
@@ -989,7 +1005,9 @@ namespace ICQ2000 {
   bool NewUINEvent::isSuccess() const { return m_success; }
 
 
-  // ---------------- Rate Info Change -------------------
+  // ============================================================================
+  //  Rate Info Change
+  // ============================================================================
 
   /**
    *  Constructor for a RateInfoChangeEvent

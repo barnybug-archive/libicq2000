@@ -51,14 +51,14 @@ namespace ICQ2000 {
     void flush_queue();
     void check_timeout();
 
-    string getContactEmail(const Contact &cont) const;
+    string getContactEmail(ContactRef cont) const;
 
     void Init();
     void Parse();
     void Send(Buffer &b);
 
     Translator *m_translator;
-    Contact& m_self_contact;
+    ContactRef m_self_contact;
 
     void SayHello();
     void SayFrom();
@@ -71,7 +71,7 @@ namespace ICQ2000 {
     void Disconnect();
 
    public:
-    SMTPClient(Contact &self, const string& server_name, unsigned short server_port,
+    SMTPClient(ContactRef self, const string& server_name, unsigned short server_port,
 	       Translator* translator);
 
     ~SMTPClient();
