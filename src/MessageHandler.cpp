@@ -69,11 +69,13 @@ namespace ICQ2000 {
     if (t == 0) t = ev->getTime();
     else ev->setTime(t);
 
+    ev->setDelivered(true);
+    // default to true - for clients that ignore this functionality
+
     if (ev->getType() != MessageEvent::AwayMessage) {
       messaged.emit(ev);
       contact->set_last_message_time( t );
     } else {
-      ev->setDelivered(true);
       contact->set_last_away_msg_check_time( t );
     }
 
