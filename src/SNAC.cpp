@@ -100,14 +100,22 @@ namespace ICQ2000 {
     
     case SNAC_FAM_SBL:
       switch(subtype) {
+      case SNAC_SBL_Rights_Reply:
+	snac = new SBLRightsReplySNAC();
+	break;
       case SNAC_SBL_List_From_Server:
 	snac = new SBLListSNAC();
 	break;
-      case SNAC_SBL_Edit_Access_Granted:
-	snac = new EditReqAccessGrantedSBLSNAC();
+      case SNAC_SBL_List_Unchanged:
+	snac = new SBLListUnchangedSNAC();
 	break;
-      case SNAC_SBL_Modification_Ack:
-	snac = new ModificationAckSBLSNAC();
+      case SNAC_SBL_Edit_ACK:
+	snac = new SBLEditACKSNAC();
+	break;
+      case SNAC_SBL_Auth_Request:
+      case SNAC_SBL_Auth_Granted:
+      case SNAC_SBL_User_Added_You:
+	// todo
 	break;
       }
       break;

@@ -231,9 +231,7 @@ Buffer& Buffer::operator<<(unsigned int l) {
 
 // strings stored as length (2 bytes), string m_data, _not_ null-terminated
 Buffer& Buffer::operator<<(const string& s) {
-  unsigned short sz = s.size();
-  m_data.push_back((sz>>8) & 0xFF);
-  m_data.push_back(sz & 0xFF);
+  (*this) << (unsigned short)s.size();
   Pack(s);
   return (*this);
 }

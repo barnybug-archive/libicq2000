@@ -55,7 +55,8 @@ namespace ICQ2000 {
 		       TLV_ParseMode_MessageBlock,
 		       TLV_ParseMode_AdvMsgBlock,
 		       TLV_ParseMode_InMessageData,
-		       TLV_ParseMode_InAdvMsgData
+		       TLV_ParseMode_InAdvMsgData,
+		       TLV_ParseMode_SBL
   };
 
   // Channel 0x0001
@@ -118,6 +119,15 @@ namespace ICQ2000 {
   const unsigned short TLV_AdvMsgBody = 0x2711;
   // loads more - but we don't parse them yet
 
+  // In Server-based list data
+  const unsigned short TLV_SBL_Await_Auth = 0x0066;
+  const unsigned short TLV_SBL_Ids        = 0x00c8;
+  const unsigned short TLV_SBL_Visibility = 0x00ca;
+  const unsigned short TLV_SBL_ICQTIC     = 0x00cd;
+  const unsigned short TLV_SBL_ImportTime = 0x00d4;
+  const unsigned short TLV_SBL_Nick       = 0x0131;
+  const unsigned short TLV_SBL_SMS_No     = 0x013a;
+
   // ------------- abstract TLV classes ---------------
 
   class TLV {
@@ -147,6 +157,22 @@ namespace ICQ2000 {
   };
 
   // -------------- base classes ----------------------
+
+  class CharTLV : public OutTLV, public InTLV {
+   protected:
+    unsigned char m_value;
+    
+    virtual void OutputValue(Buffer& b) const;
+
+   public:
+    CharTLV();
+    CharTLV(unsigned char n);
+
+    unsigned short Length() const { return 1; }
+
+    virtual void ParseValue(Buffer& b);
+    virtual unsigned char Value() const { return m_value; }
+  };
 
   class ShortTLV : public OutTLV, public InTLV {
    protected:
@@ -549,6 +575,64 @@ namespace ICQ2000 {
     unsigned short Length() const { return 0; }
   };
 
+  // ============================================================================
+  //  SBL TLVs
+  // ============================================================================
+
+  class SBLAwaitAuthTLV : public InTLV
+  {
+   public:
+    SBLAwaitAuthTLV() { }
+
+    unsigned short Type() const { return TLV_SBL_Await_Auth; }
+    unsigned short Length() const { return 0; }
+    void ParseValue(Buffer& b);
+  };
+
+  class SBLIdsTLV : public InTLV 
+  {
+   public:
+    SBLIdsTLV() { }
+
+    unsigned short Type() const { return TLV_SBL_Ids; }
+    unsigned short Length() const { return 0; }
+    void ParseValue(Buffer& b);
+  };
+  
+  class SBLVisibilityTLV : public CharTLV 
+  {
+   public:
+    SBLVisibilityTLV() { }
+    unsigned short Type() const { return TLV_SBL_Visibility; }
+  };
+  
+  class SBLICQTICTLV : public StringTLV 
+  {
+   public:
+    SBLICQTICTLV() { }
+    unsigned short Type() const { return TLV_SBL_ICQTIC; }
+  };
+  
+  class SBLImportTimeTLV : public LongTLV 
+  {
+   public:
+    SBLImportTimeTLV() { }
+    unsigned short Type() const { return TLV_SBL_ImportTime; }
+  };
+
+  class SBLNickTLV : public StringTLV 
+  {
+   public:
+    SBLNickTLV() { }
+    unsigned short Type() const { return TLV_SBL_Nick; }
+  };
+
+  class SBLSMSNoTLV : public StringTLV 
+  {
+   public:
+    SBLSMSNoTLV() { }
+    unsigned short Type() const { return TLV_SBL_SMS_No; }
+  };
 
   // --------------- ICQDataTLV ------------------
 
@@ -579,6 +663,8 @@ namespace ICQ2000 {
     ~TLVList();
 
     void Parse(Buffer& b, TLV_ParseMode pm, unsigned short no_tlvs);
+    void ParseByLength(Buffer& b, TLV_ParseMode pm, unsigned int len);
+
     bool exists(unsigned short type);
     InTLV* & operator[](unsigned short type);
 

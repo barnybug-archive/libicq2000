@@ -33,6 +33,7 @@
 #include <libicq2000/constants.h>
 
 #include <libicq2000/ContactList.h>
+#include <libicq2000/ContactTree.h>
 
 namespace ICQ2000 {
 
@@ -207,7 +208,7 @@ namespace ICQ2000 {
   };
 
   // ============================================================================
-  //  ContactListEvents (user added, user removed)
+  //  ContactListEvents (user added, user removed, group added, group removed)
   // ============================================================================
 
   /**
@@ -220,22 +221,18 @@ namespace ICQ2000 {
      */
     enum EventType {
       UserAdded,
-      UserRemoved
+      UserRemoved,
+      UserRelocated,
+      GroupAdded,
+      GroupRemoved,
+      GroupChange,
+      CompleteUpdate
     };
     
-   protected:
-    /**
-     *  The contact this event refers to.
-     */
-    ContactRef m_contact;
-
    public:
-    ContactListEvent(ContactRef c);
+    ContactListEvent();
     virtual ~ContactListEvent();
     
-    ContactRef getContact() const;
-    unsigned int getUIN() const;
-
     /**
      *  get the type of ContactListEvent
      *
@@ -244,26 +241,109 @@ namespace ICQ2000 {
     virtual EventType getType() const = 0;
   };
 
+  class UserContactListEvent : public ContactListEvent 
+  {
+   private:
+    ContactRef m_contact;
+    ContactTree::Group& m_group;
+    
+   public:
+    UserContactListEvent(const ContactRef& c, ContactTree::Group& gp);
+    
+    ContactRef getContact() const;
+    ContactTree::Group& get_group();
+    unsigned int getUIN() const;
+  };
+  
   /**
    *  The event signalled when a user is added.
    */
-  class UserAddedEvent : public ContactListEvent {
+  class UserAddedEvent : public UserContactListEvent {
    public:
-    UserAddedEvent(ContactRef c);
+    UserAddedEvent(const ContactRef& c, ContactTree::Group& gp);
     EventType getType() const;
   };
 
   /**
    *  The event signalled when a user is about to be removed.
    */
-  class UserRemovedEvent : public ContactListEvent {
+  class UserRemovedEvent : public UserContactListEvent {
    public:
-    UserRemovedEvent(ContactRef c);
+    UserRemovedEvent(const ContactRef& c, ContactTree::Group& gp);
+    EventType getType() const;
+  };
+
+  /**
+   *  The event signalled when a user is being moved between groups.
+   */
+  class UserRelocatedEvent : public UserContactListEvent {
+   protected:
+    ContactTree::Group& m_old_group;
+
+   public:
+    UserRelocatedEvent(const ContactRef& c, ContactTree::Group& new_gp, ContactTree::Group& old_gp);
+    EventType getType() const;
+
+    ContactTree::Group& get_old_group();
+  };
+
+  /**
+   *  Group related ContactList events
+   */
+  class GroupContactListEvent : public ContactListEvent 
+  {
+   private:
+    const ContactTree::Group& m_group;
+    
+   public:
+    GroupContactListEvent(const ContactTree::Group& gp);
+    
+    const ContactTree::Group& get_group() const;
+  };
+  
+  /**
+   *  The event signalled when a group is added.
+   */
+  class GroupAddedEvent : public GroupContactListEvent
+  {
+   public:
+    GroupAddedEvent(const ContactTree::Group& gp);
+    EventType getType() const;
+  };
+
+  /**
+   *  The event signalled when a group is removed.
+   */
+  class GroupRemovedEvent : public GroupContactListEvent
+  {
+   public:
+    GroupRemovedEvent(const ContactTree::Group& gp);
+    EventType getType() const;
+  };
+
+  /**
+   *  The event signalled when a group is removed.
+   */
+  class GroupChangeEvent : public GroupContactListEvent
+  {
+   public:
+    GroupChangeEvent(const ContactTree::Group& gp);
+    EventType getType() const;
+  };
+
+  /**
+   *  The event signalled when the contact list is completely
+   *  refreshed (from the server)
+   */
+  class CompleteUpdateEvent : public ContactListEvent
+  {
+   public:
+    CompleteUpdateEvent();
     EventType getType() const;
   };
 
   // ============================================================================
-  //  ContactEvents (queue changes, status change, user info change)
+  //  ContactEvents (status change, user info change)
   // ============================================================================
 
   /**
@@ -700,6 +780,7 @@ namespace ICQ2000 {
   /**
    *  The event signalled when entries from the server-based contact list is received.
    */
+  /*
   class ServerBasedContactEvent : public Event {
    public:
     enum SBLType {
@@ -728,6 +809,7 @@ namespace ICQ2000 {
     ContactList& getContactList();
     SBLType getType() const { return m_type; }
   };
+  */
 
   // ============================================================================
   //  NewUINEvent

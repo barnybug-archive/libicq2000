@@ -45,7 +45,7 @@ namespace ICQ2000 {
    */
   Client::Client()
     : m_self( new Contact(0) ),
-      m_message_handler(m_self, &m_contact_list),
+      m_message_handler(m_self, &m_contact_tree),
       m_smtp(m_self, "localhost", 25, &m_translator),
       m_recv(&m_translator)
   {
@@ -62,7 +62,7 @@ namespace ICQ2000 {
    */
   Client::Client(const unsigned int uin, const string& password)
     : m_self( new Contact(uin) ), m_password(password),
-      m_message_handler(m_self, &m_contact_list),
+      m_message_handler(m_self, &m_contact_tree),
       m_smtp(m_self, "localhost", 25, &m_translator),
       m_recv(&m_translator)
   {
@@ -104,8 +104,7 @@ namespace ICQ2000 {
     m_lower_port = 0;
     m_upper_port = 0;
 
-    m_default_group = 0x13a0;
-    m_default_group_name = "General";
+    m_fetch_sbl = false;
 
     m_cookiecache.setDefaultTimeout(30);
     // 30 seconds is hopefully enough for even the slowest connections
@@ -123,11 +122,15 @@ namespace ICQ2000 {
     m_smtp.socket.connect( slot(this, &Client::dc_socket_cb) );
 
     /* contact list callbacks */
-    m_contact_list.contactlist_signal.connect( slot(this, &Client::contactlist_cb) );
+    m_contact_tree.contactlist_signal.connect( slot(this, &Client::contactlist_cb) );
     
+    /* contact callbacks */
+    m_contact_tree.contact_status_change_signal.connect( contact_status_change_signal.slot() );
+    m_contact_tree.contact_userinfo_change_signal.connect( contact_userinfo_change_signal.slot() );
+
     /* visible, invisible lists callbacks */
-    m_visible_list.contactlist_signal.connect( slot(this, &Client::visiblelist_cb) );
-    m_invisible_list.contactlist_signal.connect( slot(this, &Client::invisiblelist_cb) );
+    //    m_visible_list.contactlist_signal.connect( slot(this, &Client::visiblelist_cb) );
+    //    m_invisible_list.contactlist_signal.connect( slot(this, &Client::invisiblelist_cb) );
 
     /* self contact callbacks */
     m_self->status_change_signal.connect( self_contact_status_change_signal.slot() );
@@ -258,11 +261,14 @@ namespace ICQ2000 {
     }
 
     // ensure all contacts return to Offline
-    ContactList::iterator curr = m_contact_list.begin();
-    while(curr != m_contact_list.end()) {
-      Status old_st = (*curr)->getStatus();
-      if ( old_st != STATUS_OFFLINE ) {
-	(*curr)->setStatus(STATUS_OFFLINE, false);
+    ContactTree::iterator curr = m_contact_tree.begin();
+    while(curr != m_contact_tree.end()) {
+      ContactTree::Group::iterator gcurr = (*curr).begin();
+      while (gcurr != (*curr).end()) {
+	Status old_st = (*gcurr)->getStatus();
+	if ( old_st != STATUS_OFFLINE )
+	  (*gcurr)->setStatus(STATUS_OFFLINE, false);
+	++gcurr;
       }
       ++curr;
     }
@@ -459,9 +465,9 @@ namespace ICQ2000 {
 	}
 	
       } else {
-	if ( m_contact_list.exists( snac->getUIN() ) ) {
+	if ( m_contact_tree.exists( snac->getUIN() ) ) {
 	  // update Contact
-	  ContactRef c = m_contact_list[ snac->getUIN() ];
+	  ContactRef c = m_contact_tree[ snac->getUIN() ];
 	  c->setAlias( snac->getAlias() );
 	  c->setEmail( snac->getEmail() );
 	  c->setFirstName( snac->getFirstName() );
@@ -611,8 +617,22 @@ namespace ICQ2000 {
     }
   }
   
-  ContactRef Client::getUserInfoCacheContact(unsigned int reqid) {
+  void Client::mergeSBL(ContactTree& tree)
+  {
+    ContactTree::iterator curr = tree.begin();
+    while (curr != tree.end()) {
+      ContactTree::Group::iterator gcurr = (*curr).begin();
+      cout << "Group: " << (*curr).get_label() << endl;
+      while (gcurr != (*curr).end()) {
+	cout << "  Contact: " << (*gcurr)->getAlias() << endl;
+	++gcurr;
+      }
+      ++curr;
+    }
+  }
 
+  ContactRef Client::getUserInfoCacheContact(unsigned int reqid)
+  {
     if ( m_reqidcache.exists( reqid ) ) {
       RequestIDCacheValue *v = m_reqidcache[ reqid ];
 
@@ -697,8 +717,8 @@ namespace ICQ2000 {
 
   void Client::SignalUserOnline(BuddyOnlineSNAC *snac) {
     const UserInfoBlock& userinfo = snac->getUserInfo();
-    if (m_contact_list.exists(userinfo.getUIN())) {
-      ContactRef c = m_contact_list[userinfo.getUIN()];
+    if (m_contact_tree.exists(userinfo.getUIN())) {
+      ContactRef c = m_contact_tree[userinfo.getUIN()];
       Status old_st = c->getStatus();
       
       c->setDirect(true); // reset flags when a user goes online
@@ -730,8 +750,8 @@ namespace ICQ2000 {
 
   void Client::SignalUserOffline(BuddyOfflineSNAC *snac) {
     const UserInfoBlock& userinfo = snac->getUserInfo();
-    if (m_contact_list.exists(userinfo.getUIN())) {
-      ContactRef c = m_contact_list[userinfo.getUIN()];
+    if (m_contact_tree.exists(userinfo.getUIN())) {
+      ContactRef c = m_contact_tree[userinfo.getUIN()];
       c->setStatus(STATUS_OFFLINE, false);
 
       ostringstream ostr;
@@ -876,12 +896,14 @@ namespace ICQ2000 {
       SignalLog(LogEvent::INFO, "Not starting listening server, incoming Direct connections disabled");
     }
 
+    /*
     if (!m_contact_list.empty())
       FLAPwrapSNAC(b, AddBuddySNAC(m_contact_list) );
 
     if (m_invisible_wanted)
       FLAPwrapSNAC(b, AddVisibleSNAC(m_visible_list) );
-        
+    */
+
     SetStatusSNAC sss(Contact::MapStatusToICQStatus(m_status_wanted, m_invisible_wanted), m_web_aware);
 
     sss.setSendExtra(true);
@@ -896,25 +918,37 @@ namespace ICQ2000 {
 
     FLAPwrapSNAC( b, SrvRequestOfflineSNAC(m_self->getUIN()) );
 
-    SignalLog(LogEvent::INFO, "Sending Contact List, Status, Client Ready and Offline Messages Request");
+    SignalLog(LogEvent::INFO, "Sending Status, Client Ready and Offline Messages Request");
     Send(b);
 
     SignalConnect();
     m_last_server_ping = time(NULL);
   }
 
-  void Client::SendOfflineMessagesRequest() {
-    SignalLog(LogEvent::INFO, "Sending Offline Messages Request");
-    FLAPwrapSNACandSend( SrvRequestOfflineSNAC(m_self->getUIN()) );
+  void Client::SendRequestSBL()
+  {
+    Buffer b(&m_translator);
+
+    FLAPwrapSNAC( b, SBLRequestRightsSNAC() );
+    FLAPwrapSNAC( b, SBLRequestListSNAC() );
+
+    SignalLog(LogEvent::INFO, "Sending Request Server-based list");
+    Send(b);
   }
 
-
-  void Client::SendOfflineMessagesACK() {
+  void Client::SendSBLReceivedACK()
+  {
+    FLAPwrapSNACandSend( SBLListACKSNAC() );
+  }
+  
+  void Client::SendOfflineMessagesACK()
+  {
     SignalLog(LogEvent::INFO, "Sending Offline Messages ACK");
     FLAPwrapSNACandSend( SrvAckOfflineSNAC(m_self->getUIN()) );
   }
 
-  void Client::SendAdvancedACK(MessageSNAC *snac) {
+  void Client::SendAdvancedACK(MessageSNAC *snac)
+  {
     ICQSubType *st = snac->getICQSubType();
     if (st == NULL || dynamic_cast<UINICQSubType*>(st) == NULL ) return;
     UINICQSubType *ust = dynamic_cast<UINICQSubType*>(snac->grabICQSubType());
@@ -1100,6 +1134,7 @@ namespace ICQ2000 {
 	SendPersonalInfoRequest();
 	SendAddICBMParameter();
 	SendSetUserInfo();
+	if (m_fetch_sbl) SendRequestSBL();
 	SendLogin();
 	break;
       case SNAC_GEN_CapAck:
@@ -1156,6 +1191,7 @@ namespace ICQ2000 {
 	break;
       }
       break;
+
     case SNAC_FAM_UIN:
       switch(snac->Subtype()) {
       case SNAC_UIN_Response:
@@ -1168,44 +1204,57 @@ namespace ICQ2000 {
 	break;
       }
       break;
+
     case SNAC_FAM_SBL:
+
       switch(snac->Subtype()) {
-      case SNAC_SBL_List_From_Server:
-	SignalLog(LogEvent::INFO, "Received server-based list from server\n");
-	SignalServerBasedContactList( static_cast<SBLListSNAC*>(snac)->getContactList() );
+      case SNAC_SBL_Rights_Reply:
+	SignalLog(LogEvent::INFO, "Server-based contact list rights granted\n");
 	break;
-      case SNAC_SBL_Edit_Access_Granted:
-	SignalLog(LogEvent::INFO, "Access to the server-based contact list was granted\n");
-      break;
-      case SNAC_SBL_Modification_Ack: {
-	vector<ModificationAckSBLSNAC::Result> r = static_cast<ModificationAckSBLSNAC*>(snac)->getResults();
-	vector<ModificationAckSBLSNAC::Result>::iterator ir;
-	vector<ServerBasedContactEvent::UploadResult> updresults;
-	vector<ServerBasedContactEvent::UploadResult>::iterator iur;
+
+      case SNAC_SBL_List_From_Server: 
+      {
+	SignalLog(LogEvent::INFO, "Received server-based list from server\n");
+        SBLListSNAC *sbs = static_cast<SBLListSNAC*>(snac);
+	mergeSBL( sbs->getContactTree() );
+	SendSBLReceivedACK();
+	break;
+      }
+      
+      case SNAC_SBL_Edit_ACK:
+      {
+	vector<SBLEditACKSNAC::Result> r = static_cast<SBLEditACKSNAC*>(snac)->getResults();
+	vector<SBLEditACKSNAC::Result>::iterator ir;
 	
 	for(ir = r.begin(); ir != r.end(); ++ir)
 	switch( *ir ) {
-	  case ModificationAckSBLSNAC::Success:
-	    SignalLog(LogEvent::INFO, "Server-based contact list modification succeeded\n");
-	    updresults.push_back(ServerBasedContactEvent::Success);
-	    break;
-	  case ModificationAckSBLSNAC::Failed:
-	    SignalLog(LogEvent::INFO, "Server-based contact list modification failed\n");
-	    updresults.push_back(ServerBasedContactEvent::Failed);
-	    break;
-	  case ModificationAckSBLSNAC::AuthRequired:
-	    SignalLog(LogEvent::INFO, "Succeeded, though authentification is required to perform the server-based modification\n");
-	    updresults.push_back(ServerBasedContactEvent::AuthRequired);
-	    break;
-	  case ModificationAckSBLSNAC::AlreadyExists:
-	    SignalLog(LogEvent::INFO, "Already exists on the server-based contact list\n");
-	    break;
-	  }
+	case SBLEditACKSNAC::Success:
+	  SignalLog(LogEvent::INFO, "Server-based contact list modification succeeded\n");
+	  //	  updresults.push_back(ServerBasedContactEvent::Success);
+	  break;
+	case SBLEditACKSNAC::Failed:
+	  SignalLog(LogEvent::INFO, "Server-based contact list modification failed\n");
+	  //	  updresults.push_back(ServerBasedContactEvent::Failed);
+	  break;
+	case SBLEditACKSNAC::AuthRequired:
+	  SignalLog(LogEvent::INFO, "Succeeded, though authentification is required to perform the server-based modification\n");
+	  //	  updresults.push_back(ServerBasedContactEvent::AuthRequired);
+	  break;
+	case SBLEditACKSNAC::AlreadyExists:
+	  SignalLog(LogEvent::INFO, "Already exists on the server-based contact list\n");
+	  break;
+	}
+
+	/*
+	** haven't yet decided the best way to recode this for groups and contacts **
+
+	vector<ServerBasedContactEvent::UploadResult> updresults;
+	vector<ServerBasedContactEvent::UploadResult>::iterator iur;
 
 	if(!updresults.empty()) {
 	  if( m_reqidcache.exists( snac->RequestID() ) ) {
 	    RequestIDCacheValue *v = m_reqidcache[ snac->RequestID() ];
-
+	    
 	    if ( v->getType() == RequestIDCacheValue::ServerBasedContact ) {
 	      ServerBasedContactCacheValue *sv = static_cast<ServerBasedContactCacheValue*>(v);
 	      ServerBasedContactEvent *ev = sv->getEvent();
@@ -1235,17 +1284,17 @@ namespace ICQ2000 {
 
 	      delete ev;
 	      m_reqidcache.remove( snac->RequestID() );
+	    } else {
+	      SignalLog(LogEvent::WARN, "Request ID cached value is not for a server-based contacts upload request");
 	    }
-
 	  } else {
-	    SignalLog(LogEvent::WARN, "Request ID cached value is not for a server-base contacts upload request");
+	    SignalLog(LogEvent::WARN, "SBL Edit acknowledge from server for a non-existent upload");
 	  }
-
-	}
-
+	*/
 	}
 	break;
-      }
+
+      } // switch(SBL Subtype)
       break;
 	
     } // switch(Family)
@@ -1456,7 +1505,7 @@ namespace ICQ2000 {
        */
 
       TCPSocket *sock = m_listenServer.Accept();
-      DirectClient *dc = new DirectClient(m_self, sock, &m_message_handler, &m_contact_list,
+      DirectClient *dc = new DirectClient(m_self, sock, &m_message_handler, &m_contact_tree,
 					  m_ext_ip, m_listenServer.getPort(), &m_translator);
       m_dccache[ sock->getSocketHandle() ] = dc;
       dc->logger.connect( slot(this, &Client::dc_log_cb) );
@@ -1792,51 +1841,72 @@ namespace ICQ2000 {
     Send(b);
   }
     
-  void Client::uploadServerBasedContactList()
+  void Client::fetchServerBasedContactList()
   {
-    uploadServerBasedContactList(m_contact_list);
+    m_fetch_sbl = true;
+    if (m_state == BOS_LOGGED_IN) SendRequestSBL();
+  }
+  
+  void Client::fetchServerBasedContactList(int)
+  {
+    // TODO!
   }
 
-  void Client::uploadServerBasedContactList(const ContactList &l)
+  void Client::uploadServerBasedContact(const ContactRef& c)
+  {
+    Buffer b(&m_translator);
+    FLAPwrapSNAC( b, SBLBeginEditSNAC() );
+    
+    // TODO ContactTree!
+    //    SBLAddEntrySNAC ssnac(l);
+    //    ssnac.setRequestID( reqid );
+    Send(b);
+  }
+
+  void Client::uploadServerBasedGroup(const ContactTree::Group& gp)
+  {
+  }
+  
+  void Client::uploadServerBasedContactList()
   {
     Buffer b(&m_translator);
 
-    FLAPwrapSNAC( b, EditReqAccessSBLSNAC() );
-    FLAPwrapSNAC( b, AddItemSBLSNAC(m_default_group_name, m_default_group) );
+    FLAPwrapSNAC( b, SBLBeginEditSNAC() );
 
-    ServerBasedContactEvent *ev = new ServerBasedContactEvent(ServerBasedContactEvent::Upload, l);
+    /*
+    ** needs recoding for groups **
+    ServerBasedContactEvent *ev = new ServerBasedContactEvent(ServerBasedContactEvent::Upload, m_contact_tree );
     unsigned int reqid = NextRequestID();
     m_reqidcache.insert( reqid, new ServerBasedContactCacheValue( ev ) );
+    */
 
-    AddItemSBLSNAC ssnac(l);
-    ssnac.setRequestID( reqid );
-    FLAPwrapSNAC( b, ssnac );
+    // TODO ContactTree!
+    //SBLAddEntrySNAC ssnac( m_contact_tree );
+    //    ssnac.setRequestID( reqid );
+    //    FLAPwrapSNAC( b, ssnac );
 
-    FLAPwrapSNAC( b, EditFinishSBLSNAC() );
+    FLAPwrapSNAC( b, SBLCommitEditSNAC() );
 
     Send(b);
   }
 
   void Client::removeServerBasedContactList()
   {
-    removeServerBasedContactList(m_contact_list);
-  }
-
-  void Client::removeServerBasedContactList(const ContactList &l)
-  {
     Buffer b(&m_translator);
 
-    FLAPwrapSNAC( b, EditReqAccessSBLSNAC() );
+    FLAPwrapSNAC( b, SBLBeginEditSNAC() );
 
+    /*
+    ** needs recoding for groups **
     ServerBasedContactEvent *ev = new ServerBasedContactEvent(ServerBasedContactEvent::Remove, l);
     unsigned int reqid = NextRequestID();
     m_reqidcache.insert( reqid, new ServerBasedContactCacheValue( ev ) );
 
-    RemoveItemSBLSNAC ssnac(l);
+    SBLRemoveEntrySNAC ssnac(l);
     ssnac.setRequestID( reqid );
     FLAPwrapSNAC( b, ssnac );
-
-    FLAPwrapSNAC( b, EditFinishSBLSNAC() );
+    */
+    FLAPwrapSNAC( b, SBLCommitEditSNAC() );
 
     Send(b);
   }
@@ -1949,11 +2019,6 @@ namespace ICQ2000 {
     }
   }
 
-  void Client::setServerSideGroup(const std::string &group_name, unsigned short group_id) {
-    m_default_group = group_id;
-    m_default_group_name = group_name;
-  }
-
   /**
    *  Get your current status.
    *
@@ -1996,10 +2061,9 @@ namespace ICQ2000 {
 
   void Client::contactlist_cb(ContactListEvent *ev)
   {
-    ContactRef c = ev->getContact();
-    
     if (ev->getType() == ContactListEvent::UserAdded) {
-      
+      UserAddedEvent *cev = static_cast<UserAddedEvent*>(ev);
+      ContactRef c = cev->getContact();
       if (c->isICQContact() && m_state == BOS_LOGGED_IN) {
 	FLAPwrapSNACandSend( AddBuddySNAC(c) );
 
@@ -2008,26 +2072,29 @@ namespace ICQ2000 {
       }
 
     } else if (ev->getType() == ContactListEvent::UserRemoved) {
-      
+      UserRemovedEvent *cev = static_cast<UserRemovedEvent*>(ev);
+      ContactRef c = cev->getContact();
       if (c->isICQContact() && m_state == BOS_LOGGED_IN) {
 	FLAPwrapSNACandSend( RemoveBuddySNAC(c) );
       }
 
       // remove all direct connections for that contact
       m_dccache.removeContact(c);
+
+    } else if (ev->getType() == ContactListEvent::GroupAdded) {
+    } else if (ev->getType() == ContactListEvent::GroupRemoved) {
+    } else if (ev->getType() == ContactListEvent::CompleteUpdate) {
     }
 
     // re-emit on the Client signal
     contactlist.emit(ev);
-    
   }
-  
 
   void Client::visiblelist_cb(ContactListEvent *ev)
   {
-    ContactRef c = ev->getContact();
-    
     if (ev->getType() == ContactListEvent::UserAdded) {
+      UserAddedEvent *cev = static_cast<UserAddedEvent*>(ev);
+      ContactRef c = cev->getContact();
       
       if (c->isICQContact() && m_state == BOS_LOGGED_IN && m_self->isInvisible()) {
 	FLAPwrapSNACandSend( AddVisibleSNAC(c) );
@@ -2035,6 +2102,8 @@ namespace ICQ2000 {
       }
 
     } else {
+      UserRemovedEvent *cev = static_cast<UserRemovedEvent*>(ev);
+      ContactRef c = cev->getContact();
 
       if (c->isICQContact() && m_state == BOS_LOGGED_IN && m_self->isInvisible()) {
 	FLAPwrapSNACandSend( RemoveVisibleSNAC(c) );
@@ -2047,9 +2116,9 @@ namespace ICQ2000 {
 
   void Client::invisiblelist_cb(ContactListEvent *ev)
   {
-    ContactRef c = ev->getContact();
-    
     if (ev->getType() == ContactListEvent::UserAdded) {
+      UserAddedEvent *cev = static_cast<UserAddedEvent*>(ev);
+      ContactRef c = cev->getContact();
       
       if (c->isICQContact() && m_state == BOS_LOGGED_IN && !m_self->isInvisible()) {
 	FLAPwrapSNACandSend( AddInvisibleSNAC(c) );
@@ -2057,6 +2126,8 @@ namespace ICQ2000 {
       }
 
     } else {
+      UserRemovedEvent *cev = static_cast<UserRemovedEvent*>(ev);
+      ContactRef c = cev->getContact();
 
       if (c->isICQContact() && m_state == BOS_LOGGED_IN && !m_self->isInvisible()) {
 	FLAPwrapSNACandSend( RemoveInvisibleSNAC(c) );
@@ -2064,37 +2135,6 @@ namespace ICQ2000 {
 
     }
     
-  }
-  
-
-  /**
-   *  Add a contact to your list.
-   *
-   * @param c the contact passed as a reference counted object (ref_ptr<Contact> or ContactRef).
-   */
-  void Client::addContact(ContactRef c) {
-
-    if (!m_contact_list.exists(c->getUIN())) {
-      m_contact_list.add(c);
-
-      if(!c->getServerBased())
-      c->setServerSideInfo(m_default_group, 0);
-
-      c->status_change_signal.connect( contact_status_change_signal.slot() );
-      c->userinfo_change_signal.connect( contact_userinfo_change_signal.slot() );
-    }
-
-  }
-
-  /**
-   *  Remove a contact from your list.
-   *
-   * @param uin the uin of the contact to be removed
-   */
-  void Client::removeContact(const unsigned int uin) {
-    if (m_contact_list.exists(uin)) {
-      m_contact_list.remove(uin);
-    }
   }
   
   /**
@@ -2139,31 +2179,17 @@ namespace ICQ2000 {
    *
    * @param uin the uin of the contact to be removed
    */
-  void Client::removeInvisible(const unsigned int uin) {
+  void Client::removeInvisible(const unsigned int uin)
+  {
     if (m_invisible_list.exists(uin)) {
       m_invisible_list.remove(uin);
     }
   }
   
-  void Client::SignalServerBasedContactList(const ContactList& l) {
-    ContactRef ct;
-    ContactList::const_iterator curr = l.begin();
-
-    while(curr != l.end()) {
-      ct = getContact((*curr)->getUIN());
-      if(ct.get()) {
-        ct->setServerBased(true);
-	ct->setServerSideInfo((*curr)->getServerSideGroupID(), (*curr)->getServerSideID());
-      }
-
-      ++curr;
-    }
-
-    ServerBasedContactEvent ev(ServerBasedContactEvent::Fetch, l);
-    server_based_contact_list.emit(&ev);
+  ContactRef Client::getSelfContact()
+  {
+    return m_self;
   }
-
-  ContactRef Client::getSelfContact() { return m_self; }
 
   /**
    *  Get the Contact object for a given uin.
@@ -2173,21 +2199,21 @@ namespace ICQ2000 {
    * that uin exists on your list.
    */
   ContactRef Client::getContact(const unsigned int uin) {
-    if (m_contact_list.exists(uin)) {
-      return m_contact_list[uin];
+    if (m_contact_tree.exists(uin)) {
+      return m_contact_tree[uin];
     } else {
       return NULL;
     }
   }
 
   /**
-   *  Get the ContactList object used for the main library.
+   *  Get the ContactTree object used for the main library.
    *
-   * @return a reference to the ContactList
+   * @return a reference to the ContactTree
    */
-  ContactList& Client::getContactList()
+  ContactTree& Client::getContactTree()
   {
-    return m_contact_list;
+    return m_contact_tree;
   }
 
   /**
@@ -2236,11 +2262,6 @@ namespace ICQ2000 {
   void Client::fetchSelfDetailContactInfo()
   {
     fetchDetailContactInfo(m_self);
-  }
-
-  void Client::fetchServerBasedContactList() {
-    SignalLog(LogEvent::INFO, "Requesting Server-based contact list");
-    FLAPwrapSNACandSend( RequestSBLSNAC() );
   }
 
   SearchResultEvent* Client::searchForContacts
@@ -2385,7 +2406,7 @@ namespace ICQ2000 {
    * @return whether setting translation map was a success
    */
   bool Client::setTranslationMap(const string& szMapFileName) { 
-    try{
+    try {
       m_translator.setTranslationMap(szMapFileName);
     } catch (TranslatorException e) {
       SignalLog(LogEvent::WARN, e.what());

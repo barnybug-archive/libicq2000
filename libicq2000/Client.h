@@ -36,6 +36,7 @@
 #include <libicq2000/events.h>
 #include <libicq2000/constants.h>
 #include <libicq2000/Contact.h>
+#include <libicq2000/ContactTree.h>
 #include <libicq2000/ContactList.h>
 #include <libicq2000/custom_marshal.h>
 #include <libicq2000/Translator.h>
@@ -85,9 +86,6 @@ namespace ICQ2000 {
     bool m_web_aware;
     unsigned short m_random_group;
 
-    std::string m_default_group_name;
-    unsigned short m_default_group;
-
     std::string m_authorizerHostname;
     unsigned short m_authorizerPort;
 
@@ -102,10 +100,12 @@ namespace ICQ2000 {
     
     Translator m_translator;
 
-    ContactList m_contact_list;
+    ContactTree m_contact_tree;
     
     ContactList m_visible_list;
     ContactList m_invisible_list;
+
+    bool m_fetch_sbl;
 
     MessageHandler m_message_handler;
 
@@ -158,7 +158,6 @@ namespace ICQ2000 {
     void SignalLog(LogEvent::LogType type, const std::string& msg);
     void SignalUserOnline(BuddyOnlineSNAC *snac);
     void SignalUserOffline(BuddyOfflineSNAC *snac);
-    void SignalServerBasedContactList(const ContactList& l);
     void SignalAddSocket(int fd, SocketEvent::Mode m);
     void SignalRemoveSocket(int fd);
     // ------------------ Outgoing packets -------------------
@@ -182,7 +181,8 @@ namespace ICQ2000 {
     void SendAddICBMParameter();
     void SendSetUserInfo();
     void SendLogin();
-    void SendOfflineMessagesRequest();
+    void SendRequestSBL();
+    void SendSBLReceivedACK();
     void SendOfflineMessagesACK();
 
     void SendAdvancedACK(MessageSNAC *snac);
@@ -214,6 +214,8 @@ namespace ICQ2000 {
     // -------------------------------------------------------
 
     ContactRef getUserInfoCacheContact(unsigned int reqid);
+
+    void mergeSBL(ContactTree& tree);
 
     void ICBMCookieCache_expired_cb(MessageEvent *ev);
     void dccache_expired_cb(DirectClient *dc);
@@ -376,8 +378,6 @@ namespace ICQ2000 {
      */
     SigC::Signal1<void,SearchResultEvent*> search_result;
     
-    SigC::Signal1<void,ServerBasedContactEvent*> server_based_contact_list;
-    
     // -------------
 
     // -- Send calls --
@@ -400,27 +400,27 @@ namespace ICQ2000 {
 
     void uploadSelfDetails();
     
-    void setServerSideGroup(const std::string &group_name, unsigned short group_id);
-
+    void uploadServerBasedContact(const ContactRef& c);
+    void uploadServerBasedGroup(const ContactTree::Group& gp);
     void uploadServerBasedContactList();
-    void uploadServerBasedContactList(const ContactList &l);
+
+    void removeServerBasedContact(const ContactRef& c);
+    void removeServerBasedGroup(const ContactTree::Group& gp);
     void removeServerBasedContactList();
-    void removeServerBasedContactList(const ContactList &l);
-    
+
     // -- Contact List --
-    void addContact(ContactRef c);
-    void removeContact(const unsigned int uin);
     void addVisible(ContactRef c);
     void removeVisible(const unsigned int uin);
     void addInvisible(ContactRef c);
     void removeInvisible(const unsigned int uin);
     ContactRef getContact(const unsigned int uin);
 
-    ContactList& getContactList();
+    ContactTree& getContactTree();
 
     void fetchSimpleContactInfo(ContactRef c);
     void fetchDetailContactInfo(ContactRef c);
     void fetchServerBasedContactList();
+    void fetchServerBasedContactList(int); // the conditional form - TODO!
     void fetchSelfSimpleContactInfo();
     void fetchSelfDetailContactInfo();
 

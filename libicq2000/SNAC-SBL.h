@@ -1,9 +1,7 @@
 /*
  * SNAC - Server-based list management
  * Mitz Pettel, 2001
- *
- * based on: SNAC - Buddy (Contact) list management
- * Copyright (C) 2001 Barnaby Gray <barnaby@beedesign.co.uk>.
+ * Copyright (C) 2002 Barnaby Gray <barnaby@beedesign.co.uk>.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,43 +28,93 @@
 #include <libicq2000/SNAC-base.h>
 #include <libicq2000/Contact.h>
 #include <libicq2000/ContactList.h>
+#include <libicq2000/ContactTree.h>
 #include <libicq2000/UserInfoBlock.h>
 
 namespace ICQ2000 {
 
   // Server-based list stuff (Family 0x0013)
-  const unsigned short SNAC_SBL_Request_List = 0x0005;
-  const unsigned short SNAC_SBL_List_From_Server = 0x0006;
-  const unsigned short SNAC_SBL_Edit_Start = 0x0011;
-  const unsigned short SNAC_SBL_Add_Item = 0x0008;
-  const unsigned short SNAC_SBL_Remove_Item = 0x000a;
-  const unsigned short SNAC_SBL_Edit_Finish = 0x0012;
-  const unsigned short SNAC_SBL_Edit_Request_Access = 0x0002;
-  const unsigned short SNAC_SBL_Edit_Access_Granted = 0x0003;
-  const unsigned short SNAC_SBL_Update_Group_Header = 0x0009;
-  const unsigned short SNAC_SBL_Modification_Ack = 0x000e;
-
+  const unsigned short SNAC_SBL_Req_Rights       = 0x0002; // Out
+  const unsigned short SNAC_SBL_Rights_Reply     = 0x0003; // In
+  const unsigned short SNAC_SBL_Request_List     = 0x0004; // Out 
+  const unsigned short SNAC_SBL_Check_List       = 0x0005; // Out
+  const unsigned short SNAC_SBL_List_From_Server = 0x0006; // In
+  const unsigned short SNAC_SBL_List_ACK         = 0x0007; // Out
+  const unsigned short SNAC_SBL_Add_Entry        = 0x0008; // Out
+  const unsigned short SNAC_SBL_Update_Entry     = 0x0009; // Out
+  const unsigned short SNAC_SBL_Remove_Entry     = 0x000a; // Out
+  const unsigned short SNAC_SBL_Edit_ACK         = 0x000e; // In
+  const unsigned short SNAC_SBL_List_Unchanged   = 0x000f; // In
+  const unsigned short SNAC_SBL_Begin_Edit       = 0x0011; // Out
+  const unsigned short SNAC_SBL_Commit_Edit      = 0x0012; // Out
+  const unsigned short SNAC_SBL_Request_Auth     = 0x0018; // Out
+  const unsigned short SNAC_SBL_Auth_Request     = 0x0019; // In
+  const unsigned short SNAC_SBL_Authorise        = 0x001a; // Out 
+  const unsigned short SNAC_SBL_Auth_Granted     = 0x001b; // In
+  const unsigned short SNAC_SBL_User_Added_You   = 0x001c; // In
+  
   // ----------------- Server-based Lists (Family 0x0013) SNACs -----------
 
-  class SBLFamilySNAC : virtual public SNAC {
+  class SBLFamilySNAC : virtual public SNAC
+  {
    public:
     unsigned short Family() const { return SNAC_FAM_SBL; }
   };
 
-  class RequestSBLSNAC : public SBLFamilySNAC, public OutSNAC {
-    
+  // ============================================================================
+  //  Request SBL rights
+  // ============================================================================
+
+  class SBLRequestRightsSNAC : public SBLFamilySNAC, public OutSNAC 
+  {
+   protected:
+    void OutputBody(Buffer& b) const;
+
+  public:
+    SBLRequestRightsSNAC();
+
+    unsigned short Subtype() const { return SNAC_SBL_Req_Rights; }
+  };
+
+  // ============================================================================
+  //  SBL rights reply
+  // ============================================================================
+  
+  class SBLRightsReplySNAC : public SBLFamilySNAC, public InSNAC 
+  {
+   protected:
+    void ParseBody(Buffer& b);
+
+  public:
+    SBLRightsReplySNAC();
+
+    unsigned short Subtype() const { return SNAC_SBL_Rights_Reply; }
+  };
+
+  // ============================================================================
+  //  Unconditional SBL list request
+  // ============================================================================
+
+  class SBLRequestListSNAC : public SBLFamilySNAC, public OutSNAC
+  {
    protected:
     void OutputBody(Buffer& b) const;
 
    public:
-    RequestSBLSNAC();
+    SBLRequestListSNAC();
 
     unsigned short Subtype() const { return SNAC_SBL_Request_List; }
   };
   
-  class SBLListSNAC : public SBLFamilySNAC, public InSNAC {
+  // ============================================================================
+  //  SBL list reply
+  // ============================================================================
+
+  class SBLListSNAC : public SBLFamilySNAC, public InSNAC
+  {
    private:
-    ContactList m_contacts;
+    ContactTree m_tree;
+    unsigned short m_size;
      
    protected:
     void ParseBody(Buffer& b);
@@ -74,21 +122,48 @@ namespace ICQ2000 {
    public:
     SBLListSNAC();
     
-    const ContactList& getContactList() const { return m_contacts; }
+    ContactTree& getContactTree() { return m_tree; }
+    unsigned short get_size() const { return m_size; }
+
     unsigned short Subtype() const { return SNAC_SBL_List_From_Server; }
   };
   
-  class EditStartSBLSNAC : public SBLFamilySNAC, public OutSNAC {
+  // ============================================================================
+  //  SBL list received ACK
+  // ============================================================================
+
+  class SBLListACKSNAC : public SBLFamilySNAC, public OutSNAC
+  {
    protected:
     void OutputBody(Buffer& b) const;
 
    public:
-    EditStartSBLSNAC();
+    SBLListACKSNAC();
+    
+    unsigned short Subtype() const { return SNAC_SBL_List_ACK; }
+  };
+  
+  // ============================================================================
+  //  SBL Begin Edit
+  // ============================================================================
 
-    unsigned short Subtype() const { return SNAC_SBL_Edit_Start; }
+  class SBLBeginEditSNAC : public SBLFamilySNAC, public OutSNAC
+  {
+   protected:
+    void OutputBody(Buffer& b) const;
+
+   public:
+    SBLBeginEditSNAC();
+
+    unsigned short Subtype() const { return SNAC_SBL_Begin_Edit; }
   };
 
-  class AddItemSBLSNAC : public SBLFamilySNAC, public OutSNAC {
+  // ============================================================================
+  //  SBL Add Entry
+  // ============================================================================
+
+  class SBLAddEntrySNAC : public SBLFamilySNAC, public OutSNAC
+  {
    private:
     std::string m_group_name;
     unsigned short m_group_id;
@@ -98,17 +173,43 @@ namespace ICQ2000 {
     void OutputBody(Buffer& b) const;
 
    public:
-    AddItemSBLSNAC();
-    AddItemSBLSNAC(const ContactList& l);
-    AddItemSBLSNAC(const ContactRef& c);
-    AddItemSBLSNAC(const std::string &group_name, unsigned short group_id);
+    SBLAddEntrySNAC();
+    SBLAddEntrySNAC(const ContactList& l);
+    SBLAddEntrySNAC(const ContactRef& c);
+    SBLAddEntrySNAC(const std::string &group_name, unsigned short group_id);
 
     void addBuddy(const ContactRef& c);
 
-    unsigned short Subtype() const { return SNAC_SBL_Add_Item; }
+    unsigned short Subtype() const { return SNAC_SBL_Add_Entry; }
   };
 
-  class RemoveItemSBLSNAC : public SBLFamilySNAC, public OutSNAC {
+  // ============================================================================
+  //  SBL Update Entry
+  // ============================================================================
+
+  class SBLUpdateEntrySNAC : public SBLFamilySNAC, public OutSNAC
+  {
+   private:
+     std::string m_group_name;
+     unsigned short m_group_id;
+     std::vector<unsigned short> m_ids;
+
+   protected:
+    void OutputBody(Buffer& b) const;
+
+   public:
+    SBLUpdateEntrySNAC(const std::string &group_name,
+		       unsigned short group_id, const std::vector<unsigned short> &ids);
+
+    unsigned short Subtype() const { return SNAC_SBL_Update_Entry; }
+  };
+  
+  // ============================================================================
+  //  SBL Remove Entry
+  // ============================================================================
+
+  class SBLRemoveEntrySNAC : public SBLFamilySNAC, public OutSNAC
+  {
    private:
     std::string m_group_name;
     unsigned short m_group_id;
@@ -118,35 +219,35 @@ namespace ICQ2000 {
     void OutputBody(Buffer& b) const;
 
    public:
-    RemoveItemSBLSNAC();
-    RemoveItemSBLSNAC(const ContactList& l);
-    RemoveItemSBLSNAC(const ContactRef& c);
-    RemoveItemSBLSNAC(const std::string &group_name, unsigned short group_id);
+    SBLRemoveEntrySNAC();
+    SBLRemoveEntrySNAC(const ContactList& l);
+    SBLRemoveEntrySNAC(const ContactRef& c);
+    SBLRemoveEntrySNAC(const std::string &group_name, unsigned short group_id);
 
-    unsigned short Subtype() const { return SNAC_SBL_Remove_Item; }
+    unsigned short Subtype() const { return SNAC_SBL_Remove_Entry; }
   };
 
-  class EditFinishSBLSNAC : public SBLFamilySNAC, public OutSNAC {
+  // ============================================================================
+  //  SBL Commit Edit
+  // ============================================================================
+
+  class SBLCommitEditSNAC : public SBLFamilySNAC, public OutSNAC
+  {
    protected:
     void OutputBody(Buffer& b) const;
 
    public:
-    EditFinishSBLSNAC();
+    SBLCommitEditSNAC();
 
-    unsigned short Subtype() const { return SNAC_SBL_Edit_Finish; }
+    unsigned short Subtype() const { return SNAC_SBL_Commit_Edit; }
   };
 
-  class EditReqAccessSBLSNAC : public SBLFamilySNAC, public OutSNAC {
-   protected:
-    void OutputBody(Buffer& b) const;
+  // ============================================================================
+  //  SBL Edit ACK
+  // ============================================================================
 
-   public:
-    EditReqAccessSBLSNAC();
-
-    unsigned short Subtype() const { return SNAC_SBL_Edit_Request_Access; }
-  };
-
-  class ModificationAckSBLSNAC : public SBLFamilySNAC, public InSNAC {
+  class SBLEditACKSNAC : public SBLFamilySNAC, public InSNAC
+  {
    public:
      enum Result {
        Success,
@@ -160,36 +261,24 @@ namespace ICQ2000 {
     void ParseBody(Buffer& b);
 
    public:
-    ModificationAckSBLSNAC();
+    SBLEditACKSNAC();
 
     std::vector<Result> getResults() const { return m_results; }
-    unsigned short Subtype() const { return SNAC_SBL_Modification_Ack; }
+    unsigned short Subtype() const { return SNAC_SBL_Edit_ACK; }
   };
 
-  class EditReqAccessGrantedSBLSNAC : public SBLFamilySNAC, public InSNAC {
+  // ============================================================================
+  //  SBL List Unchanged reply
+  // ============================================================================
+
+  class SBLListUnchangedSNAC : public SBLFamilySNAC, public InSNAC 
+  {
    protected:
     void ParseBody(Buffer& b);
 
    public:
-    EditReqAccessGrantedSBLSNAC();
-
-    unsigned short Subtype() const { return SNAC_SBL_Edit_Access_Granted; }
-  };
-
-  class UpdateGroupSBLSNAC : public SBLFamilySNAC, public OutSNAC {
-   private:
-     std::string m_group_name;
-     unsigned short m_group_id;
-     std::vector<unsigned short> m_ids;
-
-   protected:
-    void OutputBody(Buffer& b) const;
-
-   public:
-    UpdateGroupSBLSNAC(const std::string &group_name,
-      unsigned short group_id, const std::vector<unsigned short> &ids);
-
-    unsigned short Subtype() const { return SNAC_SBL_Update_Group_Header; }
+    SBLListUnchangedSNAC();
+    unsigned short Subtype() const { return SNAC_SBL_List_Unchanged; }
   };
   
 }

@@ -31,7 +31,7 @@
 
 namespace ICQ2000 {
   
-  class ContactList;
+  class ContactTree;
   class ICQSubType;
   class UINICQSubType;
   class MessageEvent;
@@ -46,7 +46,7 @@ namespace ICQ2000 {
   class MessageHandler : public SigC::Object {
    private:
     ContactRef m_self_contact;
-    ContactList *m_contact_list;
+    ContactTree *m_contact_list;
     
     MessageEvent* ICQSubTypeToEvent(ICQSubType *st, ContactRef& contact, bool& adv);
     ICQMessageEvent* UINICQSubTypeToEvent(UINICQSubType *st, const ContactRef& contact);
@@ -60,7 +60,7 @@ namespace ICQ2000 {
     void SignalLog(LogEvent::LogType type, const std::string& msg);
     
   public:
-    MessageHandler(ContactRef self, ContactList *cl);
+    MessageHandler(ContactRef self, ContactTree *cl);
 
     // incoming messages
     bool handleIncoming(ICQSubType* icq, time_t t = 0);

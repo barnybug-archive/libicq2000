@@ -72,20 +72,11 @@ namespace ICQ2000 {
 
   ContactRef ContactList::add(ContactRef ct) {
     m_cmap.insert( std::make_pair(ct->getUIN(), ct) );
-
-    // fire off signal
-    UserAddedEvent uev( ct );
-    contactlist_signal.emit( &uev );
-
     return ct;
   }
 
   void ContactList::remove(unsigned int uin) {
     if (m_cmap.count(uin) != 0) {
-      // first fire off signal
-      UserRemovedEvent uev( m_cmap[uin] );
-      contactlist_signal.emit( &uev );
-
       m_cmap.erase(uin);
     }
   }

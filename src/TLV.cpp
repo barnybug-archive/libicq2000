@@ -161,6 +161,33 @@ namespace ICQ2000 {
 	break;
       }
       break;
+
+      // ----- SBLDATA -----
+    case TLV_ParseMode_SBL:
+      switch(type) {
+      case TLV_SBL_Await_Auth:
+	tlv = new SBLAwaitAuthTLV();
+	break;
+      case TLV_SBL_Ids:
+	tlv = new SBLIdsTLV();
+	break;
+      case TLV_SBL_Visibility:
+	tlv = new SBLVisibilityTLV();
+	break;
+      case TLV_SBL_ICQTIC:
+	tlv = new SBLICQTICTLV();
+	break;
+      case TLV_SBL_ImportTime:
+	tlv = new SBLImportTimeTLV();
+	break;
+      case TLV_SBL_Nick:
+	tlv = new SBLNickTLV();
+	break;
+      case TLV_SBL_SMS_No:
+	tlv = new SBLSMSNoTLV();
+	break;
+      }
+      break;
     }
 
     if (tlv == NULL) {
@@ -185,6 +212,18 @@ namespace ICQ2000 {
   }
 
   // ----------------- Base Classes ---------------
+
+  CharTLV::CharTLV() { }
+  CharTLV::CharTLV(unsigned char n) : m_value(n) { }
+  void CharTLV::OutputValue(Buffer& b) const {
+    b << Length();
+    b << m_value;
+  }
+  void CharTLV::ParseValue(Buffer& b) {
+    unsigned short l;
+    b >> l; // should be 1
+    b >> m_value;
+  }
 
   ShortTLV::ShortTLV() { }
   ShortTLV::ShortTLV(unsigned short n) : m_value(n) { }
@@ -511,6 +550,28 @@ namespace ICQ2000 {
     }
   }
 
+  // ============================================================================
+  //  SBL TLVs
+  // ============================================================================
+
+  void SBLAwaitAuthTLV::ParseValue(Buffer& b)
+  {
+    unsigned short l;
+    b >> l; // should be 0
+    b.advance(l);
+  }
+  
+  void SBLIdsTLV::ParseValue(Buffer& b)
+  {
+    unsigned short l;
+    b >> l;
+    b.advance(l); // TODO
+  }
+
+  // ============================================================================
+  //  ICQ TLVs
+  // ============================================================================
+
   ICQDataTLV::ICQDataTLV() : m_icqsubtype(NULL) { }
 
   ICQDataTLV::~ICQDataTLV() {
@@ -560,7 +621,8 @@ namespace ICQ2000 {
     tlvmap.clear();
   }
 
-  void TLVList::Parse(Buffer& b, TLV_ParseMode pm, unsigned short no_tlvs) {
+  void TLVList::Parse(Buffer& b, TLV_ParseMode pm, unsigned short no_tlvs)
+  {
     InTLV *t;
     unsigned short ntlv = 0;
     while (b.beforeEnd() && ntlv < no_tlvs) {
@@ -572,6 +634,21 @@ namespace ICQ2000 {
 
       tlvmap[t->Type()] = t;
       ntlv++;
+    }
+  }
+
+  void TLVList::ParseByLength(Buffer& b, TLV_ParseMode pm, unsigned int len) 
+  {
+    InTLV *t;
+    unsigned int end = b.pos() + len;
+    while (b.pos() < end) {
+      t = InTLV::ParseTLV(b,pm);
+      // duplicate TLVs of one type - this shouldn't happen!
+      if (tlvmap.count(t->Type())) {
+	delete tlvmap[t->Type()];
+      }
+
+      tlvmap[t->Type()] = t;
     }
   }
 

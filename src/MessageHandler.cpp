@@ -20,7 +20,7 @@
  */
 
 #include <libicq2000/MessageHandler.h>
-#include <libicq2000/ContactList.h>
+#include <libicq2000/ContactTree.h>
 #include <libicq2000/SNAC-MSG.h>
 #include <libicq2000/SNAC-SRV.h>
 #include "sstream_fix.h"
@@ -31,7 +31,7 @@ using std::endl;
 
 namespace ICQ2000 {
 
-  MessageHandler::MessageHandler(ContactRef self, ContactList *cl)
+  MessageHandler::MessageHandler(ContactRef self, ContactTree *cl)
     : m_self_contact(self), m_contact_list(cl)
   { }
   

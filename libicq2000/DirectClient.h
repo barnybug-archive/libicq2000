@@ -33,7 +33,7 @@
 #include <libicq2000/events.h>
 #include <libicq2000/exceptions.h>
 #include <libicq2000/Contact.h>
-#include <libicq2000/ContactList.h>
+#include <libicq2000/ContactTree.h>
 #include <libicq2000/SeqNumCache.h>
 #include <libicq2000/Translator.h>
 #include <libicq2000/SocketClient.h>
@@ -57,7 +57,7 @@ namespace ICQ2000 {
 
     ContactRef m_self_contact;
     ContactRef m_contact;
-    ContactList *m_contact_list;
+    ContactTree *m_contact_list;
     MessageHandler *m_message_handler;
 
     bool m_incoming;
@@ -101,7 +101,7 @@ namespace ICQ2000 {
     void Init();
 
    public:
-    DirectClient(ContactRef self, TCPSocket *sock, MessageHandler *mh, ContactList *cl, unsigned int ext_ip,
+    DirectClient(ContactRef self, TCPSocket *sock, MessageHandler *mh, ContactTree *cl, unsigned int ext_ip,
 		 unsigned short server_port, Translator* translator);
     DirectClient(ContactRef self, ContactRef c, MessageHandler *mh, unsigned int ext_ip,
 		 unsigned short server_port, Translator *translator);

@@ -31,78 +31,169 @@ namespace ICQ2000 {
 
   // --------------- Server-based Lists (Family 0x0013) SNACs --------------
 
-  RequestSBLSNAC::RequestSBLSNAC() { }
+  // ============================================================================
+  //  Request SBL rights
+  // ============================================================================
 
-  void RequestSBLSNAC::OutputBody(Buffer& b) const {
-      b << (unsigned int)(0);
-      b << (unsigned short)(1);
-    }
+  SBLRequestRightsSNAC::SBLRequestRightsSNAC() { }
+  
+  void SBLRequestRightsSNAC::OutputBody(Buffer& b) const
+  {
+    // empty
+  }
+
+  // ============================================================================
+  //  SBL rights reply
+  // ============================================================================
+  
+  SBLRightsReplySNAC::SBLRightsReplySNAC() { }
+  
+  void SBLRightsReplySNAC::ParseBody(Buffer& b) 
+  {    // several unknown TLVs, skip
+    b.advance(68);
+  }
+  
+  // ============================================================================
+  //  Unconditional SBL list request
+  // ============================================================================
+
+  SBLRequestListSNAC::SBLRequestListSNAC() { }
+
+  void SBLRequestListSNAC::OutputBody(Buffer& b) const
+  {
+    // empty
+  }
+
+  // ============================================================================
+  //  SBL list reply
+  // ============================================================================
 
   SBLListSNAC::SBLListSNAC() { }
   
-  void SBLListSNAC::ParseBody(Buffer& b) {
-        
-        b.advance(1);			// 00
-	unsigned short entityCount, group_id, tag_id;
-        b >> entityCount;		// number of entities?
-        while (b.pos()<=b.size()-10)
-        {
-            unsigned short nameLength;
-            b >> nameLength;
-            string name;
-            b.Unpack(name, nameLength);
-	    b >> group_id;
-	    b >> tag_id;
-	    b.advance(2);
-            unsigned short dataLength;
-            b >> dataLength;
-            while (dataLength>=2)
-            {
-                unsigned short infoType;
-                unsigned short infoLength;
-                b >> infoType;
-                dataLength -= 2;
-                b >> infoLength;
-                dataLength -= 2;
-                if (infoType==0x0131)	// UIN
-                {
-                    ContactRef c(new Contact(Contact::StringtoUIN(name)));
-                    string nickname;
-                    b.Unpack(nickname, infoLength);
-                    dataLength -= infoLength;
-                    c->setAlias(nickname);
-		    c->setServerSideInfo(group_id, tag_id);
-		    c->setServerBased(true);
-                    m_contacts.add(c);
-                    break;
-                }
-                else			// other stuff we don't understand
-                {
-                    b.advance(infoLength);
-                    dataLength -= infoLength;
-                }
-            }
-            b.advance(dataLength);
-        }
-        b.advance(4);
+  const unsigned short Entry_UIN        = 0x0000;
+  const unsigned short Entry_Group      = 0x0001;
+  const unsigned short Entry_VisSetting = 0x0004;
+  const unsigned short Entry_ICQTIC     = 0x0009;
+  const unsigned short Entry_Invisible  = 0x000e;
+  const unsigned short Entry_ImportTime = 0x0013;
+
+  void SBLListSNAC::ParseBody(Buffer& b)
+  {
+    b.advance(1); // 00
+
+    b >> m_size;  // remember for client
+
+    unsigned short l = m_size;
+    while (l--) {
+      string name;
+      unsigned short group_id, tag_id, type, len, end;
+
+      b >> name
+	>> group_id
+	>> tag_id
+	>> type
+	>> len;
+      end = b.pos() + len;
+
+      // Parse TLVs
+      TLVList tlvlist;
+      tlvlist.ParseByLength(b, TLV_ParseMode_SBL, len);
+      
+      switch(type) {
+      case Entry_UIN:
+      {
+	unsigned int uin;
+	string nick;
+
+	uin = Contact::StringtoUIN(name);
+	ContactRef ct = ContactRef(new Contact(uin));
+	
+	if (tlvlist.exists(TLV_SBL_Nick)) {
+	  SBLNickTLV *tlv = static_cast<SBLNickTLV*>(tlvlist[TLV_SBL_Nick]);
+	  ct->setAlias(tlv->Value()); // translate (?)
+	} else {
+	  ct->setAlias(name);
+	}
+
+	if (tlvlist.exists(TLV_SBL_SMS_No)) {
+	  SBLSMSNoTLV *tlv = static_cast<SBLSMSNoTLV*>(tlvlist[TLV_SBL_SMS_No]);
+	  ct->setMobileNo(tlv->Value());
+	}
+	
+	// add to contact tree under group
+	if (!m_tree.exists_group( group_id )) throw ParseException("Contact group_id doesn't match any group");
+	ContactTree::Group& gp = m_tree.lookup_group( group_id );
+	gp.add(ct);
+
+	break;
+      }
+      case Entry_Group:
+	if (group_id > 0) m_tree.add_group( name, group_id );
+	break;
+      case Entry_VisSetting:
+	// TODO
+	break;
+      case Entry_ICQTIC:
+	// ignore
+	break;
+      case Entry_Invisible:
+	// TODO
+	break;
+      case Entry_ImportTime:
+	// ignore
+	break;
+      default:
+	// ignore
+	break;
+      }
+
     }
 
-  EditStartSBLSNAC::EditStartSBLSNAC() { }
+    b.advance(4);
+  }
+  
+  // ============================================================================
+  //  SBL List Received ACK
+  // ============================================================================
 
-  void EditStartSBLSNAC::OutputBody(Buffer& b) const {
+  SBLListACKSNAC::SBLListACKSNAC() { }
+  
+  void SBLListACKSNAC::OutputBody(Buffer& b) const
+  {
     // empty
-    }
+  }
+  
+  // ============================================================================
+  //  SBL Begin Edit
+  // ============================================================================
 
-  EditFinishSBLSNAC::EditFinishSBLSNAC() { }
+  SBLBeginEditSNAC::SBLBeginEditSNAC() { }
 
-  void EditFinishSBLSNAC::OutputBody(Buffer& b) const {
+  void SBLBeginEditSNAC::OutputBody(Buffer& b) const
+  {
     // empty
-    }
+  }
 
-  AddItemSBLSNAC::AddItemSBLSNAC() { }
+  // ============================================================================
+  //  SBL Commit Edit
+  // ============================================================================
 
-  AddItemSBLSNAC::AddItemSBLSNAC(const ContactList& l)
-    : m_buddy_list(), m_group_id(0) { 
+  SBLCommitEditSNAC::SBLCommitEditSNAC() { }
+
+  void SBLCommitEditSNAC::OutputBody(Buffer& b) const
+  {
+    // empty
+  }
+
+  // ============================================================================
+  //  SBL Add Entry
+  // ============================================================================
+
+  SBLAddEntrySNAC::SBLAddEntrySNAC() { }
+
+  SBLAddEntrySNAC::SBLAddEntrySNAC(const ContactList& l)
+    : m_buddy_list(), m_group_id(0)
+  { 
     ContactList::const_iterator curr = l.begin();
     while (curr != l.end()) {
       if ((*curr)->isICQContact())
@@ -111,20 +202,24 @@ namespace ICQ2000 {
     }
   }
 
-  AddItemSBLSNAC::AddItemSBLSNAC(const ContactRef& c)
-    : m_buddy_list(1, c), m_group_id(0) { }
+  SBLAddEntrySNAC::SBLAddEntrySNAC(const ContactRef& c)
+    : m_buddy_list(1, c), m_group_id(0)
+  { }
 
-  AddItemSBLSNAC::AddItemSBLSNAC(const std::string &group_name, unsigned short group_id)
-    : m_group_name(group_name), m_group_id(group_id) { }
+  SBLAddEntrySNAC::SBLAddEntrySNAC(const string& group_name, unsigned short group_id)
+    : m_group_name(group_name), m_group_id(group_id)
+  { }
 
-  void AddItemSBLSNAC::addBuddy(const ContactRef& c) {
+  void SBLAddEntrySNAC::addBuddy(const ContactRef& c)
+  {
     m_buddy_list.push_back(c);
     }
 
-  void AddItemSBLSNAC::OutputBody(Buffer& b) const {
-    if(m_group_id) {
-      b << (unsigned short) m_group_name.size();
-      b.Pack(m_group_name);
+  void SBLAddEntrySNAC::OutputBody(Buffer& b) const
+  {
+    if (m_group_id) {
+      // a Group
+      b << m_group_name;
       b << m_group_id;
       b << (unsigned short) 0x0000;
       b << (unsigned short) 0x0001;
@@ -133,28 +228,27 @@ namespace ICQ2000 {
     } else {
       std::list<ContactRef>::const_iterator curr = m_buddy_list.begin();
       while (curr != m_buddy_list.end()) {
-	std::string suin = (*curr)->getStringUIN();
-	std::string alias = (*curr)->getAlias();
+	string suin = (*curr)->getStringUIN();
+	string alias = (*curr)->getAlias();
 
-	b << (unsigned short) suin.size();
-	b.Pack(suin);
+	b << suin;
 	b << (unsigned short) (*curr)->getServerSideGroupID();
 	b << (unsigned short) (*curr)->getServerSideID();
 	b << (unsigned short) 0x0000;
 
-	int tlvlen = 4 + alias.size();
-	if((*curr)->getAuthAwait()) tlvlen += 4;
+	Buffer::marker m = b.getAutoSizeShortMarker();
 
-	b << (unsigned short) tlvlen;
-
+	// Contact Nickname TLV
 	b << TLV_ContactNickname;
-	b << (unsigned short) alias.size();
-	b.Pack(alias);
+	b << alias;
 
+	// Auth awaiting TLV
 	if((*curr)->getAuthAwait()) {
 	    b << TLV_AuthAwaited;
 	    b << (unsigned short) 0x0000;
 	}
+
+	b.setAutoSizeMarker(m);
 
 	++curr;
       }
@@ -162,10 +256,50 @@ namespace ICQ2000 {
     }
   }
 
-  RemoveItemSBLSNAC::RemoveItemSBLSNAC() { }
+  // ============================================================================
+  //  SBL Update Entry
+  // ============================================================================
 
-  RemoveItemSBLSNAC::RemoveItemSBLSNAC(const ContactList& l)
-    : m_buddy_list(), m_group_id(0) { 
+  SBLUpdateEntrySNAC::SBLUpdateEntrySNAC(const string &group_name,
+					 unsigned short group_id,
+					 const std::vector<unsigned short> &ids)
+    : m_group_name(group_name), m_group_id(group_id), m_ids(ids)
+  { }
+
+  void SBLUpdateEntrySNAC::OutputBody(Buffer& b) const {
+    b << (unsigned short) m_group_name.size();
+    b.Pack(m_group_name);
+    b << m_group_id;
+    b << (unsigned short) 0x0000;
+    b << (unsigned short) 0x0001;
+
+    if(m_ids.empty()) {
+      b << (unsigned short) 0x0000;
+
+    } else {
+      b << (unsigned short) (4 + m_ids.size()*2);
+      b << (unsigned short) 0x00c8;
+      b << (unsigned short) (m_ids.size()*2);
+      // raw-coded TLV, found no suitable data structures in TLV.h
+
+      std::vector<unsigned short>::const_iterator curr = m_ids.begin();
+      while (curr != m_ids.end()) {
+	b << (unsigned short) *curr;
+	++curr;
+      }
+
+    }
+  }
+
+  // ============================================================================
+  //  SBL Remove Entry
+  // ============================================================================
+
+  SBLRemoveEntrySNAC::SBLRemoveEntrySNAC() { }
+
+  SBLRemoveEntrySNAC::SBLRemoveEntrySNAC(const ContactList& l)
+    : m_buddy_list(), m_group_id(0)
+  { 
     ContactList::const_iterator curr = l.begin();
     while (curr != l.end()) {
       if ((*curr)->isICQContact()) m_buddy_list.push_back(*curr);
@@ -173,13 +307,14 @@ namespace ICQ2000 {
     }
   }
 
-  RemoveItemSBLSNAC::RemoveItemSBLSNAC(const ContactRef& c)
+  SBLRemoveEntrySNAC::SBLRemoveEntrySNAC(const ContactRef& c)
     : m_buddy_list(1, c), m_group_id(0) { }
 
-  RemoveItemSBLSNAC::RemoveItemSBLSNAC(const std::string &group_name, unsigned short group_id)
+  SBLRemoveEntrySNAC::SBLRemoveEntrySNAC(const string &group_name, unsigned short group_id)
     : m_group_name(group_name), m_group_id(group_id) { }
 
-  void RemoveItemSBLSNAC::OutputBody(Buffer& b) const {
+  void SBLRemoveEntrySNAC::OutputBody(Buffer& b) const
+  {
     if(m_group_id) {
       b << (unsigned short) m_group_name.size();
       b.Pack(m_group_name);
@@ -191,8 +326,8 @@ namespace ICQ2000 {
     } else {
       std::list<ContactRef>::const_iterator curr = m_buddy_list.begin();
       while (curr != m_buddy_list.end()) {
-	std::string suin = (*curr)->getStringUIN();
-	std::string alias = (*curr)->getAlias();
+	string suin = (*curr)->getStringUIN();
+	string alias = (*curr)->getAlias();
 
 	b << (unsigned short) suin.size();
 	b.Pack(suin);
@@ -220,21 +355,13 @@ namespace ICQ2000 {
     }
   }
 
-  EditReqAccessSBLSNAC::EditReqAccessSBLSNAC() { }
+  // ============================================================================
+  //  SBL Edit ACK
+  // ============================================================================
 
-  void EditReqAccessSBLSNAC::OutputBody(Buffer& b) const {
-    // empty
-    }
+  SBLEditACKSNAC::SBLEditACKSNAC() { }
 
-  EditReqAccessGrantedSBLSNAC::EditReqAccessGrantedSBLSNAC() { }
-  
-  void EditReqAccessGrantedSBLSNAC::ParseBody(Buffer& b) {
-    // some mess is inside, isn't worth parsing
-    }
-
-  ModificationAckSBLSNAC::ModificationAckSBLSNAC() { }
-
-  void ModificationAckSBLSNAC::ParseBody(Buffer& b) {
+  void SBLEditACKSNAC::ParseBody(Buffer& b) {
     unsigned short errcode;
 
     while(b.remains() >= 2) {
@@ -249,33 +376,16 @@ namespace ICQ2000 {
     }
   }
 
-  UpdateGroupSBLSNAC::UpdateGroupSBLSNAC(const std::string &group_name,
-  unsigned short group_id, const std::vector<unsigned short> &ids)
-    : m_group_name(group_name), m_group_id(group_id), m_ids(ids) { }
+  // ============================================================================
+  //  SBL List Unchanged reply
+  // ============================================================================
 
-  void UpdateGroupSBLSNAC::OutputBody(Buffer& b) const {
-    b << (unsigned short) m_group_name.size();
-    b.Pack(m_group_name);
-    b << m_group_id;
-    b << (unsigned short) 0x0000;
-    b << (unsigned short) 0x0001;
+  SBLListUnchangedSNAC::SBLListUnchangedSNAC()
+  { }
 
-    if(m_ids.empty()) {
-      b << (unsigned short) 0x0000;
-
-    } else {
-      b << (unsigned short) (4 + m_ids.size()*2);
-      b << (unsigned short) 0x00c8;
-      b << (unsigned short) (m_ids.size()*2);
-	// raw-coded TLV, found no suitable data structures in TLV.h
-
-      std::vector<unsigned short>::const_iterator curr = m_ids.begin();
-      while (curr != m_ids.end()) {
-	b << (unsigned short) *curr;
-	++curr;
-      }
-
-    }
+  void SBLListUnchangedSNAC::ParseBody(Buffer& b)
+  {
+    // anything?
   }
-
+  
 }

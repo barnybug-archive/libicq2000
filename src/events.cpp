@@ -193,31 +193,50 @@ namespace ICQ2000 {
 
   /**
    *  Base constructor for contact list events.
+   */
+  ContactListEvent::ContactListEvent() { }
+
+  /**
+   *  Destructor for ContactListEvent
+   */
+  ContactListEvent::~ContactListEvent() { }
+
+  // ============================================================================
+  //  User Contact List Event
+  // ============================================================================
+
+  /**
+   *  Base constructor for user contact list events.
    *
    * @param c the contact
+   * @param gp the group
    */
-  ContactListEvent::ContactListEvent(ContactRef c) { m_contact = c; }
+  UserContactListEvent::UserContactListEvent(const ContactRef& c, ContactTree::Group& gp)
+    : m_contact(c), m_group(gp)
+  { }
 
   /**
    *  get the contact
    *
    * @return the contact
    */
-  ContactRef ContactListEvent::getContact() const { return m_contact; }
+  ContactRef UserContactListEvent::getContact() const { return m_contact; }
+
+  /**
+   *  get the group of the contact
+   *
+   * @return the group
+   */
+  ContactTree::Group& UserContactListEvent::get_group() { return m_group; }
 
   /**
    *  get the uin of the contact. This could be done just as easily,
    *  with getContact()->getUIN(), provided for convenience.
    *
-   * @return
+   * @return uin of the contact
    */
-  unsigned int ContactListEvent::getUIN() const { return m_contact->getUIN(); }
+  unsigned int UserContactListEvent::getUIN() const { return m_contact->getUIN(); }
     
-  /**
-   *  Destructor for ContactListEvent
-   */
-  ContactListEvent::~ContactListEvent() { }
-
   // ============================================================================
   //  UserAdded Event
   // ============================================================================
@@ -226,8 +245,10 @@ namespace ICQ2000 {
    *  Constructor for UserAddedEvent
    *
    * @param contact the contact that has just been added
+   * @param gp the group
    */
-  UserAddedEvent::UserAddedEvent(ContactRef contact) : ContactListEvent(contact) { }
+  UserAddedEvent::UserAddedEvent(const ContactRef& contact, ContactTree::Group& gp)
+    : UserContactListEvent(contact, gp) { }
   ContactListEvent::EventType UserAddedEvent::getType() const { return UserAdded; }
 
   // ============================================================================
@@ -238,32 +259,110 @@ namespace ICQ2000 {
    *  Constructor for UserRemovedEvent
    *
    * @param contact the contact that is about to be removed
+   * @param gp the group
    */
-  UserRemovedEvent::UserRemovedEvent(ContactRef contact) : ContactListEvent(contact) { }
+  UserRemovedEvent::UserRemovedEvent(const ContactRef& contact, ContactTree::Group& gp)
+    : UserContactListEvent(contact, gp) { }
   ContactListEvent::EventType UserRemovedEvent::getType() const { return UserRemoved; }
+
+  // ============================================================================
+  //  UserRelocated Event
+  // ============================================================================
+
+  /**
+   *  Constructor for UserRelocatedEvent
+   *
+   * @param contact the contact that is about to be removed
+   * @param new_gp the new group
+   * @param old_gp the old group
+   */
+  UserRelocatedEvent::UserRelocatedEvent(const ContactRef& contact, ContactTree::Group& new_gp, ContactTree::Group& old_gp)
+    : UserContactListEvent(contact, new_gp), m_old_group(old_gp) { }
+  ContactListEvent::EventType UserRelocatedEvent::getType() const { return UserRelocated; }
+
+  /**
+   *  get the old group of the contact
+   *
+   * @return the old group
+   */
+  ContactTree::Group& UserRelocatedEvent::get_old_group() { return m_old_group; }
+
+  // ============================================================================
+  //  GroupContactList Event
+  // ============================================================================
+
+  /**
+   *  Constructor for base class GroupContactListEvent
+   *
+   * @param gp the group being added
+   */
+  GroupContactListEvent::GroupContactListEvent(const ContactTree::Group& gp)
+    : m_group(gp) { }
+
+  /**
+   *  get the group
+   *
+   * @return reference to the group
+   */
+  const ContactTree::Group& GroupContactListEvent::get_group() const { return m_group; }
+
+  // ============================================================================
+  //  GroupAdded Event
+  // ============================================================================
+
+  /**
+   *  Constructor for GroupAddedEvent
+   *
+   * @param gp the group being added
+   */
+  GroupAddedEvent::GroupAddedEvent(const ContactTree::Group& gp)
+    : GroupContactListEvent(gp) { }
+  ContactListEvent::EventType GroupAddedEvent::getType() const { return GroupAdded; }
+
+  // ============================================================================
+  //  GroupRemoved Event
+  // ============================================================================
+
+  /**
+   *  Constructor for GroupRemovedEvent
+   *
+   * @param gp the group being removed
+   */
+  GroupRemovedEvent::GroupRemovedEvent(const ContactTree::Group& gp)
+    : GroupContactListEvent(gp) { }
+  ContactListEvent::EventType GroupRemovedEvent::getType() const { return GroupRemoved; }
+
+  // ============================================================================
+  //  GroupChange Event
+  // ============================================================================
+
+  /**
+   *  Constructor for GroupChangeEvent
+   *
+   * @param gp the group changed
+   */
+  GroupChangeEvent::GroupChangeEvent(const ContactTree::Group& gp)
+    : GroupContactListEvent(gp) { }
+  ContactListEvent::EventType GroupChangeEvent::getType() const { return GroupChange; }
+
+  // ============================================================================
+  //  CompleteUpdate Event
+  // ============================================================================
+
+  /**
+   *  Constructor for CompleteUpdateEvent
+   */
+  CompleteUpdateEvent::CompleteUpdateEvent() { }
+  ContactListEvent::EventType CompleteUpdateEvent::getType() const { return CompleteUpdate; }
 
   // ============================================================================
   //  ServerBasedContactEvent
   // ============================================================================
 
-  ServerBasedContactEvent::ServerBasedContactEvent(SBLType t, const ContactList& l) : m_type(t), m_clist(l) { }
+  /*
+  ServerBasedContactEvent::ServerBasedContactEvent(const ContactList& l) : m_clist(l) { }
   ContactList& ServerBasedContactEvent::getContactList() { return m_clist; }
-  void ServerBasedContactEvent::setUploadResults(const std::vector<ServerBasedContactEvent::UploadResult> &v) { m_results = v; }
-
-  std::map<unsigned int, ServerBasedContactEvent::UploadResult> ServerBasedContactEvent::getUploadResults() const {
-    std::map<unsigned int, ServerBasedContactEvent::UploadResult> r;
-
-    ContactList::const_iterator curr = m_clist.begin();
-    std::vector<ServerBasedContactEvent::UploadResult>::const_iterator ir = m_results.begin();
-
-    while(curr != m_clist.end() && ir != m_results.end()) {
-      r[(*curr)->getUIN()] = *ir;
-      ++curr;
-      ++ir;
-    }
-
-    return r;
-  }
+  */
 
   // ============================================================================
   //  Contact Event
@@ -1037,6 +1136,10 @@ namespace ICQ2000 {
   string EmailMessageEvent::getMessage() const { return m_message; }
 
   EmailMessageEvent::MessageType EmailMessageEvent::getType() const { return MessageEvent::Email; }
+
+  // ============================================================================
+  //  Contact(s) message
+  // ============================================================================
 
   ContactMessageEvent::ContactMessageEvent(ContactRef c, std::list<ContactRef> content)
   : ICQMessageEvent(c), m_content(content) {

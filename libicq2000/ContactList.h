@@ -104,8 +104,6 @@ namespace ICQ2000 {
     iterator end();
     const_iterator begin() const;
     const_iterator end() const;
-
-    SigC::Signal1<void,ContactListEvent*> contactlist_signal;
   };
 
 }

@@ -49,7 +49,7 @@ namespace ICQ2000 {
    * Constructor when receiving an incoming connection
    */
   DirectClient::DirectClient(ContactRef self, TCPSocket *sock, MessageHandler *mh,
-			     ContactList *cl, unsigned int ext_ip, unsigned short server_port,
+			     ContactTree *cl, unsigned int ext_ip, unsigned short server_port,
 			     Translator* translator)
     : m_state(WAITING_FOR_INIT), m_recv(translator),
       m_self_contact(self), m_contact(NULL), m_contact_list(cl), 

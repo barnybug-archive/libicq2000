@@ -77,7 +77,7 @@ namespace ICQ2000 {
     Type getType() const { return Search; }
   };
 
-  class ServerBasedContactCacheValue : public RequestIDCacheValue {
+  /*  class ServerBasedContactCacheValue : public RequestIDCacheValue {
    private:
     ServerBasedContactEvent *m_ev;
 
@@ -86,6 +86,7 @@ namespace ICQ2000 {
     ServerBasedContactEvent *getEvent() const { return m_ev; }
     Type getType() const { return ServerBasedContact; }
   };
+  */
 
   class RequestIDCache : public Cache<unsigned int, RequestIDCacheValue*> {
    public:
