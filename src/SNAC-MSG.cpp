@@ -328,6 +328,8 @@ namespace ICQ2000 {
 
     b.PackByteString( Contact::UINtoString( m_icqsubtype->getSource() ) );
 
+    b << (unsigned short)0x0003; // unknown
+
     b.setLittleEndian();
     
     // -- start of first subsection
@@ -377,16 +379,22 @@ namespace ICQ2000 {
     uin = Contact::StringtoUIN(sn);
 
     b.advance(2); // 0x0003 unknown
-    b.advance(26); // unknown
-    b.advance(1);
-
-    unsigned short seqnum, junk;
+    
+    unsigned short len;
     b.setLittleEndian();
-    b >> seqnum
-      >> junk
-      >> seqnum;
 
-    b.advance(12);
+    // -- first section, mostly unknown/useless
+    b >> len;
+    b.advance(len);
+    // ----
+
+    // -- second section
+    unsigned short seqnum;
+    b >> len;
+    b >> seqnum;
+    b.advance(len - 2); // 12 zeroes usually
+    // ----
+
     ICQSubType *t = ICQSubType::ParseICQSubType(b, true, true);
     if (t != NULL) {
       m_icqsubtype = dynamic_cast<UINICQSubType*>(t);
