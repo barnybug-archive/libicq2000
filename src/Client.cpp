@@ -471,6 +471,10 @@ namespace ICQ2000 {
 	    ev->setDirect(false);
 	    messageack.emit(ev);
 	    m_reqidcache.remove( reqid );
+	  } else if (snac->smtp_deliverable()) {
+
+	    // todo - konst have volunteered :-)
+	    
 	  } else {
 	    if (snac->getErrorParam() != "DUPLEX RESPONSE") {
 	      // ignore DUPLEX RESPONSE since I always get that

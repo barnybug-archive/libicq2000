@@ -249,10 +249,11 @@ namespace ICQ2000 {
 
     // SMS Response fields
     string m_source, m_network, m_message_id, m_messages_left;
-    bool m_deliverable;
+    bool m_deliverable, m_smtp_deliverable;
     int m_error_id;
     string m_error_param;
-
+    string m_smtp_from, m_smtp_to, m_smtp_subject;
+    
     // Offline Message fields
     time_t m_time;
     unsigned int m_sender_UIN;
@@ -293,6 +294,12 @@ namespace ICQ2000 {
     ResponseType getType() const { return m_type; }
     string getSource() const { return m_source; }
     bool deliverable() const { return m_deliverable; }
+    bool smtp_deliverable() const { return m_smtp_deliverable; }
+
+    string getSMTPFrom() const { return m_smtp_from; }
+    string getSMTPTo() const { return m_smtp_to; }
+    string getSMTPSubject() const { return m_smtp_subject; }
+
     string getNetwork() const { return m_network; }
     string getMessageId() const { return m_message_id; }
     string getMessagesLeft() const { return m_messages_left; }

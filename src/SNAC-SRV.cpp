@@ -565,11 +565,14 @@ namespace ICQ2000 {
 
     XmlLeaf *deliverable = sms_response->getLeaf("deliverable");
     m_deliverable = false;
+    m_smtp_deliverable = false;
+    
     if (deliverable != NULL) {
       if (deliverable->getValue() == "Yes") m_deliverable = true;
-      if (deliverable->getValue() == "SMTP")
-	throw ParseException("SMS messages for your provider must be sent via an SMTP (email) proxy, "
-			     "libicq2000 doesn't support that yet, but may in the future.");
+      if (deliverable->getValue() == "SMTP") {
+	m_deliverable = false;
+	m_smtp_deliverable = true;
+      }
     }
 
     if (m_deliverable) {
@@ -584,6 +587,18 @@ namespace ICQ2000 {
       XmlLeaf *messages_left = sms_response->getLeaf("messages_left");
       if (messages_left != NULL) m_messages_left = messages_left->getValue();
       // always 0, unsurprisingly
+
+    } else if (m_smtp_deliverable) {
+      // -- deliverable = SMTP --
+      
+      XmlLeaf *smtp_from = sms_response->getLeaf("from");
+      if (from != NULL) m_smtp_from = smtp_from->getValue();
+
+      XmlLeaf *smtp_to = sms_response->getLeaf("to");
+      if (to != NULL) m_smtp_to = smtp_to->getValue();
+
+      XmlLeaf *smtp_subject = sms_response->getLeaf("subject");
+      if (subject != NULL) m_smtp_subject = smtp_subject->getValue();
 
     } else {
       // -- deliverable = No --
