@@ -1,11 +1,33 @@
+/*
+ * SMTPClient
+ *
+ * Copyright (C) 2002 Konst <konst@konst.org.ua>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+ *
+ */
+
 #ifndef SMTPCLIENT_H
 #define SMTPCLIENT_H
 
-#include <libicq2000/DirectClient.h>
+#include <libicq2000/SocketClient.h>
+#include <libicq2000/buffer.h>
 
 namespace ICQ2000 {
 
-  class SMTPClient : public DirectClientBase {
+  class SMTPClient : public SocketClient {
    private:
     enum State { NOT_CONNECTED,
 		 WAITING_FOR_CONNECT,
@@ -49,7 +71,7 @@ namespace ICQ2000 {
     void Disconnect();
 
    public:
-    SMTPClient(Contact &self, const string server_name, unsigned short server_port,
+    SMTPClient(Contact &self, const string& server_name, unsigned short server_port,
 	       Translator* translator);
 
     ~SMTPClient();
@@ -63,7 +85,7 @@ namespace ICQ2000 {
     void setServerHost(const string& host);
     string getServerHost() const;
 
-    void setServerPort(const unsigned short& port);
+    void setServerPort(unsigned short port);
     unsigned short getServerPort() const;
 
     void setTimeout(time_t t);

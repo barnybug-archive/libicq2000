@@ -37,6 +37,7 @@
 #include <libicq2000/ContactList.h>
 #include <libicq2000/SeqNumCache.h>
 #include <libicq2000/Translator.h>
+#include <libicq2000/SocketClient.h>
 
 using std::string;
 using std::list;
@@ -48,34 +49,7 @@ namespace ICQ2000 {
 
   class UINICQSubType;
   
-  class DirectClientBase : public SigC::Object {
-   protected:
-    void SignalAddSocket(int fd, SocketEvent::Mode m);
-    void SignalRemoveSocket(int fd);
-
-    TCPSocket *m_socket;
-
-   public:
-    virtual void Connect() = 0;
-    virtual void FinishNonBlockingConnect() = 0;
-    virtual void Recv() = 0;
-
-    // ------------------ Signal dispatchers -----------------
-    void SignalLog(LogEvent::LogType type, const string& msg);
-    // ------------------  Signals ---------------------------
-    Signal1<void,LogEvent*> logger;
-    Signal1<void,MessageEvent*> messageack;
-    Signal1<void,SocketEvent*> socket;
-    Signal0<void> connected;
-
-    int getfd() const;
-    TCPSocket* getSocket() const;
-    virtual void clearoutMessagesPoll() = 0;
-
-    virtual void SendEvent(MessageEvent* ev) = 0;
-  };
-
-  class DirectClient : public DirectClientBase {
+  class DirectClient : public SocketClient {
    private:
     enum State { NOT_CONNECTED,
 		 WAITING_FOR_INIT,
@@ -158,23 +132,6 @@ namespace ICQ2000 {
     void setContact(Contact* c);
     Contact* getContact() const;
     void SendEvent(MessageEvent* ev);
-  };
-
-  class DirectClientException : public exception {
-   private:
-    string m_errortext;
-    
-   public:
-    DirectClientException();
-    DirectClientException(const string& text);
-    ~DirectClientException() throw() { }
-
-    const char* what() const throw();
-  };
-  
-  class DisconnectedException : public DirectClientException {
-   public:
-    DisconnectedException(const string& text);
   };
 
 }

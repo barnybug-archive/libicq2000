@@ -12,7 +12,8 @@ SNAC.cpp SNAC-base.cpp SNAC-BUD.cpp SNAC-LOC.cpp SNAC-GEN.cpp		\
 SNAC-UIN.cpp SNAC-MSG.cpp SNAC-SRV.cpp SNAC-SBL.cpp SNAC-BOS.cpp	\
 version.cpp events.cpp Xml.cpp Contact.cpp ContactList.cpp		\
 exceptions.cpp DirectClient.cpp ICQ.cpp UserInfoBlock.cpp		\
-ICBMCookie.cpp Translator.cpp userinfohelpers.cpp
+ICBMCookie.cpp Translator.cpp userinfohelpers.cpp SMTPClient.cpp	\
+SocketClient.cpp
 
 noinst_HEADERS = sstream_fix.h
 

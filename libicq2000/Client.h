@@ -417,7 +417,7 @@ namespace ICQ2000 {
     void setSMTPServerHost(const string& host);
     string getSMTPServerHost() const;
 
-    void setSMTPServerPort(const unsigned short& port);
+    void setSMTPServerPort(unsigned short port);
     unsigned short getSMTPServerPort() const;
 
     void setAcceptInDC(bool d);

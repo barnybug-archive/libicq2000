@@ -268,11 +268,11 @@ namespace ICQ2000 {
   void DirectClient::SendInitPacket() {
     Buffer b(m_translator);
     b.setLittleEndian();
-    b << (unsigned short)( m_eff_tcp_version == 7 ? 0x0030 : 0x002c ); // length
+    Buffer::marker m1 = b.getAutoSizeShortMarker();
 
     b << (unsigned char)0xff;    // start byte
     b << (unsigned short)0x0007; // tcp version
-    b << (unsigned short)( m_eff_tcp_version == 7 ? 0x002b : 0x0027 ); // second length
+    Buffer::marker m2 = b.getAutoSizeShortMarker();
     
     b << m_remote_uin;
     b << (unsigned short)0x0000;
@@ -291,6 +291,9 @@ namespace ICQ2000 {
     b << (unsigned int)0x00000003; // unknown
     if (m_eff_tcp_version == 7) 
       b << (unsigned int)0x00000000; // unknown
+
+    b.setAutoSizeMarker(m1);
+    b.setAutoSizeMarker(m2);
     
     Send(b);
   }
@@ -393,7 +396,7 @@ namespace ICQ2000 {
   void DirectClient::SendInit2() {
     Buffer b(m_translator);
     b.setLittleEndian();
-    b << (unsigned short)0x0021;
+    Buffer::marker m1 = b.getAutoSizeShortMarker();
     b << (unsigned char) 0x03       // start byte
       << (unsigned int)  0x0000000a // unknown
       << (unsigned int)  0x00000001 // unknown
@@ -409,6 +412,7 @@ namespace ICQ2000 {
 	<< (unsigned int) 0x00000000 // unknown
 	<< (unsigned int) 0x00040001; // unknown
     }
+    b.setAutoSizeMarker(m1);
     Send(b);
   }
 
@@ -476,7 +480,7 @@ namespace ICQ2000 {
         AwayMsgSubType *ast = static_cast<AwayMsgSubType*>(icqsubtype);
 	AwayMessageEvent aev(m_contact);
 	want_auto_resp.emit(&aev);
-        ast->setMessage(aev.getMessage());
+        ast->setAwayMessage(aev.getMessage());
 
 	ostringstream ostr;
 	ostr << "Sending direct auto response to "
@@ -504,7 +508,7 @@ namespace ICQ2000 {
 	      || icqsubtype->getType() == MSG_Type_AutoReq_DND
 	      || icqsubtype->getType() == MSG_Type_AutoReq_FFC) {
 	    AwayMsgSubType *ast = static_cast<AwayMsgSubType*>(icqsubtype);
-	    aev->setMessage( ast->getMessage() ); // fill out the away message in the ACK
+	    aev->setMessage( ast->getAwayMessage() ); // fill out the away message in the ACK
 	  } else {
 	    SignalLog(LogEvent::WARN, "Away Message ACKed by remote client as wrong type");
 	  }
@@ -672,8 +676,9 @@ namespace ICQ2000 {
   void DirectClient::SendInitAck() {
     Buffer b(m_translator);
     b.setLittleEndian();
-    b << (unsigned short)0x0004;
+    Buffer::marker m1 = b.getAutoSizeShortMarker();
     b << (unsigned int)0x00000001;
+    b.setAutoSizeMarker(m1);
     Send(b);
   }
 
@@ -778,34 +783,4 @@ namespace ICQ2000 {
 
   Contact* DirectClient::getContact() const { return m_contact; }
 
-  // -- exceptions ------------------------------------------------------------
-
-  DirectClientException::DirectClientException() { }
-  DirectClientException::DirectClientException(const string& text) : m_errortext(text) { }
-
-  const char* DirectClientException::what() const throw() { return m_errortext.c_str(); }
-
-  DisconnectedException::DisconnectedException(const string& text) : DirectClientException(text) { }
-  
-  // -- DirectClientBase ------------------------------------------------------
-
-  void DirectClientBase::SignalAddSocket(int fd, SocketEvent::Mode m) {
-    AddSocketHandleEvent ev( fd, m );
-    socket.emit(&ev);
-  }
-
-  void DirectClientBase::SignalRemoveSocket(int fd) {
-    RemoveSocketHandleEvent ev(fd);
-    socket.emit(&ev);
-  }
-
-  void DirectClientBase::SignalLog(LogEvent::LogType type, const string& msg) {
-    LogEvent ev(type,msg);
-    logger.emit(&ev);
-  }
-
-  int DirectClientBase::getfd() const { return m_socket->getSocketHandle(); }
-
-  TCPSocket* DirectClientBase::getSocket() const { return m_socket; }
-  
 }

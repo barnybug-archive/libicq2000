@@ -293,7 +293,7 @@ namespace ICQ2000 {
       contact = lookupICQ(ast->getSource());
       AwayMessageEvent aev(contact);
       want_auto_resp.emit(&aev);
-      ast->setMessage(aev.getMessage());
+      ast->setAwayMessage(aev.getMessage());
 
       ostringstream dude;
       dude << contact->getAlias() << " (" << contact->getStringUIN() << ")";
@@ -338,7 +338,7 @@ namespace ICQ2000 {
 	MessageEvent *ev = m_cookiecache[c];
 	AwayMessageEvent *aev = dynamic_cast<AwayMessageEvent*>(ev);
 	if (aev != NULL) {
-	  aev->setMessage( ast->getMessage() );
+	  aev->setMessage( ast->getAwayMessage() );
 	  aev->setFinished(true);
 	  aev->setDelivered(true);
 	  aev->setDirect(false);
@@ -1534,7 +1534,7 @@ namespace ICQ2000 {
        *
        */
 
-      DirectClientBase *dc;
+      SocketClient *dc;
       if (m_dccache.exists(fd)) {
 	dc = m_dccache[fd];
       } else if(m_smtp.getfd() == fd) {
@@ -2386,7 +2386,7 @@ namespace ICQ2000 {
     return m_smtp.getServerHost();
   }
 
-  void Client::setSMTPServerPort(const unsigned short& port) {
+  void Client::setSMTPServerPort(unsigned short port) {
     m_smtp.setServerPort(port);
   }
 

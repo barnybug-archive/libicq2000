@@ -151,6 +151,16 @@ namespace ICQ2000 {
     m_tocontactlist = b;
   }
 
+  void UINICQSubType::setAwayMessage(const string& m)
+  {
+    m_away_message = m;
+  }
+
+  string UINICQSubType::getAwayMessage() const
+  {
+    return m_away_message;
+  }
+
   void UINICQSubType::ParseBody(Buffer& b)
   {
     if (m_advanced) {
@@ -161,7 +171,15 @@ namespace ICQ2000 {
       m_tocontactlist = priority & Priority_ToContactList;
     }
 
-    ParseBodyUIN(b);
+    if (!m_ack) {
+      ParseBodyUIN(b);
+    } else {
+      /* whatever the message type, ACKs are always the same
+	 - the current away message */
+      b.UnpackUint16TranslatedNull(m_away_message);
+    }
+    
+    
   }
 
   void UINICQSubType::OutputBody(Buffer& b) const
@@ -179,7 +197,12 @@ namespace ICQ2000 {
       b << priority;
     }
 
-    OutputBodyUIN(b);
+    if (!m_ack) {
+      OutputBodyUIN(b);
+    } else {
+      b.PackUint16TranslatedNull(m_away_message);
+    }
+    
   }
 
   NormalICQSubType::NormalICQSubType(bool multi)
@@ -334,12 +357,15 @@ namespace ICQ2000 {
   }
 
   void AwayMsgSubType::ParseBodyUIN(Buffer& b) {
-    b.UnpackUint16StringNull(m_message);
-    b.ServerToClient(m_message);
+    // dummy
+    string dummy;
+    b.UnpackUint16StringNull(dummy);
   }
 
   void AwayMsgSubType::OutputBodyUIN(Buffer& b) const {
-    b.PackUint16TranslatedNull( m_message );
+    // dummy
+    string dummy;
+    b.PackUint16StringNull( dummy );
   }
 
   unsigned short AwayMsgSubType::Length() const {
@@ -351,10 +377,6 @@ namespace ICQ2000 {
   unsigned char AwayMsgSubType::getType() const { return m_type; }
 
   unsigned char AwayMsgSubType::getFlags() const { return 0x03; }
-
-  string AwayMsgSubType::getMessage() const { return m_message; }
-
-  void AwayMsgSubType::setMessage(const string& msg) { m_message = msg; }
 
   SMSICQSubType::SMSICQSubType() { }
 

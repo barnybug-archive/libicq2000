@@ -1,10 +1,35 @@
+/*
+ * SMTPClient
+ *
+ * Copyright (C) 2002 Konst <konst@konst.org.ua>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307  USA
+ *
+ */
+
 #include <libicq2000/SMTPClient.h>
+#include <libicq2000/exceptions.h>
 
 #include "sstream_fix.h"
 
+using std::string;
+using std::ostringstream;
+
 namespace ICQ2000 {
 
-  SMTPClient::SMTPClient(Contact &self, const string server_name,
+  SMTPClient::SMTPClient(Contact &self, const string& server_name,
 			 unsigned short server_port, Translator* translator)
     : m_state(NOT_CONNECTED), m_translator(translator), m_recv(translator),
       m_server_name(server_name), m_server_port(server_port), m_timeout(30),
@@ -300,7 +325,7 @@ namespace ICQ2000 {
   void SMTPClient::setServerHost(const string& host) { m_server_name = host; }
   string SMTPClient::getServerHost() const { return m_server_name; }
 
-  void SMTPClient::setServerPort(const unsigned short& port) { m_server_port = port; }
+  void SMTPClient::setServerPort(unsigned short port) { m_server_port = port; }
   unsigned short SMTPClient::getServerPort() const { return m_server_port; }
 
   void SMTPClient::setTimeout(time_t t) { m_timeout = t; }

@@ -139,6 +139,9 @@ namespace ICQ2000 {
     bool isUrgent() const;
     void setToContactList(bool b);
     bool isToContactList() const;
+
+    void setAwayMessage(const std::string& m);
+    string getAwayMessage() const;
   };
 
   class NormalICQSubType : public UINICQSubType {
@@ -197,9 +200,6 @@ namespace ICQ2000 {
 
     void ParseBodyUIN(Buffer& b);
     void OutputBodyUIN(Buffer& b) const;
-
-    string getMessage() const;
-    void setMessage(const string& msg);
 
     unsigned short Length() const;
     unsigned char getType() const;
