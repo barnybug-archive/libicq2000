@@ -188,6 +188,10 @@ namespace ICQ2000 {
 	break;
       }
       break;
+
+    case TLV_ParseMode_SBL:
+      // TODO
+      break;
     }
 
     if (tlv == NULL) {

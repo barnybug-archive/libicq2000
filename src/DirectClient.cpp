@@ -73,7 +73,8 @@ namespace ICQ2000 {
     m_remote_uin = c->getUIN();
   }
 
-  DirectClient::~DirectClient() {
+  DirectClient::~DirectClient()
+  {
     m_msgcache.expireAll();
     
     while (!m_msgqueue.empty()) {
@@ -85,7 +86,8 @@ namespace ICQ2000 {
     delete m_socket;
   }
 
-  void DirectClient::Init() {
+  void DirectClient::Init()
+  {
     m_seqnum = 0xFFFF;
     m_msgcache.setDefaultTimeout(30);
     m_msgcache.expired.connect( this, &DirectClient::expired_cb) ;
@@ -116,7 +118,8 @@ namespace ICQ2000 {
     m_state = WAITING_FOR_INIT_ACK;
   }
 
-  void DirectClient::FinishNonBlockingConnect() {
+  void DirectClient::FinishNonBlockingConnect()
+  {
     SendInitPacket();
   }
 
@@ -659,7 +662,8 @@ namespace ICQ2000 {
 
   }
 
-  void DirectClient::SendInitAck() {
+  void DirectClient::SendInitAck()
+  {
     Buffer b;
     b.setLittleEndian();
     Buffer::marker m1 = b.getAutoSizeShortMarker();
@@ -668,7 +672,8 @@ namespace ICQ2000 {
     Send(b);
   }
 
-  void DirectClient::SendPacketAck(ICQSubType *icqsubtype) {
+  void DirectClient::SendPacketAck(ICQSubType *icqsubtype)
+  {
     Buffer b;
 
     b.setLittleEndian();
@@ -686,7 +691,8 @@ namespace ICQ2000 {
     Send(c);
   }
 
-  void DirectClient::SendPacketEvent(MessageEvent *ev) {
+  void DirectClient::SendPacketEvent(MessageEvent *ev)
+  {
     Buffer b;
 
     unsigned short seqnum = NextSeqNum();

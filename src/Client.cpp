@@ -143,6 +143,8 @@ namespace ICQ2000
     m_lower_port = 0;
     m_upper_port = 0;
 
+    m_use_typing_notif = false;
+
     m_fetch_sbl = false;
 
     m_cookiecache->setDefaultTimeout(30);
@@ -1165,7 +1167,7 @@ namespace ICQ2000
 
   void Client::SendAddICBMParameter() {
     SignalLog(LogEvent::INFO, "Sending Add ICBM Parameter");
-    FLAPwrapSNACandSend( MsgAddICBMParameterSNAC() );
+    FLAPwrapSNACandSend( MsgAddICBMParameterSNAC(m_use_typing_notif) );
   }
 
   void Client::SendLogin() {
@@ -2914,9 +2916,9 @@ namespace ICQ2000
 	 
 	 if (ev->getState() == FileTransferEvent::ACCEPTED) {
 	   FileTransferClient *ftc = new FileTransferClient(m_self,
-											  m_message_handler,
-											  &m_contact_tree,
-											  m_ext_ip, ev);
+							    m_message_handler,
+							    &m_contact_tree,
+							    m_ext_ip, ev);
 	   SignalAddSocket(ftc->getlistenfd(), SocketEvent::READ );
 	   ev->setPort(ftc->getlistenPort());
 		 
@@ -3260,6 +3262,17 @@ namespace ICQ2000
   bool Client::getUsePortRange() const 
   {
     return m_use_portrange;
+  }
+
+  /** 
+   *  set whether to enable the flag at login which indicates you'd
+   *  like to send and receive typing notifications
+   *
+   * @param b whether to enable typing notifications
+   */
+  void Client::setTypingNotifications(bool b)
+  {
+    m_use_typing_notif = b;
   }
   
   /**

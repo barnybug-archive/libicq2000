@@ -56,7 +56,8 @@ namespace ICQ2000 {
 		       TLV_ParseMode_AdvMsgBlock,
 		       TLV_ParseMode_InMessageData,
 		       TLV_ParseMode_InAdvMsgData,
-		       TLV_ParseMode_SBL
+		       TLV_ParseMode_SBL,
+		       TLV_ParseMode_SBL_Rights
   };
 
   // Channel 0x0001

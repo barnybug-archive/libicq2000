@@ -120,6 +120,7 @@ namespace ICQ2000
 
     unsigned int m_ext_ip;
     bool m_use_portrange;
+    bool m_use_typing_notif;
     unsigned short m_upper_port, m_lower_port;
     TCPSocket * m_serverSocket;
     TCPServer * m_listenServer;
@@ -505,6 +506,8 @@ namespace ICQ2000
 
     void setUsePortRange(bool b);
     bool getUsePortRange() const;
+
+    void setTypingNotifications(bool b);
 
     void Poll();
     void socket_cb(int fd, SocketEvent::Mode m);

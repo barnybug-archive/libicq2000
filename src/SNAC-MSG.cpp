@@ -33,25 +33,39 @@ namespace ICQ2000 {
 
   // --------------- Message (Family 0x0004) SNACs -----------------
 
-  void MsgAddICBMParameterSNAC::OutputBody(Buffer& b) const {
-    b << (unsigned int)0x00000000
-      << (unsigned int)0x00031f40
-      << (unsigned int)0x03e703e7
-      << (unsigned int)0x00000000;
+  const unsigned short MESSAGEFLAG_ALLOWED       = 0x00000001;
+  const unsigned short MESSAGEFLAG_MISSEDCALLS   = 0x00000002;
+  const unsigned short MESSAGEFLAG_TYPING        = 0x00000008;
+
+  void MsgAddICBMParameterSNAC::OutputBody(Buffer& b) const
+  {
+    b << (unsigned short)0x0000       // channel
+      << (unsigned int)  (MESSAGEFLAG_ALLOWED
+			  | MESSAGEFLAG_MISSEDCALLS
+			  | (m_typing_notif ? MESSAGEFLAG_TYPING : 0))
+                                      // message flags
+      << (unsigned short)0x1f40       // max message snac size
+      << (unsigned short)0x03e7       // max sender warning level
+      << (unsigned short)0x03e7       // max receiver warning level
+      << (unsigned short)0x0000       // min message interval
+      << (unsigned short)0x0000;      // unknown
   }
 
   MsgSendSNAC::MsgSendSNAC(ICQSubType *icqsubtype, bool ad)
     : m_icqsubtype(icqsubtype), m_advanced(ad) { } 
 
-  void MsgSendSNAC::setSeqNum(unsigned short seqnum) {
+  void MsgSendSNAC::setSeqNum(unsigned short seqnum)
+  {
     m_seqnum = seqnum;
   }
 
-  void MsgSendSNAC::setAdvanced(bool ad) {
+  void MsgSendSNAC::setAdvanced(bool ad)
+  {
     m_advanced = ad;
   }
 
-  void MsgSendSNAC::setICBMCookie(const ICBMCookie& c) {
+  void MsgSendSNAC::setICBMCookie(const ICBMCookie& c)
+  {
     m_cookie = c;
   }
 
@@ -60,8 +74,8 @@ namespace ICQ2000 {
     m_dest_capabilities = c;
   }
   
-  void MsgSendSNAC::OutputBody(Buffer& b) const {
-
+  void MsgSendSNAC::OutputBody(Buffer& b) const
+  {
     // ICBM Cookie
     b << m_cookie;
     

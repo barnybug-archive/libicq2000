@@ -46,11 +46,15 @@ namespace ICQ2000 {
   };
 
   class MsgAddICBMParameterSNAC : public MsgFamilySNAC, public OutSNAC {
+   private:
+    bool m_typing_notif;
+    
    protected:
     void OutputBody(Buffer& b) const;
     
    public:
-    MsgAddICBMParameterSNAC() { }
+    MsgAddICBMParameterSNAC(bool typing_notif) : m_typing_notif(typing_notif)
+    { }
 
     unsigned short Subtype() const { return SNAC_MSG_AddICBMParameter; }
   };
