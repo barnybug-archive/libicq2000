@@ -1,0 +1,39 @@
+Source: libicq2000
+Section: devel
+Priority: optional
+Maintainer: Barnaby Gray <barnaby@beedesign.co.uk>
+Build-Depends: debhelper (>= 3), libstdc++2.10-dev, libsigc++-dev
+Standards-Version: 3.5.2
+
+Package: libicq2000
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}
+Description: An ICQ2000/2001 C++ library
+ libicq2000 is an opensource C++ library being developed to support the
+ icq2000/2001 protocol. It is easy for developers to use as the
+ backbone for their clients' connection to the ICQ network - all the
+ protocol work is abstracted away in a nice object-orientated
+ interface.
+
+Package: libicq2000-dev
+Section: devel
+Architecture: any
+Depends: libicq2000 (= ${Source-Version}), libsigc++-dev, libstdc++2.10-dev
+Description: An ICQ2000/2001 C++ library - development files
+ libicq2000 is an opensource C++ library being developed to support the
+ icq2000/2001 protocol. It is easy for developers to use as the
+ backbone for their clients' connection to the ICQ network - all the
+ protocol work is abstracted away in a nice object-orientated
+ interface.
+
+Package: libicq2000-doc
+Section: devel
+Depends: libicq2000 (= ${Source-Version})
+Architecture: any
+Description: An ICQ2000/2001 C++ library - documentation
+ libicq2000 is an opensource C++ library being developed to support the
+ icq2000/2001 protocol. It is easy for developers to use as the
+ backbone for their clients' connection to the ICQ network - all the
+ protocol work is abstracted away in a nice object-orientated
+ interface.

@@ -1,0 +1,6 @@
+usr/lib/libicq2000.a
+usr/lib/libicq2000.la
+usr/lib/libicq2000.so
+usr/include/libicq2000
+usr/bin/libicq2000-config
+usr/share/aclocal/libicq2000.m4
