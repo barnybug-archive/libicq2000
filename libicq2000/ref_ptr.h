@@ -98,6 +98,7 @@ namespace ICQ2000 {
       m_instance = that.m_instance;
       if (m_instance != NULL)
 	++(m_instance->count);
+      return *this;		
     }
 
   };
