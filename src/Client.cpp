@@ -1759,6 +1759,9 @@ namespace ICQ2000 {
     ev->setFinished(true);
     ev->setDelivered(true);
     ev->setDirect(false);
+    ICQMessageEvent *cev;
+    if ((cev = dynamic_cast<ICQMessageEvent*>(ev)) != NULL) cev->setOfflineMessage(true);
+    
     messageack.emit(ev);
   }
   

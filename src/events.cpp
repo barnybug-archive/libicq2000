@@ -402,9 +402,7 @@ namespace ICQ2000 {
   void MessageEvent::setFinished(bool f) { m_finished = f; }
 
   /**
-   *  set whether the message has been delivered.  This is used
-   *  internally by the library and is of no interest to the client.
-   *
+   *  set whether the message has been delivered.
    * @param f if message was delivered
    */
   void MessageEvent::setDelivered(bool f) { m_delivered = f; }
@@ -418,8 +416,9 @@ namespace ICQ2000 {
   void MessageEvent::setDirect(bool f) { m_direct = f; }
 
   /**
-   *  set the reason for delivery failure.  This is used
-   *  internally by the library and is of no interest to the client.
+   *  set the reason for delivery failure. Used to indicate the
+   * failure reason when a client marks a message as not accepted (by
+   * setDeliverd(false) in the messaged callback).
    *
    * @param d delivery failure reason
    */

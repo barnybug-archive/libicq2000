@@ -77,48 +77,61 @@ namespace ICQ2000 {
       b << (unsigned short)0x0005;
       Buffer::marker m1 = b.getAutoSizeShortMarker();
 
-      b << (unsigned short)0x0000     // status
+      b << (unsigned short)0x0000       // status
 	<< m_cookie
-	<< (unsigned int)  0x09461349 // cap
-	<< (unsigned int)  0x4c7f11d1 // cap
-	<< (unsigned int)  0x82224445 // cap
-	<< (unsigned int)  0x53540000;// cap
+	<< (unsigned int)  0x09461349   // cap
+	<< (unsigned int)  0x4c7f11d1   // cap
+	<< (unsigned int)  0x82224445   // cap
+	<< (unsigned int)  0x53540000;  // cap
 
-      b << (unsigned short)0x000a  // TLV
+      b << (unsigned short)0x000a       // TLV
 	<< (unsigned short)0x0002
 	<< (unsigned short)0x0001;
 
-      b << (unsigned short)0x000f  // TLV
+      b << (unsigned short)0x000f       // TLV
 	<< (unsigned short)0x0000;
 
-      b << (unsigned short)0x2711;  // TLV
+      b << (unsigned short)0x2711;      // TLV
       Buffer::marker m2 = b.getAutoSizeShortMarker();
 
+      b.setLittleEndian();
+
+      // -- start of first subsection
+      Buffer::marker m3 = b.getAutoSizeShortMarker();
+      
       // unknown..
-      b << (unsigned int)  0x1B000700
+      b << (unsigned short)0x0007;      // Protocol version
+
+      b << (unsigned int)  0x00000000   // Unknown
 	<< (unsigned int)  0x00000000
 	<< (unsigned int)  0x00000000
 	<< (unsigned int)  0x00000000
-	<< (unsigned int)  0x00000000
-	<< (unsigned int)  0x00000300
 	<< (unsigned short)0x0000;
 
-      b << (unsigned char) 0x00;
+      b << (unsigned int)  0x00000003;  // Client features (?)
+      b << (unsigned char) 0x00;        // Unknown
 
-      b.setLittleEndian();
-      b << m_seqnum
-	<< (unsigned short)0x000e
-	<< m_seqnum;
+      b << m_seqnum;
+
+      b.setAutoSizeMarker(m3);
+      // -- end of first subsection
+
+      // -- start of second subsection
+      Buffer::marker m4 = b.getAutoSizeShortMarker();
+      b	<< m_seqnum;
 
       // unknown
       b << (unsigned int)0x00000000
 	<< (unsigned int)0x00000000
 	<< (unsigned int)0x00000000;
 
+      b.setAutoSizeMarker(m4);
+      // -- end of second subsection
+
       m_icqsubtype->Output(b);
       
       b.setBigEndian();
-      b << (unsigned short)0x0003
+      b << (unsigned short)0x0003 // TLV
 	<< (unsigned short)0x0000;
 
       b.setAutoSizeMarker(m1);

@@ -378,9 +378,9 @@ namespace ICQ2000 {
     virtual MessageType getType() const = 0;
     ContactRef getContact();
     
-    bool isFinished() const;
+    bool isFinished()  const;
     bool isDelivered() const;
-    bool isDirect() const;
+    bool isDirect()    const;
     
     void setFinished(bool f);
     void setDelivered(bool f);
@@ -418,7 +418,7 @@ namespace ICQ2000 {
   class NormalMessageEvent : public ICQMessageEvent {
    private:
     string m_message;
-    bool m_offline, m_multi;
+    bool m_multi;
     unsigned int m_foreground, m_background;
     
    public:
@@ -441,7 +441,6 @@ namespace ICQ2000 {
   class URLMessageEvent : public ICQMessageEvent {
    private:
     string m_message, m_url;
-    bool m_offline;
     
    public:
     URLMessageEvent(ContactRef c, const string& msg, const string& url);
@@ -524,7 +523,6 @@ namespace ICQ2000 {
   class AuthReqEvent : public ICQMessageEvent {
    private:
     string m_message;
-    bool m_offline;
 
    public:
     AuthReqEvent(ContactRef c, const string& msg);
@@ -540,7 +538,6 @@ namespace ICQ2000 {
   class AuthAckEvent : public ICQMessageEvent {
    private:
     string m_message;
-    bool m_offline;
     bool m_granted;
 
    public:
