@@ -34,8 +34,6 @@
 
 #include <libicq2000/ContactList.h>
 
-using std::string;
-
 namespace ICQ2000 {
 
   class Contact;
@@ -199,13 +197,13 @@ namespace ICQ2000 {
 
    private:
     LogType m_type;
-    string m_msg;
+    std::string m_msg;
 
    public:
-    LogEvent(LogType type, const string& msg);
+    LogEvent(LogType type, const std::string& msg);
 
     LogType getType() const;
-    string getMessage() const;
+    std::string getMessage() const;
   };
 
   // ============================================================================
@@ -433,16 +431,16 @@ namespace ICQ2000 {
    */
   class NormalMessageEvent : public ICQMessageEvent {
    private:
-    string m_message;
+    std::string m_message;
     bool m_multi;
     unsigned int m_foreground, m_background;
     
    public:
-    NormalMessageEvent(ContactRef c, const string& msg, bool multi = false);
-    NormalMessageEvent(ContactRef c, const string& msg, time_t t, bool multi);
-    NormalMessageEvent(ContactRef c, const string& msg, unsigned int fg, unsigned int bg);
+    NormalMessageEvent(ContactRef c, const std::string& msg, bool multi = false);
+    NormalMessageEvent(ContactRef c, const std::string& msg, time_t t, bool multi);
+    NormalMessageEvent(ContactRef c, const std::string& msg, unsigned int fg, unsigned int bg);
 
-    string getMessage() const;
+    std::string getMessage() const;
     MessageType getType() const;
     bool isMultiParty() const;
     unsigned int getForeground() const;
@@ -458,14 +456,14 @@ namespace ICQ2000 {
    */
   class URLMessageEvent : public ICQMessageEvent {
    private:
-    string m_message, m_url;
+    std::string m_message, m_url;
     
    public:
-    URLMessageEvent(ContactRef c, const string& msg, const string& url);
-    URLMessageEvent(ContactRef c, const string& msg, const string& url, time_t t);
+    URLMessageEvent(ContactRef c, const std::string& msg, const std::string& url);
+    URLMessageEvent(ContactRef c, const std::string& msg, const std::string& url, time_t t);
 
-    string getMessage() const;
-    string getURL() const;
+    std::string getMessage() const;
+    std::string getURL() const;
     MessageType getType() const;
 
     ICQMessageEvent* copy() const;
@@ -476,30 +474,30 @@ namespace ICQ2000 {
    */
   class SMSMessageEvent : public MessageEvent {
    private:
-    string m_message, m_source, m_sender, m_senders_network;
-    string m_smtp_from, m_smtp_to, m_smtp_subject;
+    std::string m_message, m_source, m_sender, m_senders_network;
+    std::string m_smtp_from, m_smtp_to, m_smtp_subject;
     bool m_rcpt;
 
    public:
-    SMSMessageEvent(ContactRef c, const string& msg, bool rcpt);
-    SMSMessageEvent(ContactRef c, const string& msg, const string& source,
-		    const string& senders_network, const string& time);
+    SMSMessageEvent(ContactRef c, const std::string& msg, bool rcpt);
+    SMSMessageEvent(ContactRef c, const std::string& msg, const std::string& source,
+		    const std::string& senders_network, const std::string& time);
 
-    string getMessage() const;
+    std::string getMessage() const;
     MessageType getType() const;
-    string getSource() const;
-    string getSender() const;
-    string getSenders_network() const;
+    std::string getSource() const;
+    std::string getSender() const;
+    std::string getSenders_network() const;
     bool getRcpt() const;
 
-    void setSMTPFrom(const string& from);
-    string getSMTPFrom() const;
+    void setSMTPFrom(const std::string& from);
+    std::string getSMTPFrom() const;
 
-    void setSMTPTo(const string& to);
-    string getSMTPTo() const;
+    void setSMTPTo(const std::string& to);
+    std::string getSMTPTo() const;
 
-    void setSMTPSubject(const string& subj);
-    string getSMTPSubject() const;
+    void setSMTPSubject(const std::string& subj);
+    std::string getSMTPSubject() const;
   };
 
   /**
@@ -507,19 +505,19 @@ namespace ICQ2000 {
    */
   class SMSReceiptEvent : public MessageEvent {
    private:
-    string m_message, m_message_id, m_destination, m_submission_time, m_delivery_time;
+    std::string m_message, m_message_id, m_destination, m_submission_time, m_delivery_time;
     bool m_delivered;
     
    public:
-    SMSReceiptEvent(ContactRef c, const string& msg, const string& message_id,
-		    const string& submission_time, const string& delivery_time, bool del);
+    SMSReceiptEvent(ContactRef c, const std::string& msg, const std::string& message_id,
+		    const std::string& submission_time, const std::string& delivery_time, bool del);
     
     MessageType getType() const;
-    string getMessage() const;
-    string getMessageId() const;
-    string getDestination() const;
-    string getSubmissionTime() const;
-    string getDeliveryTime() const;
+    std::string getMessage() const;
+    std::string getMessageId() const;
+    std::string getDestination() const;
+    std::string getSubmissionTime() const;
+    std::string getDeliveryTime() const;
     bool delivered() const;
   };
 
@@ -544,13 +542,13 @@ namespace ICQ2000 {
    */
   class AuthReqEvent : public ICQMessageEvent {
    private:
-    string m_message;
+    std::string m_message;
 
    public:
-    AuthReqEvent(ContactRef c, const string& msg);
-    AuthReqEvent(ContactRef c, const string& msg, time_t time);
+    AuthReqEvent(ContactRef c, const std::string& msg);
+    AuthReqEvent(ContactRef c, const std::string& msg, time_t time);
 
-    string getMessage() const;
+    std::string getMessage() const;
     MessageType getType() const;
 
     ICQMessageEvent* copy() const;
@@ -561,16 +559,16 @@ namespace ICQ2000 {
    */
   class AuthAckEvent : public ICQMessageEvent {
    private:
-    string m_message;
+    std::string m_message;
     bool m_granted;
 
    public:
     AuthAckEvent(ContactRef c, bool granted);
     AuthAckEvent(ContactRef c, bool granted, time_t time);
-    AuthAckEvent(ContactRef c, const string& msg, bool granted);
-    AuthAckEvent(ContactRef c, const string& msg, bool granted, time_t time);
+    AuthAckEvent(ContactRef c, const std::string& msg, bool granted);
+    AuthAckEvent(ContactRef c, const std::string& msg, bool granted, time_t time);
 
-    string getMessage() const;
+    std::string getMessage() const;
     MessageType getType() const;
     bool isGranted() const;
 
@@ -582,14 +580,14 @@ namespace ICQ2000 {
    */
   class EmailExEvent : public MessageEvent {
    private:
-    string m_sender, m_email, m_message;
+    std::string m_sender, m_email, m_message;
 
    public:
-    EmailExEvent(ContactRef c, const string &email, const string &sender, const string &msg);
+    EmailExEvent(ContactRef c, const std::string &email, const std::string &sender, const std::string &msg);
 
-    string getMessage() const;
-    string getEmail() const;
-    string getSender() const;
+    std::string getMessage() const;
+    std::string getEmail() const;
+    std::string getSender() const;
 
     MessageType getType() const;
     unsigned int getSenderUIN() const;
@@ -600,14 +598,14 @@ namespace ICQ2000 {
    */
   class WebPagerEvent : public MessageEvent {
    private:
-    string m_sender, m_email, m_message;
+    std::string m_sender, m_email, m_message;
 
    public:
-    WebPagerEvent(ContactRef c, const string& email, const string& sender, const string& msg);
+    WebPagerEvent(ContactRef c, const std::string& email, const std::string& sender, const std::string& msg);
 
-    string getMessage() const;
-    string getEmail() const;
-    string getSender() const;
+    std::string getMessage() const;
+    std::string getEmail() const;
+    std::string getSender() const;
 
     MessageType getType() const;
   };
@@ -630,12 +628,12 @@ namespace ICQ2000 {
    */
   class EmailMessageEvent : public MessageEvent {
    private:
-    string m_message;
+    std::string m_message;
 
    public:
-    EmailMessageEvent(ContactRef c, const string &msg);
+    EmailMessageEvent(ContactRef c, const std::string &msg);
 
-    string getMessage() const;
+    std::string getMessage() const;
 
     MessageType getType() const;
   };

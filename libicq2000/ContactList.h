@@ -22,16 +22,11 @@
 #ifndef CONTACTLIST_H
 #define CONTACTLIST_H
 
-#include <list>
 #include <string>
 #include <map>
 
 #include <libicq2000/Contact.h>
 #include <sigc++/signal_system.h>
-
-using std::list;
-using std::string;
-using std::map;
 
 namespace ICQ2000 {
 
@@ -39,10 +34,10 @@ namespace ICQ2000 {
 
   class _ContactList_iterator {
   private:
-    map<unsigned int,ContactRef>::iterator iter;
+    std::map<unsigned int,ContactRef>::iterator iter;
   
   public:
-    _ContactList_iterator(map<unsigned int,ContactRef>::iterator i)
+    _ContactList_iterator(std::map<unsigned int,ContactRef>::iterator i)
       : iter(i) { }
   
     _ContactList_iterator& operator++() { ++iter; return *this; }
@@ -54,10 +49,10 @@ namespace ICQ2000 {
 
   class _ContactList_const_iterator {
    private:
-    map<unsigned int,ContactRef>::const_iterator iter;
+    std::map<unsigned int,ContactRef>::const_iterator iter;
   
    public:
-    _ContactList_const_iterator(map<unsigned int,ContactRef>::const_iterator i)
+    _ContactList_const_iterator(std::map<unsigned int,ContactRef>::const_iterator i)
       : iter(i) { }
   
     _ContactList_const_iterator& operator++() { ++iter; return *this; }
@@ -69,7 +64,7 @@ namespace ICQ2000 {
 
   class ContactList {
    private:
-    map<unsigned int,ContactRef> m_cmap;
+    std::map<unsigned int,ContactRef> m_cmap;
 
     /*
      * Mobile contacts are implemented as
@@ -101,8 +96,8 @@ namespace ICQ2000 {
     bool empty() const;
 
     bool exists(unsigned int uin);
-    bool mobile_exists(const string& m);
-    bool email_exists(const string& em);
+    bool mobile_exists(const std::string& m);
+    bool email_exists(const std::string& em);
 
     iterator begin();
     iterator end();

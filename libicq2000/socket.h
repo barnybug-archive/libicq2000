@@ -36,12 +36,9 @@
 #include <stdio.h>
 #include <fcntl.h>
 
-using std::string;
-using std::exception;
+unsigned int StringtoIP(const std::string& ip);
 
-unsigned int StringtoIP(const string& ip);
-
-string IPtoString(unsigned int ip);
+std::string IPtoString(unsigned int ip);
 
 class Buffer;
 
@@ -128,12 +125,12 @@ class TCPServer {
 
 };
 
-class SocketException : exception {
+class SocketException : std::exception {
  private:
-  string m_errortext;
+  std::string m_errortext;
 
  public:
-  SocketException(const string& text);
+  SocketException(const std::string& text);
   ~SocketException() throw() { }
 
   const char* what() const throw();

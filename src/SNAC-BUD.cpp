@@ -23,6 +23,9 @@
 
 #include <libicq2000/TLV.h>
 
+using std::string;
+using std::list;
+
 namespace ICQ2000 {
 
   // --------------- Buddy List (Family 0x0003) SNACs --------------

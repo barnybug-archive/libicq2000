@@ -21,6 +21,8 @@
 
 #include <libicq2000/exceptions.h>
 
+using std::string;
+
 namespace ICQ2000 {
 
   ParseException::ParseException(const string& text) : m_errortext(text) { }

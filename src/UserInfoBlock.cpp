@@ -24,6 +24,8 @@
 #include <libicq2000/Contact.h>
 #include <libicq2000/TLV.h>
 
+using std::string;
+
 namespace ICQ2000 {
 
   UserInfoBlock::UserInfoBlock()

@@ -26,8 +26,6 @@
 
 #include <sigc++/signal_system.h>
 
-using SigC::Signal1;
-
 namespace ICQ2000 {
 
   /* fd -> DirectClient cache
@@ -107,7 +105,7 @@ namespace ICQ2000 {
       }
     }
 
-    Signal1<void,DirectClient*> expired;
+    SigC::Signal1<void,DirectClient*> expired;
   };
   
 }

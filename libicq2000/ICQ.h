@@ -31,8 +31,6 @@
 #include <libicq2000/constants.h>
 #include <libicq2000/Contact.h>
 
-using std::string;
-
 namespace ICQ2000 {
 
   // ------------- TCP Command Types ------------------
@@ -112,7 +110,7 @@ namespace ICQ2000 {
     bool m_advanced, m_ack;
     bool m_urgent, m_tocontactlist;
     unsigned short m_status;
-    string m_away_message;
+    std::string m_away_message;
 
    public:
     UINICQSubType();
@@ -145,22 +143,22 @@ namespace ICQ2000 {
     bool isToContactList() const;
 
     void setAwayMessage(const std::string& m);
-    string getAwayMessage() const;
+    std::string getAwayMessage() const;
   };
 
   class NormalICQSubType : public UINICQSubType {
    private:
-    string m_message;
+    std::string m_message;
     bool m_multi;
     unsigned int m_foreground, m_background;
     
    public:
     NormalICQSubType(bool multi);
-    NormalICQSubType(const string& msg);
+    NormalICQSubType(const std::string& msg);
 
-    string getMessage() const;
+    std::string getMessage() const;
     bool isMultiParty() const;
-    void setMessage(const string& message);
+    void setMessage(const std::string& message);
     
     void setForeground(unsigned int f);
     void setBackground(unsigned int f);
@@ -178,17 +176,17 @@ namespace ICQ2000 {
 
   class URLICQSubType : public UINICQSubType {
    private:
-    string m_message;
-    string m_url;
+    std::string m_message;
+    std::string m_url;
     
    public:
     URLICQSubType();
-    URLICQSubType(const string& msg, const string& url);
+    URLICQSubType(const std::string& msg, const std::string& url);
 
-    string getMessage() const;
-    void setMessage(const string& msg);
-    string getURL() const;
-    void setURL(const string& url);
+    std::string getMessage() const;
+    void setMessage(const std::string& msg);
+    std::string getURL() const;
+    void setURL(const std::string& url);
     
     void ParseBodyUIN(Buffer& b);
     void OutputBodyUIN(Buffer& b) const;
@@ -199,7 +197,7 @@ namespace ICQ2000 {
   class AwayMsgSubType : public UINICQSubType {
    private:
     unsigned char m_type;
-    string m_message;
+    std::string m_message;
 
    public:
     AwayMsgSubType(Status s);
@@ -222,19 +220,19 @@ namespace ICQ2000 {
 
    private:
     // SMS fields
-    string m_source, m_sender, m_senders_network, m_time;
+    std::string m_source, m_sender, m_senders_network, m_time;
 
     // SMS Receipt fields
-    string m_message_id, m_destination, m_submission_time, m_delivery_time;
+    std::string m_message_id, m_destination, m_submission_time, m_delivery_time;
     bool m_delivered;
 
-    string m_message;
+    std::string m_message;
     Type m_type;
 
    public:
     SMSICQSubType();
 
-    string getMessage() const;
+    std::string getMessage() const;
     Type getSMSType() const;
 
     void ParseBody(Buffer& b);
@@ -243,16 +241,16 @@ namespace ICQ2000 {
     unsigned char getType() const;
 
     // -- SMS fields --
-    string getSource() const { return m_source; }
-    string getSender() const { return m_sender; }
-    string getSenders_network() const { return m_senders_network; }
-    string getTime() const { return m_time; }
+    std::string getSource() const { return m_source; }
+    std::string getSender() const { return m_sender; }
+    std::string getSenders_network() const { return m_senders_network; }
+    std::string getTime() const { return m_time; }
 
     // -- SMS Receipt fields --
-    string getMessageId() const { return m_message_id; }
-    string getDestination() const { return m_destination; }
-    string getSubmissionTime() const { return m_submission_time; }
-    string getDeliveryTime() const { return m_delivery_time; }
+    std::string getMessageId() const { return m_message_id; }
+    std::string getDestination() const { return m_destination; }
+    std::string getSubmissionTime() const { return m_submission_time; }
+    std::string getDeliveryTime() const { return m_delivery_time; }
     bool delivered() const { return m_delivered; }
 
   };
@@ -264,9 +262,9 @@ namespace ICQ2000 {
 
    public:
     AuthReqICQSubType();
-    AuthReqICQSubType(const string& alias, const string& firstname,
-		      const string& lastname, const string& email, bool auth,
-		      const string& msg);
+    AuthReqICQSubType(const std::string& alias, const std::string& firstname,
+		      const std::string& lastname, const std::string& email, bool auth,
+		      const std::string& msg);
 
     std::string getMessage() const;
 
@@ -290,14 +288,14 @@ namespace ICQ2000 {
   
   class AuthRejICQSubType : public UINICQSubType {
    private:
-    string m_message;
+    std::string m_message;
 
    public:
     AuthRejICQSubType();
-    AuthRejICQSubType(const string& msg);
+    AuthRejICQSubType(const std::string& msg);
 
-    string getMessage() const;
-    void setMessage(const string& msg);
+    std::string getMessage() const;
+    void setMessage(const std::string& msg);
 
     void ParseBodyUIN(Buffer& b);
     void OutputBodyUIN(Buffer& b) const;
@@ -308,7 +306,7 @@ namespace ICQ2000 {
 
   class EmailExICQSubType : public ICQSubType {
    private:
-    string m_message, m_email, m_sender;
+    std::string m_message, m_email, m_sender;
 
    public:
     EmailExICQSubType();
@@ -318,9 +316,9 @@ namespace ICQ2000 {
     unsigned short Length() const;
     unsigned char getType() const;
 
-    string getMessage() const;
-    string getEmail() const;
-    string getSender() const;
+    std::string getMessage() const;
+    std::string getEmail() const;
+    std::string getSender() const;
   };
 
   /*
@@ -329,7 +327,7 @@ namespace ICQ2000 {
    */
   class WebPagerICQSubType : public ICQSubType {
    private:
-    string m_message, m_email, m_sender;
+    std::string m_message, m_email, m_sender;
 
    public:
     WebPagerICQSubType();
@@ -339,9 +337,9 @@ namespace ICQ2000 {
     unsigned short Length() const;
     unsigned char getType() const;
 
-    string getMessage() const;
-    string getEmail() const;
-    string getSender() const;
+    std::string getMessage() const;
+    std::string getEmail() const;
+    std::string getSender() const;
   };
 
   class UserAddICQSubType : public UINICQSubType {

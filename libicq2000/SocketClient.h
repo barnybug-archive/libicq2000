@@ -59,13 +59,13 @@ namespace ICQ2000 {
     virtual void SendEvent(MessageEvent* ev) = 0;
   };
 
-  class SocketClientException : public exception {
+  class SocketClientException : public std::exception {
    private:
-    string m_errortext;
+    std::string m_errortext;
     
    public:
     SocketClientException();
-    SocketClientException(const string& text);
+    SocketClientException(const std::string& text);
     ~SocketClientException() throw() { }
 
     const char* what() const throw();
@@ -73,7 +73,7 @@ namespace ICQ2000 {
   
   class DisconnectedException : public SocketClientException {
    public:
-    DisconnectedException(const string& text);
+    DisconnectedException(const std::string& text);
   };
 
 }

@@ -47,8 +47,6 @@
 #include <libicq2000/userinfoconstants.h>
 #include <libicq2000/MessageHandler.h>
 
-using std::string;
-
 namespace ICQ2000 {
   
   // declare some SNAC classes - vastly decreases header dependancies
@@ -81,15 +79,15 @@ namespace ICQ2000 {
     } m_state;
 
     ContactRef m_self;
-    string m_password;
+    std::string m_password;
     Status m_status_wanted;
     bool m_invisible_wanted;
     bool m_web_aware;
 
-    string m_authorizerHostname;
+    std::string m_authorizerHostname;
     unsigned short m_authorizerPort;
 
-    string m_bosHostname;
+    std::string m_bosHostname;
     unsigned short m_bosPort;
     bool m_bosOverridePort;
 
@@ -153,7 +151,7 @@ namespace ICQ2000 {
     void SignalUINResponse(UINResponseSNAC *snac);
     void SignalUINRequestError();
     void SignalRateInfoChange(RateInfoChangeSNAC *snac);
-    void SignalLog(LogEvent::LogType type, const string& msg);
+    void SignalLog(LogEvent::LogType type, const std::string& msg);
     void SignalUserOnline(BuddyOnlineSNAC *snac);
     void SignalUserOffline(BuddyOfflineSNAC *snac);
     void SignalServerBasedContactList(const ContactList& l);
@@ -231,19 +229,19 @@ namespace ICQ2000 {
 
    public:
     Client();
-    Client(const unsigned int uin, const string& password);
+    Client(const unsigned int uin, const std::string& password);
     ~Client();
    
     void setUIN(unsigned int uin);
     unsigned int getUIN() const;
-    void setPassword(const string& password);
-    string getPassword() const;
+    void setPassword(const std::string& password);
+    std::string getPassword() const;
 
     ContactRef getSelfContact();
 
-    bool setTranslationMap(const string& szMapFileName);
-    const string& getTranslationMapFileName() const;
-    const string& getTranslationMapName() const;
+    bool setTranslationMap(const std::string& szMapFileName);
+    const std::string& getTranslationMapFileName() const;
+    const std::string& getTranslationMapName() const;
     bool usingDefaultMap() const;
 
     // -- Signals --
@@ -415,15 +413,15 @@ namespace ICQ2000 {
     void fetchSelfDetailContactInfo();
 
     // -- Whitepage searches --
-    SearchResultEvent* searchForContacts(const string& nickname, const string& firstname,
-					 const string& lastname);
+    SearchResultEvent* searchForContacts(const std::string& nickname, const std::string& firstname,
+					 const std::string& lastname);
 
-    SearchResultEvent* searchForContacts(const string& nickname, const string& firstname,
-					 const string& lastname, const string& email,
-					 AgeRange age, Sex sex, unsigned char language, const string& city,
-					 const string& state, unsigned short country,
-					 const string& company_name, const string& department,
-					 const string& position, bool only_online);
+    SearchResultEvent* searchForContacts(const std::string& nickname, const std::string& firstname,
+					 const std::string& lastname, const std::string& email,
+					 AgeRange age, Sex sex, unsigned char language, const std::string& city,
+					 const std::string& state, unsigned short country,
+					 const std::string& company_name, const std::string& department,
+					 const std::string& position, bool only_online);
 
     SearchResultEvent* searchForContacts(unsigned int uin);
 
@@ -441,8 +439,8 @@ namespace ICQ2000 {
      */
 
     // -- Network settings --
-    void setLoginServerHost(const string& host);
-    string getLoginServerHost() const;
+    void setLoginServerHost(const std::string& host);
+    std::string getLoginServerHost() const;
 
     void setLoginServerPort(const unsigned short& port);
     unsigned short getLoginServerPort() const;
@@ -453,8 +451,8 @@ namespace ICQ2000 {
     void setBOSServerPort(const unsigned short& port);
     unsigned short getBOSServerPort() const;
 
-    void setSMTPServerHost(const string& host);
-    string getSMTPServerHost() const;
+    void setSMTPServerHost(const std::string& host);
+    std::string getSMTPServerHost() const;
 
     void setSMTPServerPort(unsigned short port);
     unsigned short getSMTPServerPort() const;

@@ -28,8 +28,6 @@
 
 #include <sigc++/signal_system.h>
 
-using SigC::Signal1;
-
 namespace ICQ2000 {
 
   class ICBMCookieCache : public Cache<ICBMCookie, MessageEvent*> {
@@ -57,7 +55,7 @@ namespace ICQ2000 {
       return c;
     }
 
-    Signal1<void,MessageEvent*> expired;
+    SigC::Signal1<void,MessageEvent*> expired;
 
   };
 }

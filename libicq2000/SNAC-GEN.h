@@ -187,7 +187,7 @@ namespace ICQ2000 {
   class MOTDSNAC : public GenericSNAC, public InSNAC {
    private:
     unsigned char m_status;
-    string m_url;
+    std::string m_url;
 
    protected:
     void ParseBody(Buffer& b);

@@ -23,7 +23,6 @@
 #define DIRECTCLIENT_H
 
 #include <list>
-#include <string>
 
 #include <sigc++/signal_system.h>
 
@@ -39,12 +38,6 @@
 #include <libicq2000/Translator.h>
 #include <libicq2000/SocketClient.h>
 #include <libicq2000/MessageHandler.h>
-
-using std::string;
-using std::list;
-using std::exception;
-using SigC::Signal0;
-using SigC::Signal1;
 
 namespace ICQ2000 {
 
@@ -96,7 +89,7 @@ namespace ICQ2000 {
     static unsigned char client_check_data[];
     Translator *m_translator;
     SeqNumCache m_msgcache;
-    list<MessageEvent*> m_msgqueue;
+    std::list<MessageEvent*> m_msgqueue;
     unsigned short m_seqnum;
 
     unsigned short NextSeqNum();

@@ -51,14 +51,14 @@ namespace ICQ2000 {
 
   class BOSListSNAC : virtual public BOSFamilySNAC, public OutSNAC {
     protected:
-      list<string>m_buddy_list;
+      std::list<std::string> m_buddy_list;
       void OutputBody(Buffer& b) const;
 
     public:
       BOSListSNAC();
       BOSListSNAC(const ContactList& l);
       BOSListSNAC(const ContactRef& c);
-      BOSListSNAC(const string& s);
+      BOSListSNAC(const std::string& s);
       void addContact(const ContactRef& c);
   };
 
@@ -69,7 +69,7 @@ namespace ICQ2000 {
       AddVisibleSNAC();
       AddVisibleSNAC(const ContactList& l);
       AddVisibleSNAC(const ContactRef& c);
-      AddVisibleSNAC(const string& s);
+      AddVisibleSNAC(const std::string& s);
   };
 
   class AddInvisibleSNAC : public BOSListSNAC {
@@ -78,7 +78,7 @@ namespace ICQ2000 {
       AddInvisibleSNAC();
       AddInvisibleSNAC(const ContactList& l);
       AddInvisibleSNAC(const ContactRef& c);
-      AddInvisibleSNAC(const string& s);
+      AddInvisibleSNAC(const std::string& s);
   };
 
   class AddTmpVisibleSNAC : public BOSListSNAC {
@@ -87,7 +87,7 @@ namespace ICQ2000 {
       AddTmpVisibleSNAC();
       AddTmpVisibleSNAC(const ContactList& l);
       AddTmpVisibleSNAC(const ContactRef& c);
-      AddTmpVisibleSNAC(const string& s);
+      AddTmpVisibleSNAC(const std::string& s);
   };
 
   class RemoveVisibleSNAC : public BOSListSNAC {
@@ -96,7 +96,7 @@ namespace ICQ2000 {
       RemoveVisibleSNAC();
       RemoveVisibleSNAC(const ContactList& l);
       RemoveVisibleSNAC(const ContactRef& c);
-      RemoveVisibleSNAC(const string& s);
+      RemoveVisibleSNAC(const std::string& s);
   };
 
   class RemoveInvisibleSNAC : public BOSListSNAC {
@@ -105,7 +105,7 @@ namespace ICQ2000 {
       RemoveInvisibleSNAC();
       RemoveInvisibleSNAC(const ContactList& l);
       RemoveInvisibleSNAC(const ContactRef& c);
-      RemoveInvisibleSNAC(const string& s);
+      RemoveInvisibleSNAC(const std::string& s);
   };
 
   class RemoveTmpVisibleSNAC : public BOSListSNAC {
@@ -114,7 +114,7 @@ namespace ICQ2000 {
       RemoveTmpVisibleSNAC();
       RemoveTmpVisibleSNAC(const ContactList& l);
       RemoveTmpVisibleSNAC(const ContactRef& c);
-      RemoveTmpVisibleSNAC(const string& s);
+      RemoveTmpVisibleSNAC(const std::string& s);
   };
   
 }

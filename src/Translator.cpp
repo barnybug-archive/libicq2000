@@ -24,6 +24,7 @@
 #include <libicq2000/Translator.h>
 
 using std::ifstream;
+using std::string;
 using std::istringstream;
 
 namespace ICQ2000 {

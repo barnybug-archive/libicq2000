@@ -26,6 +26,7 @@
 #include <libicq2000/TLV.h>
 #include <libicq2000/Contact.h>
 
+using std::string;
 using std::ostringstream;
 
 namespace ICQ2000 {

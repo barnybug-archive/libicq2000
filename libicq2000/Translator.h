@@ -31,16 +31,13 @@
 #include <string>
 #include <exception>
 
-using std::exception;
-using std::string;
-
 namespace ICQ2000 {
-  class TranslatorException : exception {
+  class TranslatorException : public std::exception {
    private:
-    string m_errortext;
+    std::string m_errortext;
     
    public:
-    TranslatorException(const string& text);
+    TranslatorException(const std::string& text);
     ~TranslatorException() throw() { }
     
     const char* what() const throw();
@@ -50,23 +47,23 @@ namespace ICQ2000 {
    public:
     Translator();
     void setDefaultTranslationMap();
-    void setTranslationMap(const string& szMapFileName);
-    void ServerToClient(string& szString);
-    void ClientToServer(string& szString);
-    string ServerToClientCC(const string& szString);
-    string ClientToServerCC(const string& szString);
+    void setTranslationMap(const std::string& szMapFileName);
+    void ServerToClient(std::string& szString);
+    void ClientToServer(std::string& szString);
+    std::string ServerToClientCC(const std::string& szString);
+    std::string ClientToServerCC(const std::string& szString);
     void ServerToClient(char &_cChar);
     void ClientToServer(char &_cChar);
-    static void CRLFtoLF(string& s);
-    static void LFtoCRLF(string& s);
+    static void CRLFtoLF(std::string& s);
+    static void LFtoCRLF(std::string& s);
     bool usingDefaultMap() const { return m_bDefault; }
-    const string& getMapFileName() const { return m_szMapFileName; }
-    const string& getMapName() const { return m_szMapName; }
+    const std::string& getMapFileName() const { return m_szMapFileName; }
+    const std::string& getMapName() const { return m_szMapName; }
 
    protected:
     unsigned char serverToClientTab[256];
     unsigned char clientToServerTab[256];
-    string m_szMapFileName, m_szMapName;
+    std::string m_szMapFileName, m_szMapName;
     bool m_bDefault;
   };
 }

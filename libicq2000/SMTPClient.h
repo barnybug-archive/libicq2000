@@ -41,9 +41,9 @@ namespace ICQ2000 {
 
     State m_state;
 
-    list<MessageEvent*> m_msgqueue;
+    std::list<MessageEvent*> m_msgqueue;
     Buffer m_recv;
-    string m_server_name;
+    std::string m_server_name;
     unsigned short m_server_port;
     time_t m_last_operation, m_timeout;
 
@@ -51,7 +51,7 @@ namespace ICQ2000 {
     void flush_queue();
     void check_timeout();
 
-    string getContactEmail(ContactRef cont) const;
+    std::string getContactEmail(ContactRef cont) const;
 
     void Init();
     void Parse();
@@ -71,7 +71,7 @@ namespace ICQ2000 {
     void Disconnect();
 
    public:
-    SMTPClient(ContactRef self, const string& server_name, unsigned short server_port,
+    SMTPClient(ContactRef self, const std::string& server_name, unsigned short server_port,
 	       Translator* translator);
 
     ~SMTPClient();
@@ -82,8 +82,8 @@ namespace ICQ2000 {
 
     void clearoutMessagesPoll();
 
-    void setServerHost(const string& host);
-    string getServerHost() const;
+    void setServerHost(const std::string& host);
+    std::string getServerHost() const;
 
     void setServerPort(unsigned short port);
     unsigned short getServerPort() const;
@@ -94,13 +94,13 @@ namespace ICQ2000 {
     void SendEvent(MessageEvent* ev);
   };
 
-  class SMTPException : public exception {
+  class SMTPException : public std::exception {
    private:
-    string m_errortext;
+    std::string m_errortext;
     
    public:
     SMTPException();
-    SMTPException(const string& text);
+    SMTPException(const std::string& text);
     ~SMTPException() throw() { }
 
     const char* what() const throw();

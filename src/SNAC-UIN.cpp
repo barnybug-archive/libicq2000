@@ -23,6 +23,8 @@
 
 #include <libicq2000/buffer.h>
 
+using std::string;
+
 namespace ICQ2000 {
 
   // -------------- New UIN (0x0017) Family -----------------------

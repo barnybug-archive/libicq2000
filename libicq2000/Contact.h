@@ -33,9 +33,6 @@
 
 #include <libicq2000/Capabilities.h>
 
-using std::list;
-using std::string;
-
 namespace ICQ2000 {
 
   // -- Status Codes Flags --
@@ -59,7 +56,7 @@ namespace ICQ2000 {
     // Inner classes for various sections of Contact details
 
     class MainHomeInfo {
-      string cellular, normalised_cellular;
+      std::string cellular, normalised_cellular;
       // cellular private - access must be through
       // get/setMobileNo for consistency
     
@@ -68,15 +65,15 @@ namespace ICQ2000 {
     public:
       MainHomeInfo();
 
-      string alias, firstname, lastname, email, city, state, phone, fax, street, zip;
+      std::string alias, firstname, lastname, email, city, state, phone, fax, street, zip;
       unsigned short country;
       signed char timezone;
 
-      string getCountry() const;
-      string getMobileNo() const;
-      void setMobileNo(const string& s);
+      std::string getCountry() const;
+      std::string getMobileNo() const;
+      void setMobileNo(const std::string& s);
 
-      string getNormalisedMobileNo() const;
+      std::string getNormalisedMobileNo() const;
     };
 
     class HomepageInfo {
@@ -84,51 +81,51 @@ namespace ICQ2000 {
       HomepageInfo();
 
       unsigned char age, sex;
-      string homepage;
+      std::string homepage;
       unsigned short birth_year;
       unsigned char birth_month, birth_day, lang1, lang2, lang3;
 
-      string getBirthDate() const;
-      string getLanguage(int l) const;
+      std::string getBirthDate() const;
+      std::string getLanguage(int l) const;
     };
 
     class EmailInfo {
     private:
-      list<string> email_list;
+      std::list<std::string> email_list;
 
     public:
       EmailInfo();
 
-      void addEmailAddress(const string&);
+      void addEmailAddress(const std::string&);
     };
   
     class WorkInfo {
     public:
       WorkInfo();
     
-      string city, state, street, zip;
+      std::string city, state, street, zip;
       unsigned short country;
-      string company_name, company_dept, company_position, company_web;
+      std::string company_name, company_dept, company_position, company_web;
     };
 
     class BackgroundInfo {
     public:
-      typedef std::pair<unsigned short, string> School;
-      list<School> schools;   // school names
+      typedef std::pair<unsigned short, std::string> School;
+      std::list<School> schools;   // school names
 
       BackgroundInfo();
 
-      void addSchool(unsigned short cat, const string& s);
+      void addSchool(unsigned short cat, const std::string& s);
     };
 
     class PersonalInterestInfo {
     public:
-      typedef std::pair<unsigned short, string> Interest;
-      list<Interest> interests;
+      typedef std::pair<unsigned short, std::string> Interest;
+      std::list<Interest> interests;
 
       PersonalInterestInfo();
     
-      void addInterest(unsigned short cat, const string& s);
+      void addInterest(unsigned short cat, const std::string& s);
     };
 
   private:
@@ -163,28 +160,28 @@ namespace ICQ2000 {
     WorkInfo m_work_info;
     PersonalInterestInfo m_personal_interest_info;
     BackgroundInfo m_background_info;
-    string m_about;
+    std::string m_about;
 
   public:
     Contact();
 
     Contact(unsigned int uin);
-    Contact(const string& a);
+    Contact(const std::string& a);
 
     unsigned int getUIN() const;
     void setUIN(unsigned int uin);
-    string getStringUIN() const;
-    string getMobileNo() const;
-    string getNormalisedMobileNo() const;
-    string getAlias() const;
-    string getFirstName() const;
-    string getLastName() const;
-    string getEmail() const;
+    std::string getStringUIN() const;
+    std::string getMobileNo() const;
+    std::string getNormalisedMobileNo() const;
+    std::string getAlias() const;
+    std::string getFirstName() const;
+    std::string getLastName() const;
+    std::string getEmail() const;
 
-    string getNameAlias() const;
+    std::string getNameAlias() const;
 
     Status getStatus() const;
-    string getStatusStr() const;
+    std::string getStatusStr() const;
     bool isInvisible() const;
     bool getAuthReq() const;
 
@@ -202,11 +199,11 @@ namespace ICQ2000 {
     unsigned int get_last_message_time() const;
     unsigned int get_last_away_msg_check_time() const;
 
-    void setMobileNo(const string& mn);
-    void setAlias(const string& al);
-    void setFirstName(const string& fn);
-    void setLastName(const string& ln);
-    void setEmail(const string& em);
+    void setMobileNo(const std::string& mn);
+    void setAlias(const std::string& al);
+    void setFirstName(const std::string& fn);
+    void setLastName(const std::string& ln);
+    void setEmail(const std::string& em);
     void setAuthReq(bool b);
 
     bool getDirect() const;
@@ -234,7 +231,7 @@ namespace ICQ2000 {
     void setWorkInfo(const WorkInfo &w);
     void setInterestInfo(const PersonalInterestInfo& p);
     void setBackgroundInfo(const BackgroundInfo& b);
-    void setAboutInfo(const string& about);
+    void setAboutInfo(const std::string& about);
 
     MainHomeInfo& getMainHomeInfo();
     HomepageInfo& getHomepageInfo();
@@ -242,7 +239,7 @@ namespace ICQ2000 {
     WorkInfo& getWorkInfo();
     BackgroundInfo& getBackgroundInfo();
     PersonalInterestInfo& getPersonalInterestInfo();
-    const string& getAboutInfo() const;
+    const std::string& getAboutInfo() const;
 
     bool isICQContact() const;
     bool isVirtualContact() const;
@@ -257,8 +254,8 @@ namespace ICQ2000 {
     void userinfo_change_emit();
     void userinfo_change_emit(bool is_transient_detail);
 
-    static string UINtoString(unsigned int uin);
-    static unsigned int StringtoUIN(const string& s);
+    static std::string UINtoString(unsigned int uin);
+    static unsigned int StringtoUIN(const std::string& s);
     
     static unsigned short MapStatusToICQStatus(Status st, bool inv);
     static Status MapICQStatusToStatus(unsigned short st);

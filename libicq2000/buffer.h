@@ -30,8 +30,6 @@
 
 #include <libicq2000/Translator.h>
 
-using ICQ2000::Translator;
-
 class Buffer {
  public:
   typedef unsigned int size_type;
@@ -50,11 +48,11 @@ class Buffer {
   std::vector<unsigned char> m_data;
   endian m_endn;
   size_type m_out_pos;
-  Translator *m_translator;
+  ICQ2000::Translator *m_translator;
 
  public:
-  Buffer(Translator *translator);
-  Buffer(const unsigned char *d, unsigned int size, Translator *translator); 
+  Buffer(ICQ2000::Translator *translator);
+  Buffer(const unsigned char *d, unsigned int size, ICQ2000::Translator *translator); 
   // construct from an array
   Buffer(Buffer& b, unsigned int start, unsigned int data_len); // construct by copying from another Buffer
 
@@ -113,7 +111,7 @@ class Buffer {
 
   unsigned char& operator[](unsigned int p);
 
-  void setTranslator(Translator *translator);
+  void setTranslator(ICQ2000::Translator *translator);
   void ServerToClient(std::string& szString);
   void ClientToServer(std::string& szString);
   std::string ServerToClientCC(const std::string& szString);

@@ -35,9 +35,6 @@
 #include <libicq2000/ICQ.h>
 #include <libicq2000/Capabilities.h>
 
-using std::string;
-using std::map;
-
 namespace ICQ2000 {
  
   // ------------- TLV numerical constants ------------
@@ -185,18 +182,18 @@ namespace ICQ2000 {
 
   class StringTLV : public OutTLV, public InTLV {
    protected:
-    string m_value;
+    std::string m_value;
 
     virtual void OutputValue(Buffer& b) const;
 
    public:
     StringTLV();
-    StringTLV(const string& val);
+    StringTLV(const std::string& val);
 
     unsigned short Length() const { return m_value.size(); }
 
     virtual void ParseValue(Buffer& b);
-    virtual string Value() const { return m_value; }
+    virtual std::string Value() const { return m_value; }
   };
 
 
@@ -229,19 +226,19 @@ namespace ICQ2000 {
   class ScreenNameTLV : public StringTLV {
    public:
     ScreenNameTLV();
-    ScreenNameTLV(const string& val);
+    ScreenNameTLV(const std::string& val);
 
     unsigned short Type() const { return TLV_Screenname; }
   };
 
   class PasswordTLV : public OutTLV {
    protected:
-    string m_password;
+    std::string m_password;
 
     void OutputValue(Buffer& b) const;
 
    public:
-    PasswordTLV(const string& pw);
+    PasswordTLV(const std::string& pw);
 
     unsigned short Type() const { return TLV_Password; }
     unsigned short Length() const { return m_password.size(); }
@@ -286,7 +283,7 @@ namespace ICQ2000 {
 
   class ClientProfileTLV : public StringTLV {
    public:
-    ClientProfileTLV(const string& val) : StringTLV(val) { }
+    ClientProfileTLV(const std::string& val) : StringTLV(val) { }
     unsigned short Type() const { return TLV_ClientProfile; }
   };
 
@@ -328,13 +325,13 @@ namespace ICQ2000 {
 
   class CountryCodeTLV : public StringTLV {
    public:
-    CountryCodeTLV(string val) : StringTLV(val) { }
+    CountryCodeTLV(std::string val) : StringTLV(val) { }
     unsigned short Type() const { return TLV_CountryCode; }
   };
 
   class LanguageTLV : public StringTLV {
    public:
-    LanguageTLV(const string& val) : StringTLV(val) { }
+    LanguageTLV(const std::string& val) : StringTLV(val) { }
     unsigned short Type() const { return TLV_Language; }
   };
 
@@ -416,7 +413,7 @@ namespace ICQ2000 {
 
   class RedirectTLV : public InTLV {
    private:
-    string m_server;
+    std::string m_server;
     unsigned short m_port;
 
    public:
@@ -427,7 +424,7 @@ namespace ICQ2000 {
 
     void ParseValue(Buffer& b);
 
-    string getHost() { return m_server; }
+    std::string getHost() { return m_server; }
     unsigned short getPort() { return m_port; }
   };
 
@@ -490,14 +487,14 @@ namespace ICQ2000 {
 
   class MessageTextTLV : public InTLV {
    protected:
-    string m_message;
+    std::string m_message;
     unsigned short m_flag1, m_flag2;
     
    public:
     MessageTextTLV()
       : m_message(), m_flag1(0), m_flag2(0) { }
 
-    string getMessage() { return m_message; }
+    std::string getMessage() { return m_message; }
     unsigned short getFlag1() { return m_flag1; }
     unsigned short getFlag2() { return m_flag1; }
 
@@ -512,7 +509,7 @@ namespace ICQ2000 {
    public:
     MessageDataTLV();
 
-    string getMessage() { return mttlv.getMessage(); }
+    std::string getMessage() { return mttlv.getMessage(); }
     unsigned short getFlag1() { return mttlv.getFlag1(); }
     unsigned short getFlag2() { return mttlv.getFlag2(); }
 
@@ -574,7 +571,7 @@ namespace ICQ2000 {
 
   class TLVList {
    private:
-    map<unsigned short,InTLV*> tlvmap;
+    std::map<unsigned short,InTLV*> tlvmap;
    public:
     TLVList();
     ~TLVList();

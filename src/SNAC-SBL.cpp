@@ -26,6 +26,8 @@
 
 #include <libicq2000/TLV.h>
 
+using std::string;
+
 namespace ICQ2000 {
 
   // --------------- Server-based Lists (Family 0x0013) SNACs --------------

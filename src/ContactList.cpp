@@ -22,6 +22,8 @@
 #include <libicq2000/ContactList.h>
 #include <libicq2000/events.h>
 
+using std::string;
+
 namespace ICQ2000 {
 
   ContactList::ContactList() { }

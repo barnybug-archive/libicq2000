@@ -28,8 +28,9 @@
 
 #include <stdlib.h>
 
-using std::endl;
+using std::string;
 using std::ostringstream;
+using std::endl;
 using SigC::slot;
 
 namespace ICQ2000 {

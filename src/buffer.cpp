@@ -28,6 +28,8 @@ using std::string;
 using std::endl;
 using std::ostream;
 
+using ICQ2000::Translator;
+
 Buffer::Buffer(Translator *translator) : m_data(), m_endn(BIG), m_out_pos(0), 
   m_translator(translator) { }
 

@@ -21,6 +21,9 @@
 
 #include <libicq2000/Xml.h>
 
+using std::string;
+using std::list;
+
 // ---------- XmlNode ---------------------------
 
 XmlNode::XmlNode(const string& t) : tag(t) { }

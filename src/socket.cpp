@@ -30,6 +30,7 @@
 # include <config.h>
 #endif
 
+using std::string;
 using std::ostringstream;
 using std::istringstream;
 //using std::copy;

@@ -28,6 +28,7 @@
 #include <libicq2000/userinfoconstants.h>
 #include <libicq2000/events.h>
 
+using std::string;
 using std::ostringstream;
 using std::istringstream;
 

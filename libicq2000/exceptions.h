@@ -25,17 +25,14 @@
 #include <string>
 #include <exception>
 
-using std::string;
-using std::exception;
-
 namespace ICQ2000 {
 
-  class ParseException : exception {
+  class ParseException : public std::exception {
    private:
-    string m_errortext;
+    std::string m_errortext;
     
    public:
-    ParseException(const string& text);
+    ParseException(const std::string& text);
     ~ParseException() throw() { }
 
     const char* what() const throw();

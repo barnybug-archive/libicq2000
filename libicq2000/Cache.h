@@ -25,8 +25,6 @@
 #include <list>
 #include <time.h>
 
-using std::list;
-
 namespace ICQ2000 {
   
   /*
@@ -57,8 +55,8 @@ namespace ICQ2000 {
   template < typename Key, typename Value >
   class Cache {
    protected:
-    typedef typename list< CacheItem<Key,Value> >::iterator literator;
-    typedef typename list< CacheItem<Key,Value> >::const_iterator citerator;
+    typedef typename std::list< CacheItem<Key,Value> >::iterator literator;
+    typedef typename std::list< CacheItem<Key,Value> >::const_iterator citerator;
 
     unsigned int m_timeout;
     
@@ -67,7 +65,7 @@ namespace ICQ2000 {
      * a hash could be used as well, but efficiency isn't really an
      * issue - there shouldn't be more than 10 items in here at any one point
      */
-    list< CacheItem<Key,Value> > m_list;
+    std::list< CacheItem<Key,Value> > m_list;
 
     citerator lookup(const Key& k) const {
       citerator curr = m_list.begin();

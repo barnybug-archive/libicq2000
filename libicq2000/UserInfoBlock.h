@@ -35,7 +35,7 @@ namespace ICQ2000 {
    */
   class UserInfoBlock {
    protected:
-    string m_screenname;
+    std::string m_screenname;
     unsigned short m_warninglevel, m_userClass;
     unsigned char m_allowDirect, m_webAware;
     unsigned short m_status;
@@ -50,7 +50,7 @@ namespace ICQ2000 {
    public:
     UserInfoBlock();
 
-    string getScreenName() const;
+    std::string getScreenName() const;
     unsigned int getUIN() const;
     unsigned int getTimeOnline() const;
     unsigned int getSignupDate() const;

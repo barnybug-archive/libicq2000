@@ -26,6 +26,9 @@
 
 #include <libicq2000/TLV.h>
 
+using std::string;
+using std::list;
+
 namespace ICQ2000 {
 
   // --------------- Visible/invisible List (Family 0x0009) SNACs --------------

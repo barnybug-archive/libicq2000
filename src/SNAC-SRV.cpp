@@ -29,6 +29,7 @@
 
 #include <libicq2000/time_extra.h>
 
+using std::string;
 using std::auto_ptr;
 using std::istringstream;
 

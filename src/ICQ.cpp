@@ -24,6 +24,8 @@
 #include "sstream_fix.h"
 #include <memory>
 
+using std::string;
+using std::list;
 using std::ostringstream;
 using std::auto_ptr;
 

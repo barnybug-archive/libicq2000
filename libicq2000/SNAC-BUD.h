@@ -48,7 +48,7 @@ namespace ICQ2000 {
 
   class AddBuddySNAC : public BUDFamilySNAC, public OutSNAC {
    private:
-    list<string> m_buddy_list;
+    std::list<std::string> m_buddy_list;
     
    protected:
     void OutputBody(Buffer& b) const;
@@ -65,7 +65,7 @@ namespace ICQ2000 {
 
   class RemoveBuddySNAC : public BUDFamilySNAC, public OutSNAC {
    private:
-    list<string> m_buddy_list;
+    std::list<std::string> m_buddy_list;
     
    protected:
     void OutputBody(Buffer& b) const;

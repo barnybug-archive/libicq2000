@@ -50,15 +50,15 @@ namespace ICQ2000 {
 
   class SrvSendSNAC : public SrvFamilySNAC, public OutSNAC {
    protected:
-    string m_text, m_destination, m_senders_name;
+    std::string m_text, m_destination, m_senders_name;
     unsigned int m_senders_UIN;
     bool m_delivery_receipt;
     
     void OutputBody(Buffer& b) const;
 
    public:
-    SrvSendSNAC(const string& text, const string& destination,
-		unsigned int senders_UIN, const string& senders_name, bool delrpt);
+    SrvSendSNAC(const std::string& text, const std::string& destination,
+		unsigned int senders_UIN, const std::string& senders_name, bool delrpt);
 
     unsigned short Subtype() const { return SNAC_SRV_Send; }
   };
@@ -104,12 +104,12 @@ namespace ICQ2000 {
   class SrvRequestShortWP : public SrvFamilySNAC, public OutSNAC {
    protected:
     unsigned int m_my_uin;
-    string m_nickname, m_firstname, m_lastname;
+    std::string m_nickname, m_firstname, m_lastname;
     void OutputBody(Buffer& b) const;
 
    public:
-    SrvRequestShortWP(unsigned int my_uin, const string& nickname, 
-		      const string& firstname, const string& lastname);
+    SrvRequestShortWP(unsigned int my_uin, const std::string& nickname, 
+		      const std::string& firstname, const std::string& lastname);
 
     unsigned short Subtype() const { return SNAC_SRV_Send; }
   };
@@ -117,11 +117,11 @@ namespace ICQ2000 {
   class SrvRequestFullWP : public SrvFamilySNAC, public OutSNAC {
    private:
     unsigned int m_my_uin;
-    string m_nickname, m_firstname, m_lastname, m_email;
+    std::string m_nickname, m_firstname, m_lastname, m_email;
     unsigned short m_min_age, m_max_age;
     unsigned char m_sex;
     unsigned char m_language;
-    string m_city, m_state, m_company_name, m_department, m_position;
+    std::string m_city, m_state, m_company_name, m_department, m_position;
     unsigned short m_country;
     bool m_only_online;
 
@@ -129,11 +129,11 @@ namespace ICQ2000 {
     void OutputBody(Buffer& b) const;
 
    public:
-    SrvRequestFullWP(unsigned int my_uin, const string& nickname, const string& firstname,
-		     const string& lastname, const string& email, unsigned short min_age, unsigned short max_age,
-		     unsigned char sex, unsigned char language, const string& city, const string& state,
-		     unsigned short country, const string& company_name, const string& department,
-		     const string& position, bool only_online);
+    SrvRequestFullWP(unsigned int my_uin, const std::string& nickname, const std::string& firstname,
+		     const std::string& lastname, const std::string& email, unsigned short min_age, unsigned short max_age,
+		     unsigned char sex, unsigned char language, const std::string& city, const std::string& state,
+		     unsigned short country, const std::string& company_name, const std::string& department,
+		     const std::string& position, bool only_online);
 
     unsigned short Subtype() const { return SNAC_SRV_Send; }
   };
@@ -206,13 +206,13 @@ namespace ICQ2000 {
   class SrvUpdateAboutInfo : public SrvFamilySNAC, public OutSNAC {
     private:
       unsigned int m_my_uin;
-      const string& m_about_info;
+      const std::string& m_about_info;
 
     protected:
       void OutputBody(Buffer& b) const;
 
     public:
-      SrvUpdateAboutInfo(unsigned int my_uin, const string& about_info);
+      SrvUpdateAboutInfo(unsigned int my_uin, const std::string& about_info);
       unsigned short Subtype() const { return SNAC_SRV_Send; }
  };
   
@@ -262,11 +262,11 @@ namespace ICQ2000 {
     ResponseType m_type;
 
     // SMS Response fields
-    string m_source, m_network, m_message_id, m_messages_left;
+    std::string m_source, m_network, m_message_id, m_messages_left;
     bool m_deliverable, m_smtp_deliverable;
     int m_error_id;
-    string m_error_param;
-    string m_smtp_from, m_smtp_to, m_smtp_subject;
+    std::string m_error_param;
+    std::string m_smtp_from, m_smtp_to, m_smtp_subject;
     
     // Offline Message fields
     time_t m_time;
@@ -276,7 +276,7 @@ namespace ICQ2000 {
     // SimpleUserInfo fields
     bool m_empty_contact;
     unsigned int m_uin;
-    string m_alias, m_firstname, m_lastname, m_email;
+    std::string m_alias, m_firstname, m_lastname, m_email;
     bool m_last_in_search;
 
     // DetailedUserInfo fields
@@ -307,19 +307,19 @@ namespace ICQ2000 {
     ~SrvResponseSNAC();
 
     ResponseType getType() const { return m_type; }
-    string getSource() const { return m_source; }
+    std::string getSource() const { return m_source; }
     bool deliverable() const { return m_deliverable; }
     bool smtp_deliverable() const { return m_smtp_deliverable; }
 
-    string getSMTPFrom() const { return m_smtp_from; }
-    string getSMTPTo() const { return m_smtp_to; }
-    string getSMTPSubject() const { return m_smtp_subject; }
+    std::string getSMTPFrom() const { return m_smtp_from; }
+    std::string getSMTPTo() const { return m_smtp_to; }
+    std::string getSMTPSubject() const { return m_smtp_subject; }
 
-    string getNetwork() const { return m_network; }
-    string getMessageId() const { return m_message_id; }
-    string getMessagesLeft() const { return m_messages_left; }
+    std::string getNetwork() const { return m_network; }
+    std::string getMessageId() const { return m_message_id; }
+    std::string getMessagesLeft() const { return m_messages_left; }
     int getErrorId() const { return m_error_id; }
-    string getErrorParam() const { return m_error_param; }
+    std::string getErrorParam() const { return m_error_param; }
 
     ICQSubType *getICQSubType() const { return m_icqsubtype; }
     unsigned int getSenderUIN() const { return m_sender_UIN; }
@@ -327,10 +327,10 @@ namespace ICQ2000 {
 
     bool isEmptyContact() const { return m_empty_contact; }
     unsigned int getUIN() const { return m_uin; }
-    string getAlias() const { return m_alias; }
-    string getFirstName() const { return m_firstname; }
-    string getLastName() const { return m_lastname; }
-    string getEmail() const { return m_email; }
+    std::string getAlias() const { return m_alias; }
+    std::string getFirstName() const { return m_firstname; }
+    std::string getLastName() const { return m_lastname; }
+    std::string getEmail() const { return m_email; }
     bool getAuthReq() const { return m_authreq; }
     Status getStatus() const { return m_status; }
     
@@ -347,7 +347,7 @@ namespace ICQ2000 {
     Contact::WorkInfo& getWorkInfo() { return m_work_info; }
     Contact::BackgroundInfo& getBackgroundInfo() { return m_background_info; }
     Contact::PersonalInterestInfo& getPersonalInterestInfo() { return m_personal_interest_info; }
-    string getAboutInfo() const { return m_about; }
+    std::string getAboutInfo() const { return m_about; }
   };
 
 }

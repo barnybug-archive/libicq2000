@@ -21,6 +21,9 @@
 
 #include <libicq2000/TLV.h>
 
+using std::string;
+using std::map;
+
 namespace ICQ2000 {
 
   static const unsigned char XORtable[] = { 0xf3, 0x26, 0x81, 0xc4,
