@@ -1,3 +1,140 @@
+2002-07-20 13:01  barnabygray
+
+	* examples/Makefile.am: More header files to include in SOURCES for
+	dist target
+
+2002-07-18 20:46  barnabygray
+
+	* examples/: Makefile.am, Select.cpp, Select.h, shell.cpp, shell.h:
+	Fixed up working example again.
+
+2002-07-11 00:28  barnabygray
+
+	* libicq2000/DCCache.h, libicq2000/ICBMCookieCache.h,
+	libicq2000/RequestIDCache.h, libicq2000/SeqNumCache.h,
+	src/Client.cpp: Fix some memory leaks (thanks to lukasm for
+	pointing them out).
+
+2002-06-25 18:47  barnabygray
+
+	* THANKS, libicq2000/Client.h, libicq2000/events.h, src/Client.cpp,
+	src/events.cpp: Nils Björklund <nilbjo@telia.com>  - connecting
+	signal
+
+2002-06-20 15:08  barnabygray
+
+	* configure.in: Fix so libtoolize will actually be run.
+
+2002-06-08 14:51  barnabygray
+
+	* libicq2000/ICQ.h, libicq2000/MessageHandler.h, libicq2000/TLV.h,
+	libicq2000/events.h, src/ICQ.cpp, src/MessageHandler.cpp,
+	src/TLV.cpp, src/events.cpp: Support for Web pager messages (almost
+	identical to Email express ones).
+
+2002-06-08 12:57  barnabygray
+
+	* src/MessageHandler.cpp: Remove updating contact status based on
+	accept-status in ACK.
+
+2002-05-19 15:36  barnabygray
+
+	* libicq2000.m4: Correction to the m4 macro.
+
+2002-05-17 18:18  barnabygray
+
+	* examples/Makefile.am: Don't compile the examples for the moment
+
+2002-05-17 11:40  barnabygray
+
+	* examples/: PipeExec.cpp, PipeExec.h, Select.cpp, Select.h:
+	Improved the examples
+
+2002-05-17 11:38  barnabygray
+
+	* examples/Makefile.am, examples/shell.cpp, src/Client.cpp:
+	Aborting sending correctly when switching to offline whilst
+	messages are still in delivery.
+
+2002-05-16 19:02  barnabygray
+
+	* src/Capabilities.cpp: Seems this capability is relevant too - re:
+	ICQ2Go
+
+2002-05-11 13:28  barnabygray
+
+	* libicq2000/events.h, src/events.cpp: Support for copying some
+	events easily
+
+2002-05-10 01:09  barnabygray
+
+	* src/MessageHandler.cpp: All acks to away message requests are
+	delivered.. well they should be.
+
+2002-05-06 01:14  barnabygray
+
+	* libicq2000/Client.h, src/Client.cpp: Couple of convenience
+	methods
+
+2002-05-06 00:49  barnabygray
+
+	* src/ICQ.cpp: Fix for compatability with licq, which seems to use
+	different (incorrect?) accept-status flags
+
+2002-05-05 19:38  barnabygray
+
+	* src/MessageHandler.cpp: Default to delivered so it's at least
+	defined for clients that don't do this
+
+2002-04-30 01:03  barnabygray
+
+	* configure.in: By default compile without -g flag, as discussed on
+	ickle mailing list
+
+2002-04-29 17:13  mitz
+
+	* libicq2000/Client.h, libicq2000/SNAC-GEN.h, src/Client.cpp,
+	src/SNAC-GEN.cpp: Web-aware
+
+2002-04-28 23:33  barnabygray
+
+	* Makefile.am: Removing debian bits
+
+2002-04-28 23:33  barnabygray
+
+	* debian/: README, changelog, control, copyright,
+	libicq2000-dev.files, libicq2000-dev.links,
+	libicq2000-dev.manpages, libicq2000-doc.files,
+	libicq2000-doc.links, libicq2000.docs, libicq2000.files, rules:
+	Removed debian files, since it's now actually in debian..
+
+2002-04-27 19:50  barnabygray
+
+	* autogen.sh: Pick up alternate forms of libtool macro
+
+2002-04-27 15:34  barnabygray
+
+	* configure.in, src/Client.cpp: The server seems to have started
+	sending user info updates with blank IP fields, ignore these.
+
+2002-04-26 23:36  alant
+
+	* src/Capabilities.cpp: Fix for strange RedHat's gcc-2.96
+	behaviour. Need to read Stroustrup once more.
+
+2002-04-26 16:47  barnabygray
+
+	* configure.in: Inc. version numbers
+
+2002-04-26 16:44  barnabygray
+
+	* libicq2000/DirectClient.h, src/DirectClient.cpp: Boo
+
+2002-04-26 16:41  barnabygray
+
+	* ChangeLog, NEWS, README, src/DirectClient.cpp: Stuff what need to
+	be done for the next release
+
 2002-04-26 16:18  barnabygray
 
 	* libicq2000/Capabilities.h, libicq2000/Client.h,
