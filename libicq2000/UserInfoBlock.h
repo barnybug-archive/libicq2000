@@ -53,6 +53,8 @@ namespace ICQ2000 {
     string getScreenName() const;
     unsigned int getUIN() const;
     unsigned int getTimeOnline() const;
+    unsigned int getSignupDate() const;
+    unsigned int getSignonDate() const;
     unsigned int getLanIP() const;
     unsigned int getExtIP() const;
     unsigned short getLanPort() const;

@@ -148,6 +148,8 @@ namespace ICQ2000 {
     unsigned int m_ext_ip, m_lan_ip;
     unsigned short m_ext_port, m_lan_port;
     Capabilities m_capabilities;
+    unsigned int m_signon_time, m_last_online_time, m_last_status_change_time;
+    unsigned int m_last_message_time, m_last_away_msg_check_time;
 
     static unsigned int imag_uin;
     
@@ -194,6 +196,12 @@ namespace ICQ2000 {
     bool get_accept_adv_msgs() const;
     Capabilities get_capabilities() const;
 
+    unsigned int get_signon_time() const;
+    unsigned int get_last_online_time() const;
+    unsigned int get_last_status_change_time() const;
+    unsigned int get_last_message_time() const;
+    unsigned int get_last_away_msg_check_time() const;
+
     void setMobileNo(const string& mn);
     void setAlias(const string& al);
     void setFirstName(const string& fn);
@@ -213,7 +221,13 @@ namespace ICQ2000 {
     void setLanPort(unsigned short port);
     void setTCPVersion(unsigned char v);
     void set_capabilities(const Capabilities& c);
-   
+
+    void set_signon_time(unsigned int t);
+    void set_last_online_time(unsigned int t);
+    void set_last_status_change_time(unsigned int t);
+    void set_last_message_time(unsigned int t);
+    void set_last_away_msg_check_time(unsigned int t);
+
     void setMainHomeInfo(const MainHomeInfo& m);
     void setHomepageInfo(const HomepageInfo& s);
     void setEmailInfo(const EmailInfo &e);

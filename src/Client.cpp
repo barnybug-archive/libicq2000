@@ -791,6 +791,7 @@ namespace ICQ2000 {
       c->setExtPort( userinfo.getExtPort() );
       c->setLanPort( userinfo.getLanPort() );
       c->setTCPVersion( userinfo.getTCPVersion() );
+      c->set_signon_time( userinfo.getSignonDate() );
       if (userinfo.contains_capabilities())
 	c->set_capabilities( userinfo.get_capabilities() );
       

@@ -69,6 +69,11 @@ namespace ICQ2000 {
     m_ext_port = 0;
     m_lan_port = 0;
     m_direct = true;
+    m_signon_time = 0;
+    m_last_online_time = 0;
+    m_last_status_change_time = 0;
+    m_last_message_time = 0;
+    m_last_away_msg_check_time = 0;
   }
 
   unsigned int Contact::getUIN() const { return m_uin; }
@@ -134,10 +139,24 @@ namespace ICQ2000 {
     return (m_tcp_version >= 7 && m_status != STATUS_OFFLINE && m_capabilities.get_accept_adv_msgs());
   }
 
-  Capabilities Contact::get_capabilities() const
+  Capabilities Contact::get_capabilities() const { return m_capabilities; }
+
+  unsigned int Contact::get_signon_time() const { return m_signon_time; }
+
+  unsigned int Contact::get_last_online_time() const
   {
-    return m_capabilities;
+    if (m_status == STATUS_ONLINE) {
+      return time(NULL);
+    } else {
+      return m_last_online_time;
+    }
   }
+
+  unsigned int Contact::get_last_status_change_time() const { return m_last_status_change_time; }
+
+  unsigned int Contact::get_last_message_time() const { return m_last_message_time; }
+
+  unsigned int Contact::get_last_away_msg_check_time() const { return m_last_away_msg_check_time; }
 
   bool Contact::isInvisible() const { return m_invisible; }
 
@@ -179,7 +198,9 @@ namespace ICQ2000 {
 
     m_status = st;
     m_invisible = i;
-    
+
+    m_last_status_change_time = time(NULL);
+
     // clear dynamic fields on going OFFLINE
     if (m_status == STATUS_OFFLINE) {
       m_ext_ip = 0;
@@ -188,6 +209,7 @@ namespace ICQ2000 {
       m_lan_port = 0;
       m_tcp_version = 0;
       m_capabilities.clear();
+      m_last_online_time = time(NULL);
     }
 
     status_change_signal.emit( &sev );
@@ -251,6 +273,36 @@ namespace ICQ2000 {
   void Contact::set_capabilities(const Capabilities& c)
   {
     m_capabilities = c;
+  }
+
+  void Contact::set_signon_time(unsigned int t)
+  {
+    m_signon_time = t;
+    userinfo_change_emit(true);
+  }
+
+  void Contact::set_last_online_time(unsigned int t)
+  {
+    m_last_online_time = t;
+    userinfo_change_emit(true);
+  }
+
+  void Contact::set_last_status_change_time(unsigned int t)
+  {
+    m_last_status_change_time = t;
+    userinfo_change_emit(true);
+  }
+
+  void Contact::set_last_message_time(unsigned int t)
+  {
+    m_last_message_time = t;
+    userinfo_change_emit(true);
+  }
+
+  void Contact::set_last_away_msg_check_time(unsigned int t)
+  {
+    m_last_away_msg_check_time = t;
+    userinfo_change_emit(true);
   }
 
   void Contact::setMainHomeInfo(const MainHomeInfo& s) {

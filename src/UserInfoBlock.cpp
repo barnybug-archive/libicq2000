@@ -37,6 +37,8 @@ namespace ICQ2000 {
   }
   
   unsigned int UserInfoBlock::getTimeOnline() const { return m_timeOnline; }
+  unsigned int UserInfoBlock::getSignupDate() const { return m_signupDate; }
+  unsigned int UserInfoBlock::getSignonDate() const { return m_signonDate; }
   unsigned int UserInfoBlock::getLanIP() const { return m_lan_ip; }
   unsigned int UserInfoBlock::getExtIP() const { return m_ext_ip; }
   unsigned short UserInfoBlock::getLanPort() const { return m_lan_port; }

@@ -62,8 +62,10 @@ namespace ICQ2000 {
     ICQMessageEvent *ev = UINICQSubTypeToEvent(ust, contact);
     if (ev->getType() != MessageEvent::AwayMessage) {
       messaged.emit(ev);
+      contact->set_last_message_time( time(NULL) );
     } else {
       ev->setDelivered(true);
+      contact->set_last_away_msg_check_time( time(NULL) );
     }
 
     Status st = m_self_contact->getStatus();
