@@ -59,7 +59,7 @@ namespace ICQ2000 {
 
    public:
     SMSEventCacheValue( SMSMessageEvent *ev ) : m_ev(ev) { }
-    ~SMSEventCacheValue() { delete m_ev; }
+    virtual ~SMSEventCacheValue() { delete m_ev; }
     SMSMessageEvent* getEvent() const { return m_ev; }
     Contact* getContact() const { return m_ev->getContact(); }
 

@@ -36,7 +36,7 @@ static const signed char Timezone_unknown = -100;
 
 static const unsigned char Language_table_size = 60;
 
-static const char* Language_table[Language_table_size] = {
+static const char* const Language_table[Language_table_size] = {
   "Unspecified",
   "Arabic",
   "Bhojpuri",
@@ -358,7 +358,7 @@ static const struct Country Country_table[Country_table_size] =
 static const unsigned char Interests_table_size = 51;
 static const unsigned char Interests_offset = 100;
 
-static const char* Interests_table[Interests_table_size] = {
+static const char* const Interests_table[Interests_table_size] = {
   "Art",
   "Cars",
   "Celebrity Fans",
@@ -442,7 +442,7 @@ enum AgeRange {
   range_60_above = 6
 };
 
-static const char *AgeRange_text[] = {
+static const char* const AgeRange_text[] = {
   "none",
   "18-22",
   "23-29",

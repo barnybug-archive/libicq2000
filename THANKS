@@ -16,3 +16,6 @@ Michael Smith - fix for non-printable characters in terminals
 Tobias Hoffman - socket IP order bug
 
 Serhiy Brytskyy - translation file for wincp1251 - koi8-u (UKRAINIAN_WIN)
+
+Jason Townsend - Warnings fixes when compiling with (the somewhat
+  pedantic) -Wall.

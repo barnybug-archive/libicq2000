@@ -35,7 +35,7 @@ enum Status {
   STATUS_OFFLINE,
 };
 
-static const char* Status_text[] = { "Online",
+static const char* const Status_text[] = { "Online",
 				     "Away",
 				     "N/A",
 				     "Occupied",

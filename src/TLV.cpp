@@ -225,7 +225,7 @@ namespace ICQ2000 {
   PasswordTLV::PasswordTLV(const string& pw) : m_password(pw) { }
   void PasswordTLV::OutputValue(Buffer& b) const {
     b << (unsigned short)m_password.size();
-    for(int i = 0; i < m_password.size(); i++)
+    for(unsigned int i = 0; i < m_password.size(); i++)
       b << (unsigned char)(m_password[i] ^ XORtable[i%16]);
 
   }
@@ -333,7 +333,7 @@ namespace ICQ2000 {
     : m_firewall(0x0400), m_tcp_version(7) { }
 
   LANDetailsTLV::LANDetailsTLV(unsigned int ip, unsigned short port)
-    : m_tcp_version(7), m_lan_ip(ip), m_lan_port(port), m_firewall(0x0400) { }
+    : m_lan_ip(ip), m_lan_port(port), m_firewall(0x0400), m_tcp_version(7) { }
 
   void LANDetailsTLV::ParseValue(Buffer& b) {
     unsigned short length;
