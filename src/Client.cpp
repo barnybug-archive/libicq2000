@@ -821,24 +821,39 @@ namespace ICQ2000 {
 
   // ------------------ Outgoing packets -------------------
 
-  unsigned int Client::FLAPHeader(Buffer& b, unsigned char channel) {
+  Buffer::marker Client::FLAPHeader(Buffer& b, unsigned char channel) 
+  {
+    b.setBigEndian();
     b << (unsigned char) 42;
     b << channel;
     b << NextSeqNum();
-    b << (unsigned short) 0; // this is filled out later
-    return b.size();
+    Buffer::marker mk = b.getAutoSizeShortMarker();
+    return mk;
+  }
+  
+  void Client::FLAPFooter(Buffer& b, Buffer::marker& mk) 
+  {
+    b.setAutoSizeMarker(mk);
+  }
+  
+
+  void Client::FLAPwrapSNAC(Buffer& b, const OutSNAC& snac)
+  {
+    Buffer::marker mk = FLAPHeader(b, 0x02);
+    b << snac;
+    FLAPFooter(b,mk);
   }
 
-  void Client::FLAPFooter(Buffer& b, unsigned int d) {
-    unsigned short len;
-    len = b.size() - d;
-    b[d-2] = len >> 8;
-    b[d-1] = len & 0xFF;
+  void Client::FLAPwrapSNACandSend(const OutSNAC& snac)
+  {
+    Buffer b(&m_translator);
+    FLAPwrapSNAC(b, snac);
+    Send(b);
   }
-
+  
   void Client::SendAuthReq() {
     Buffer b(&m_translator);
-    unsigned int d = FLAPHeader(b,0x01);
+    Buffer::marker mk = FLAPHeader(b,0x01);
 
     b << (unsigned int)0x00000001;
 
@@ -854,104 +869,69 @@ namespace ICQ2000 {
       << LanguageTLV("en")
       << CountryCodeTLV("us");
 
-    FLAPFooter(b,d);
+    FLAPFooter(b,mk);
     SignalLog(LogEvent::INFO, "Sending Authorisation Request");
     Send(b);
   }
 
   void Client::SendNewUINReq() {
     Buffer b(&m_translator);
-    unsigned int d = FLAPHeader(b,0x01);
+    Buffer::marker mk;
 
+    mk = FLAPHeader(b,0x01);
     b << (unsigned int)0x00000001;
-    FLAPFooter(b,d);
+    FLAPFooter(b,mk);
     Send(b);
-    b.clear();
 
-    d = FLAPHeader(b,0x02);
-    UINRequestSNAC sn(m_password);
-    b << sn;
-    FLAPFooter(b,d);
     SignalLog(LogEvent::INFO, "Sending New UIN Request");
-    Send(b);
+    FLAPwrapSNACandSend( UINRequestSNAC(m_password) );
   }
     
   void Client::SendCookie() {
     Buffer b(&m_translator);
-    unsigned int d = FLAPHeader(b,0x01);
+    Buffer::marker mk = FLAPHeader(b,0x01);
 
     b << (unsigned int)0x00000001;
 
     b << CookieTLV(m_cookie_data, m_cookie_length);
 
-    FLAPFooter(b,d);
+    FLAPFooter(b,mk);
     SignalLog(LogEvent::INFO, "Sending Login Cookie");
     Send(b);
   }
     
   void Client::SendCapabilities() {
-    Buffer b(&m_translator);
-    unsigned int d = FLAPHeader(b,0x02);
-    CapabilitiesSNAC cs;
-    b << cs;
-    FLAPFooter(b,d);
     SignalLog(LogEvent::INFO, "Sending Capabilities");
-    Send(b);
+    FLAPwrapSNACandSend( CapabilitiesSNAC() );
   }
 
   void Client::SendSetUserInfo() {
-    Buffer b(&m_translator);
-    unsigned int d = FLAPHeader(b,0x02);
-    SetUserInfoSNAC cs;
-    b << cs;
-    FLAPFooter(b,d);
     SignalLog(LogEvent::INFO, "Sending Set User Info");
-    Send(b);
+    FLAPwrapSNACandSend( SetUserInfoSNAC() );
   }
 
   void Client::SendRateInfoRequest() {
-    Buffer b(&m_translator);
-    unsigned int d = FLAPHeader(b,0x02);
-    RequestRateInfoSNAC rs;
-    b << rs;
-    FLAPFooter(b,d);
     SignalLog(LogEvent::INFO, "Sending Rate Info Request");
-    Send(b);
+    FLAPwrapSNACandSend( RequestRateInfoSNAC() );
   }
   
   void Client::SendRateInfoAck() {
-    Buffer b(&m_translator);
-    unsigned int d = FLAPHeader(b,0x02);
-    RateInfoAckSNAC rs;
-    b << rs;
-    FLAPFooter(b,d);
     SignalLog(LogEvent::INFO, "Sending Rate Info Ack");
-    Send(b);
+    FLAPwrapSNACandSend( RateInfoAckSNAC() );
   }
 
   void Client::SendPersonalInfoRequest() {
-    Buffer b(&m_translator);
-    unsigned int d = FLAPHeader(b,0x02);
-    PersonalInfoRequestSNAC us;
-    b << us;
-    FLAPFooter(b,d);
     SignalLog(LogEvent::INFO, "Sending Personal Info Request");
-    Send(b);
+    FLAPwrapSNACandSend( PersonalInfoRequestSNAC() );
   }
 
   void Client::SendAddICBMParameter() {
-    Buffer b(&m_translator);
-    unsigned int d = FLAPHeader(b,0x02);
-    MsgAddICBMParameterSNAC ms;
-    b << ms;
-    FLAPFooter(b,d);
     SignalLog(LogEvent::INFO, "Sending Add ICBM Parameter");
-    Send(b);
+    FLAPwrapSNACandSend( MsgAddICBMParameterSNAC() );
   }
 
   void Client::SendLogin() {
     Buffer b(&m_translator);
-    unsigned int d;
 
     // startup listening server at this point, so we
     // know the listening port and ip
@@ -965,22 +945,12 @@ namespace ICQ2000 {
       SignalLog(LogEvent::INFO, "Not starting listening server, incoming Direct connections disabled");
     }
 
-    if (!m_contact_list.empty()) {
-      d = FLAPHeader(b,0x02);
-      AddBuddySNAC abs(m_contact_list);
-      b << abs;
-      FLAPFooter(b,d);
-    }
+    if (!m_contact_list.empty())
+      FLAPwrapSNAC(b, AddBuddySNAC(m_contact_list) );
 
-    if (m_invisible) {
-        // offline -> invisible
-        d = FLAPHeader(b,0x02);
-        AddVisibleSNAC avs;
-        b << avs;
-        FLAPFooter(b,d);
-    }
+    if (m_invisible)
+      FLAPwrapSNAC(b, AddVisibleSNAC() );
         
-    d = FLAPHeader(b,0x02);
     SetStatusSNAC sss(MapStatusToICQStatus(m_status, m_invisible));
 
     // explicitly set status to offline. If the user set the status
@@ -992,23 +962,11 @@ namespace ICQ2000 {
     sss.setSendExtra(true);
     sss.setIP( m_serverSocket.getLocalIP() );
     sss.setPort( (m_in_dc ? m_listenServer.getPort() : 0) );
-    b << sss;
-    FLAPFooter(b,d);
+    FLAPwrapSNAC( b, sss );
 
-    //    d = FLAPHeader(b,0x02);
-    //    SetIdleSNAC sis;
-    //    b << sis;
-    //    FLAPFooter(b,d);
+    FLAPwrapSNAC( b, ClientReadySNAC() );
 
-    d = FLAPHeader(b,0x02);
-    ClientReadySNAC crs;
-    b << crs;
-    FLAPFooter(b,d);
-
-    d = FLAPHeader(b,0x02);
-    SrvRequestOfflineSNAC ssnac(m_uin);
-    b << ssnac;
-    FLAPFooter(b,d);
+    FLAPwrapSNAC( b, SrvRequestOfflineSNAC(m_uin) );
 
     SignalLog(LogEvent::INFO, "Sending Contact List, Status, Client Ready and Offline Messages Request");
     Send(b);
@@ -1018,30 +976,14 @@ namespace ICQ2000 {
   }
 
   void Client::SendOfflineMessagesRequest() {
-    Buffer b(&m_translator);
-    unsigned int d;
-
-    d = FLAPHeader(b,0x02);
-    SrvRequestOfflineSNAC ssnac(m_uin);
-    b << ssnac;
-    FLAPFooter(b,d);
-
     SignalLog(LogEvent::INFO, "Sending Offline Messages Request");
-    Send(b);
+    FLAPwrapSNACandSend( SrvRequestOfflineSNAC(m_uin) );
   }
 
 
   void Client::SendOfflineMessagesACK() {
-    Buffer b(&m_translator);
-    unsigned int d;
-
-    d = FLAPHeader(b,0x02);
-    SrvAckOfflineSNAC ssnac(m_uin);
-    b << ssnac;
-    FLAPFooter(b,d);
-
     SignalLog(LogEvent::INFO, "Sending Offline Messages ACK");
-    Send(b);
+    FLAPwrapSNACandSend( SrvAckOfflineSNAC(m_uin) );
   }
 
   void Client::SendAdvancedACK(MessageSNAC *snac) {
@@ -1049,17 +991,8 @@ namespace ICQ2000 {
     if (st == NULL || dynamic_cast<UINICQSubType*>(st) == NULL ) return;
     UINICQSubType *ust = dynamic_cast<UINICQSubType*>(snac->grabICQSubType());
 
-    Buffer b(&m_translator);
-    unsigned int d;
-    
-    d = FLAPHeader(b,0x02);
-    
-    MessageACKSNAC ssnac( snac->getICBMCookie(), ust );
-    b << ssnac;
-    FLAPFooter(b,d);
-
     SignalLog(LogEvent::INFO, "Sending Advanced Message ACK");
-    Send(b);
+    FLAPwrapSNACandSend( MessageACKSNAC( snac->getICBMCookie(), ust ) );
   }
 
   void Client::Send(Buffer& b) {
@@ -1772,12 +1705,7 @@ namespace ICQ2000 {
       m_reqidcache.insert( reqid, new SMSEventCacheValue( sv ) );
       ssnac.setRequestID( reqid );
 
-      Buffer b(&m_translator);
-      unsigned int d;
-      d = FLAPHeader(b,0x02);
-      b << ssnac;
-      FLAPFooter(b,d);
-      Send(b);
+      FLAPwrapSNACandSend( ssnac );
 
     }
 
@@ -1796,12 +1724,7 @@ namespace ICQ2000 {
     msnac.setICBMCookie( ck );
     m_cookiecache.insert( ck, ev );
     
-    Buffer b(&m_translator);
-    unsigned int d;
-    d = FLAPHeader(b,0x02);
-    b << msnac;
-    FLAPFooter(b,d);
-    Send(b);
+    FLAPwrapSNACandSend( msnac );
     
     delete ist;
   }
@@ -1815,12 +1738,7 @@ namespace ICQ2000 {
     MsgSendSNAC msnac(ist);
     msnac.setAdvanced(false);
 
-    Buffer b(&m_translator);
-    unsigned int d;
-    d = FLAPHeader(b,0x02);
-    b << msnac;
-    FLAPFooter(b,d);
-    Send(b);
+    FLAPwrapSNACandSend( msnac );
     
     ev->setFinished(true);
     ev->setDelivered(true);
@@ -1866,9 +1784,8 @@ namespace ICQ2000 {
 
   void Client::PingServer() {
     Buffer b(&m_translator);
-    unsigned int d;
-    d = FLAPHeader(b,0x05);
-    FLAPFooter(b,d);
+    Buffer::marker mk = FLAPHeader(b,0x05);
+    FLAPFooter(b,mk);
     Send(b);
   }
 
@@ -1901,31 +1818,21 @@ namespace ICQ2000 {
        */
 
       Buffer b(&m_translator);
-      unsigned int d;
 
       if (!m_invisible && inv) {
 	// visible -> invisible
-	d = FLAPHeader(b,0x02);
-	AddVisibleSNAC avs;
-	b << avs;
-	FLAPFooter(b,d);
+	FLAPwrapSNAC( b, AddVisibleSNAC() );
       }
 	
-      d = FLAPHeader(b,0x02);
-      SetStatusSNAC sss(MapStatusToICQStatus(st, inv));
-      b << sss;
-      FLAPFooter(b,d);
-      
+      FLAPwrapSNAC( b, SetStatusSNAC(MapStatusToICQStatus(st, inv)) );
       
       if (m_invisible && !inv) {
 	// invisible -> visible
-	d = FLAPHeader(b,0x02);
-	AddInvisibleSNAC ais;
-	b << ais;
-	FLAPFooter(b,d);
+	FLAPwrapSNAC( b, AddInvisibleSNAC() );
       }
       
       Send(b);
+
     } else {
       // We'll set this as the initial status upon Connect()
       m_status = st;
@@ -1969,14 +1876,7 @@ namespace ICQ2000 {
       SignalUserAdded(&m_contact);
 
       if (m_contact.isICQContact() && m_state == BOS_LOGGED_IN) {
-	Buffer b(&m_translator);
-	unsigned int d;
-	d = FLAPHeader(b,0x02);
-	AddBuddySNAC abs(m_contact);
-	b << abs;
-	FLAPFooter(b,d);
-
-	Send(b);
+	FLAPwrapSNACandSend( AddBuddySNAC(m_contact) );
 
 	// fetch detailed userinfo from server
 	fetchDetailContactInfo(&m_contact);
@@ -1995,14 +1895,7 @@ namespace ICQ2000 {
       Contact &c = m_contact_list[uin];
       SignalUserRemoved(&c);
       if (m_contact_list[uin].isICQContact() && m_state == BOS_LOGGED_IN) {
-	Buffer b(&m_translator);
-	unsigned int d;
-	d = FLAPHeader(b,0x02);
-	RemoveBuddySNAC rbs(Contact::UINtoString(uin));
-	b << rbs;
-	FLAPFooter(b,d);
-	
-	Send(b);
+	FLAPwrapSNACandSend( RemoveBuddySNAC(Contact::UINtoString(uin)) );
       }
 
       // remove all direct connections for that contact
@@ -2104,16 +1997,11 @@ namespace ICQ2000 {
    */
   void Client::fetchSimpleContactInfo(Contact *c) {
     Buffer b(&m_translator);
-    unsigned int d;
 
     if ( !c->isICQContact() ) return;
 
-    d = FLAPHeader(b,0x02);
-    SrvRequestSimpleUserInfo ssnac( m_uin, c->getUIN() );
-    b << ssnac;
-    FLAPFooter(b,d);
-
-    Send(b);
+    SignalLog(LogEvent::INFO, "Sending request Simple Userinfo Request");
+    FLAPwrapSNACandSend( SrvRequestSimpleUserInfo( m_uin, c->getUIN() ) );
   }
 
   /**
@@ -2125,63 +2013,36 @@ namespace ICQ2000 {
    * @see ContactListEvent
    */
   void Client::fetchDetailContactInfo(Contact *c) {
-    Buffer b(&m_translator);
-    unsigned int d;
-
     if ( !c->isICQContact() ) return;
 
-    d = FLAPHeader(b,0x02);
+    SignalLog(LogEvent::INFO, "Sending request Detailed Userinfo Request");
+
     unsigned int reqid = NextRequestID();
     m_reqidcache.insert( reqid, new UserInfoCacheValue(c) );
     SrvRequestDetailUserInfo ssnac( m_uin, c->getUIN() );
     ssnac.setRequestID( reqid );
-    b << ssnac;
-    FLAPFooter(b,d);
-
-    Send(b);
-  }
-
-  void Client::fetchBasicInfoForUin(const unsigned int uin) {
-    Buffer b(&m_translator);
-    unsigned int d;
-    d = FLAPHeader(b,0x02);
-    SrvRequestSimpleUserInfo ssnac( m_uin, uin );
-    b << ssnac;
-    FLAPFooter(b,d);
-
-    Send(b);
+    FLAPwrapSNACandSend( ssnac );
   }
 
   void Client::fetchServerBasedContactList() {
-    Buffer b(&m_translator);
-    unsigned int d;
-    d = FLAPHeader(b,0x02);
-    RequestSBLSNAC ssnac;
-    b << ssnac;
-    FLAPFooter(b,d);
-
-    Send(b);
+    SignalLog(LogEvent::INFO, "Requesting Server-based contact list");
+    FLAPwrapSNACandSend( RequestSBLSNAC() );
   }
 
   SearchResultEvent* Client::searchForContacts
     (const string& nickname, const string& firstname,
      const string& lastname)
   {
-    Buffer b(&m_translator);
-    unsigned int d;
-
     SearchResultEvent *ev = new SearchResultEvent( SearchResultEvent::ShortWhitepage );
 
     unsigned int reqid = NextRequestID();
     m_reqidcache.insert( reqid, new SearchCacheValue( ev ) );
 
-    d = FLAPHeader(b,0x02);
     SrvRequestShortWP ssnac( m_uin, nickname, firstname, lastname );
     ssnac.setRequestID( reqid );
-    b << ssnac;
-    FLAPFooter(b,d);
 
-    Send(b);
+    SignalLog(LogEvent::INFO, "Sending short whitepage search");
+    FLAPwrapSNACandSend( ssnac );
 
     return ev;
   }
@@ -2195,46 +2056,35 @@ namespace ICQ2000 {
      const string& company_name, const string& department,
      const string& position, bool only_online)
   {
-    Buffer b(&m_translator);
-    unsigned int d;
-
     SearchResultEvent *ev = new SearchResultEvent( SearchResultEvent::FullWhitepage );
 
     unsigned int reqid = NextRequestID();
     m_reqidcache.insert( reqid, new SearchCacheValue( ev ) );
 
-    d = FLAPHeader(b,0x02);
     SrvRequestFullWP ssnac( m_uin, nickname, firstname, lastname, email,
 			    min_age, max_age, (unsigned char)sex, language, city, state,
 			    country, company_name, department, position,
 			    only_online);
-    
     ssnac.setRequestID( reqid );
-    b << ssnac;
-    FLAPFooter(b,d);
 
-    Send(b);
+    SignalLog(LogEvent::INFO, "Sending full whitepage search");
+    FLAPwrapSNACandSend( ssnac );
 
     return ev;
   }
 
   SearchResultEvent* Client::searchForContacts(unsigned int uin)
   {
-    Buffer b(&m_translator);
-    unsigned int d;
-
     SearchResultEvent *ev = new SearchResultEvent( SearchResultEvent::UIN );
 
     unsigned int reqid = NextRequestID();
     m_reqidcache.insert( reqid, new SearchCacheValue( ev ) );
 
-    d = FLAPHeader(b,0x02);
     SrvRequestSimpleUserInfo ssnac( m_uin, uin );
     ssnac.setRequestID( reqid );
-    b << ssnac;
-    FLAPFooter(b,d);
 
-    Send(b);
+    SignalLog(LogEvent::INFO, "Sending simple user info request");
+    FLAPwrapSNACandSend( ssnac );
 
     return ev;
   }

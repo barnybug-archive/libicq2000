@@ -60,6 +60,7 @@ namespace ICQ2000 {
   class BuddyOnlineSNAC;
   class BuddyOfflineSNAC;
   class UserInfoSNAC;
+  class OutSNAC;
 
   // -- Status Codes Flags --
   const unsigned short STATUS_FLAG_ONLINE = 0x0000;
@@ -181,8 +182,11 @@ namespace ICQ2000 {
 
     void HandleUserInfoSNAC(UserInfoSNAC *snac);
 
-    unsigned int FLAPHeader(Buffer& b, unsigned char channel);
-    void FLAPFooter(Buffer& b, unsigned int d);
+    Buffer::marker FLAPHeader(Buffer& b, unsigned char channel);
+    void FLAPFooter(Buffer& b, Buffer::marker& mk);
+
+    void FLAPwrapSNAC(Buffer& b, const OutSNAC& snac);
+    void FLAPwrapSNACandSend(const OutSNAC& snac);
 
     // ------------------ Incoming packets -------------------
 
@@ -395,7 +399,6 @@ namespace ICQ2000 {
     Contact* getContact(const unsigned int uin);
     void fetchSimpleContactInfo(Contact* c);
     void fetchDetailContactInfo(Contact* c);
-    void fetchBasicInfoForUin(const unsigned int uin);
     void fetchServerBasedContactList();
 
     // -- Whitepage searches --
