@@ -294,9 +294,12 @@ namespace ICQ2000 {
    *  The event signalled when user information changes.
    */
   class UserInfoChangeEvent : public ContactEvent {
+   private:
+    bool m_is_transient_detail;
    public:
-    UserInfoChangeEvent(ContactRef c);
+    UserInfoChangeEvent(ContactRef c, bool is_transient_detail);
     EventType getType() const;
+    bool isTransientDetail() const;
   };
 
   /**

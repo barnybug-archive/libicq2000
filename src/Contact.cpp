@@ -128,7 +128,7 @@ namespace ICQ2000 {
 
   void Contact::setDirect(bool b) {
     m_direct = b;
-    userinfo_change_emit();
+    userinfo_change_emit(true);
   }
 
   bool Contact::acceptAdvancedMsgs() const {
@@ -191,7 +191,12 @@ namespace ICQ2000 {
 
   void Contact::userinfo_change_emit()
   {
-    UserInfoChangeEvent ev(this);
+    userinfo_change_emit(false);
+  }
+
+  void Contact::userinfo_change_emit(bool is_transient_detail)
+  {
+    UserInfoChangeEvent ev(this, is_transient_detail);
     userinfo_change_signal.emit(&ev);
   }
 
@@ -201,7 +206,7 @@ namespace ICQ2000 {
 
   void Contact::setAuthReq(bool b) {
     m_authreq = b;
-    userinfo_change_emit();
+    userinfo_change_emit(true);
   }
 
   bool Contact::isICQContact() const { return !m_virtualcontact; }
@@ -216,27 +221,27 @@ namespace ICQ2000 {
 
   void Contact::setExtIP(unsigned int ip) { 
     m_ext_ip = ip;
-    userinfo_change_emit();
+    userinfo_change_emit(true);
   }
 
   void Contact::setLanIP(unsigned int ip) {
     m_lan_ip = ip;
-    userinfo_change_emit();
+    userinfo_change_emit(true);
   }
 
   void Contact::setExtPort(unsigned short port) {
     m_ext_port = port;
-    userinfo_change_emit();
+    userinfo_change_emit(true);
   }
 
   void Contact::setLanPort(unsigned short port) {
     m_lan_port = port;
-    userinfo_change_emit();
+    userinfo_change_emit(true);
   }
 
   void Contact::setTCPVersion(unsigned char v) {
     m_tcp_version = v;
-    userinfo_change_emit();
+    userinfo_change_emit(true);
   }
 
   void Contact::setAcceptAdvMsgs(bool b) { m_accept_adv_msgs = b; }

@@ -238,6 +238,7 @@ namespace ICQ2000 {
     SigC::Signal1<void,UserInfoChangeEvent*> userinfo_change_signal;
 
     void userinfo_change_emit();
+    void userinfo_change_emit(bool is_transient_detail);
 
     static string UINtoString(unsigned int uin);
     static unsigned int StringtoUIN(const string& s);

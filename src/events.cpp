@@ -308,8 +308,9 @@ namespace ICQ2000 {
    *
    * @param contact the contact whose information has changed
    */
-  UserInfoChangeEvent::UserInfoChangeEvent(ContactRef contact) : ContactEvent(contact) { }
+  UserInfoChangeEvent::UserInfoChangeEvent(ContactRef contact, bool is_transient_detail) : ContactEvent(contact), m_is_transient_detail(is_transient_detail) { }
   ContactEvent::EventType UserInfoChangeEvent::getType() const { return UserInfoChange; }
+  bool UserInfoChangeEvent::isTransientDetail() const { return m_is_transient_detail; }
 
   // ============================================================================
   //  Search Result Event
