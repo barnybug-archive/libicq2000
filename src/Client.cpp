@@ -1194,7 +1194,7 @@ namespace ICQ2000 {
 	    updresults.push_back(ServerBasedContactEvent::Failed);
 	    break;
 	  case ModificationAckSBLSNAC::AuthRequired:
-	    SignalLog(LogEvent::INFO, "Authentification is required to perform the server-based modification\n");
+	    SignalLog(LogEvent::INFO, "Succeeded, though authentification is required to perform the server-based modification\n");
 	    updresults.push_back(ServerBasedContactEvent::AuthRequired);
 	    break;
 	  case ModificationAckSBLSNAC::AlreadyExists:
@@ -1216,7 +1216,8 @@ namespace ICQ2000 {
 	      iur = updresults.begin();
 
 	      while(iur != updresults.end() && ic != cl.end()) {
-		if(*iur == ServerBasedContactEvent::Success) {
+		if(*iur == ServerBasedContactEvent::Success
+		|| *iur == ServerBasedContactEvent::AuthRequired) {
 		    (*ic)->setServerBased(ev->getType() == ServerBasedContactEvent::Upload);
 
 		    ContactRef ct = getContact((*ic)->getUIN());
