@@ -54,7 +54,7 @@ SimpleClient::SimpleClient(unsigned int uin, const string& pass)
   : icqclient(uin, pass) {
 
   /*
-   * set up the libicq2000 callbacks: the SigC callback system is used
+   * set up the libicq2000 callbacks: the sigslot callback system is used
    * extensively in libicq2000, and when an event happens we can
    * register callbacks for methods to be called, which in turn will
    * be called when the relevant event happens
@@ -66,6 +66,7 @@ SimpleClient::SimpleClient(unsigned int uin, const string& pass)
   icqclient.contact_status_change_signal.connect(this,&SimpleClient::contact_status_change_cb);
   icqclient.socket.connect(this,&SimpleClient::socket_cb);
 
+  input.socket_signal.connect( this, &SimpleClient::select_socket_cb );
 }
 
 void SimpleClient::run() {
@@ -108,17 +109,14 @@ void SimpleClient::socket_cb(SocketEvent *ev) {
     cout << "connecting socket " << fd << endl;
 
     // register this socket with our Select object
-    m_sockets[fd] =
-    input.connect( this,&SimpleClient::select_socket_cb,
-		   // the slot that the Select object will callback
-		   fd,
-		   // the socket file descriptor to add
-		   (Select::SocketInputCondition) 
-		   ((cev->isRead() ? Select::Read : 0) |
-		    (cev->isWrite() ? Select::Write : 0) |
-		    (cev->isException() ? Select::Exception : 0))
-		   // the mode to select on it on
-		   );
+    input.add( fd,
+	       // the socket file descriptor to add
+	       (Select::SocketInputCondition) 
+	       ((cev->isRead() ? Select::Read : 0) |
+		(cev->isWrite() ? Select::Write : 0) |
+		(cev->isException() ? Select::Exception : 0))
+	       // the mode to select on it on
+	       );
 
   } else if (dynamic_cast<RemoveSocketHandleEvent*>(ev) != NULL) {
     // the library requests we stop selecting on a socket
@@ -127,13 +125,7 @@ void SimpleClient::socket_cb(SocketEvent *ev) {
     int fd = cev->getSocketHandle();
 
     cout << "disconnecting socket " << fd << endl;
-    if (m_sockets.count(fd) == 0) {
-      cerr << "Problem: file descriptor not connected" << endl;
-    } else {
-      m_sockets[fd].disconnect();
-      m_sockets.erase(fd);
-    }
-
+    input.remove( fd );
   }
   
 }
@@ -324,7 +316,7 @@ void SimpleClient::contact_status_change_cb(StatusChangeEvent *ev)
 
 int main(int argc, char *argv[]) {
   cout << "-- ickle-shell - a simple command line implementation using --" << endl
-       << "--               the ickle ICQ2000 libraries                --" << endl << endl;
+       << "--               the libICQ2000 libraries                   --" << endl << endl;
 
   processCommandLine( argc, argv );
   

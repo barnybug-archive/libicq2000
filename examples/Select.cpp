@@ -29,27 +29,11 @@
 Select::Select()
 { }
 
-SigC::Connection Select::connect(const SlotType &s,
-				 int source,
-				 SocketInputCondition condition)
+void Select::add(int source, SocketInputCondition condition)
 {
-  // this is all SigC voodoo.. I wouldn't concern yourself with it,
-  // unless you're really keen
-  SigC::SlotData* sd=(SigC::SlotData*)(s.obj());
-
-  // add to map
-  using std::make_pair;
-  if (condition & Read) rfdl.insert( make_pair(source, (Callback*)&(sd->data_)) );
-  if (condition & Write) wfdl.insert( make_pair(source, (Callback*)&(sd->data_)) );
-  if (condition & Exception) efdl.insert( make_pair(source, (Callback*)&(sd->data_)) );
-
-  // connect it
-  sd->connect();
-
-  // register disconnection data
-  sd->list_.insert_direct(sd->list_.begin(),
-                          new SelectSigCNode(this, source));
-  return sd;
+  if (condition & Read) rfdl.insert(source);
+  if (condition & Write) wfdl.insert(source);
+  if (condition & Exception) efdl.insert(source);
 }
 
 bool Select::run(unsigned int interval)
@@ -66,24 +50,24 @@ bool Select::run(unsigned int interval)
   FD_ZERO(&wfds);
   FD_ZERO(&efds);
   
-  SocketMap::iterator curr = rfdl.begin();
+  SocketSet::iterator curr = rfdl.begin();
   while (curr != rfdl.end()) {
-    FD_SET((*curr).first, &rfds);
-    if ((*curr).first > max_fd) max_fd = (*curr).first;
+    FD_SET(*curr, &rfds);
+    if (*curr > max_fd) max_fd = *curr;
     ++curr;
   }
   
   curr = wfdl.begin();
   while (curr != wfdl.end()) {
-    FD_SET((*curr).first, &wfds);
-    if ((*curr).first > max_fd) max_fd = (*curr).first;
+    FD_SET(*curr, &wfds);
+    if (*curr > max_fd) max_fd = *curr;
     ++curr;
   }
   
   curr = efdl.begin();
   while (curr != efdl.end()) {
-    FD_SET((*curr).first, &efds);
-    if ((*curr).first > max_fd) max_fd = (*curr).first;
+    FD_SET(*curr, &efds);
+    if (*curr > max_fd) max_fd = *curr;
     ++curr;
   }
   
@@ -99,38 +83,31 @@ bool Select::run(unsigned int interval)
 
     // read descriptors
     bool done = false;
-    SocketMap::const_iterator curr = rfdl.begin();
-    while (curr != rfdl.end()) {
-      if ( FD_ISSET( (*curr).first, &rfds ) ) {
-	((*curr).second)->call((*curr).first, Read);
+    SocketSet::const_iterator curr = rfdl.begin();
+    while (!done && curr != rfdl.end()) {
+      if ( FD_ISSET( *curr, &rfds ) ) {
+	socket_signal.emit(*curr, Read);
 	done = true;
-	break;
       }
       ++curr;
     }
 
-    if (!done) {
-      curr = wfdl.begin();
-      while (curr != wfdl.end()) {
-	if ( FD_ISSET( (*curr).first, &wfds ) ) {
-	  ((*curr).second)->call((*curr).first, Write);
-	  done = true;
-	  break;
-	}
-	++curr;
+    curr = wfdl.begin();
+    while (!done && curr != wfdl.end()) {
+      if ( FD_ISSET( *curr, &wfds ) ) {
+	socket_signal.emit(*curr, Write);
+	done = true;
       }
+      ++curr;
     }
     
-    if (!done) {
-      curr = efdl.begin();
-      while (curr != efdl.end()) {
-	if ( FD_ISSET( (*curr).first, &efds ) ) {
-	  ((*curr).second)->call((*curr).first, Exception);
-	  done = true;
-	  break;
-	}
-	++curr;
+    curr = efdl.begin();
+    while (!done && curr != efdl.end()) {
+      if ( FD_ISSET( *curr, &efds ) ) {
+	socket_signal.emit(*curr, Exception);
+	done = true;
       }
+      ++curr;
     }
     
   } else {
@@ -141,7 +118,7 @@ bool Select::run(unsigned int interval)
   return false;
 }
 
-void Select::_disconnect(int fd)
+void Select::remove(int fd)
 {
   // unmap this file descriptor
   if (rfdl.count(fd) != 0) {
@@ -157,13 +134,4 @@ void Select::_disconnect(int fd)
     return;
   }
   
-}
-
-SelectSigCNode::SelectSigCNode(Select *parent, int fd)
-  : m_parent(parent), m_fd(fd)
-{ }
-
-SelectSigCNode::~SelectSigCNode()
-{
-  m_parent->_disconnect( m_fd );
 }

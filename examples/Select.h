@@ -24,7 +24,7 @@
  *
  */
 
-#include <map>
+#include <set>
 #include "libicq2000/sigslot.h"
 
 #ifndef EXAMPLE_SOCKET_H
@@ -45,24 +45,18 @@ class Select {
   };
   // this enum is used as a 'bitmask' of the input conditions
 
-  // typedefs
-  typedef SigC::Slot2<void,int,SocketInputCondition> SlotType;
-  typedef SigC::Callback2<void,int,SocketInputCondition> Callback;
-
  private:
-  // the lists of file descriptors (ok they're sets.. you get the idea)
-  typedef std::map<int, Callback*> SocketMap;
-  SocketMap rfdl, wfdl, efdl;
+  // the lists of file descriptors
+  typedef std::set<int> SocketSet;
+  SocketSet rfdl, wfdl, efdl;
 
  public:
   Select();
 
   /**
-   * This method will register a callback for a given file descriptor,
-   * on condition. The SigC::Slot sd will be called.
+   * Registers the socket source to be signalled on condition.
    */
-  SigC::Connection connect(const SlotType &sd, int source,
-			   SocketInputCondition condition);
+  void add(int source, SocketInputCondition condition);
 
   /**
    * Execute the select on the sockets, until one has an event, or
@@ -74,20 +68,14 @@ class Select {
   bool run(unsigned int interval = 0);
 
   /**
-   *  For internal use only.
+   *  Unregister the socket source.
    */
-  void _disconnect(int fd);
-};
+  void remove(int fd);
 
-class SelectSigCNode : public SigC::SlotNode
-{
- private:
-  Select *m_parent;
-  int m_fd;
-
- public:
-  SelectSigCNode(Select *parent, int fd);
-  virtual ~SelectSigCNode();
+  /**
+   *  The signal object that socket events are signalled on.
+   */
+  sigslot::signal2<int, SocketInputCondition> socket_signal;
 };
 
 #endif // EXAMPLE_SOCKET_H

@@ -59,11 +59,11 @@ bool respond;
 //  Simple Client declaration
 // ------------------------------------------------------------------
 
-class SimpleClient : public sigslot::has_slots<> {
+class SimpleClient : public sigslot::has_slots<>
+{
  private:
   ICQ2000::Client icqclient;
   Select input;
-  std::map<int, SigC::Connection> m_sockets;
 
  protected:
 
