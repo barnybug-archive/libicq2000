@@ -2089,8 +2089,7 @@ namespace ICQ2000 {
   SearchResultEvent* Client::searchForContacts
     (const string& nickname, const string& firstname,
      const string& lastname, const string& email,
-     unsigned short min_age, unsigned short max_age,
-     Sex sex, unsigned char language, const string& city,
+     AgeRange age, Sex sex, unsigned char language, const string& city,
      const string& state, unsigned short country,
      const string& company_name, const string& department,
      const string& position, bool only_online)
@@ -2099,6 +2098,38 @@ namespace ICQ2000 {
 
     unsigned int reqid = NextRequestID();
     m_reqidcache.insert( reqid, new SearchCacheValue( ev ) );
+
+    unsigned short min_age, max_age;
+
+    switch(age) {
+	case range_18_22:
+	    min_age = 18;
+	    max_age = 22;
+	    break;
+	case range_23_29:
+	    min_age = 23;
+	    max_age = 29;
+	    break;
+	case range_30_39:
+	    min_age = 30;
+	    max_age = 39;
+	    break;
+	case range_40_49:
+	    min_age = 40;
+	    max_age = 49;
+	    break;
+	case range_50_59:
+	    min_age = 50;
+	    max_age = 59;
+	    break;
+	case range_60_above:
+	    min_age = 60;
+	    max_age = 0x2710;
+	    break;
+	default:
+	    min_age = max_age = 0;
+	    break;
+    }
 
     SrvRequestFullWP ssnac( m_self.getUIN(), nickname, firstname, lastname, email,
 			    min_age, max_age, (unsigned char)sex, language, city, state,

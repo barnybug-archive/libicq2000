@@ -47,6 +47,26 @@ static const unsigned int SMS_Max_Length = 160;
 
 static const unsigned int String_Limit = 16384; // A sensible limit
 
+enum AgeRange {
+  range_NoRange = 0,
+  range_18_22 = 1,
+  range_23_29 = 2,
+  range_30_39 = 3,
+  range_40_49 = 4,
+  range_50_59 = 5,
+  range_60_above = 6
+};
+
+static const char *AgeRange_text[] = {
+  "none",
+  "18-22",
+  "23-29",
+  "30-39",
+  "40-49",
+  "50-59",
+  "60-above"
+};
+
 }
 
 #endif

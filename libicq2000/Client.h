@@ -377,8 +377,7 @@ namespace ICQ2000 {
 
     SearchResultEvent* searchForContacts(const string& nickname, const string& firstname,
 					 const string& lastname, const string& email,
-					 unsigned short min_age, unsigned short max_age,
-					 Sex sex, unsigned char language, const string& city,
+					 AgeRange age, Sex sex, unsigned char language, const string& city,
 					 const string& state, unsigned short country,
 					 const string& company_name, const string& department,
 					 const string& position, bool only_online);
