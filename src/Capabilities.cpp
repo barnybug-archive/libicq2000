@@ -166,7 +166,7 @@ namespace ICQ2000 {
 
   void Capabilities::Parse(Buffer& b, unsigned short len)
   {
-    int i = (len % 16) / 16;
+    int i = len / 16;
     unsigned char cap[16];
     for (int j = 0; j < i; ++j) {
       b.Unpack(cap, 16);
