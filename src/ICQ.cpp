@@ -41,12 +41,6 @@ namespace ICQ2000 {
     
     bool multi = (flags & MSG_Flag_Multi);
 
-    if (adv) {
-      unsigned short m_flag1, m_flag2;
-      b >> m_flag1
-	>> m_flag2;
-    }
-
     ICQSubType *ist;
     switch(type) {
     case MSG_Type_Normal:
@@ -83,7 +77,7 @@ namespace ICQ2000 {
       ust->setAdvanced(adv);
     }
     ist->setFlags(flags);
-    ist->Parse(b);
+    ist->ParseBody(b);
 
     return ist;
   }
@@ -96,10 +90,10 @@ namespace ICQ2000 {
   }
 
   UINICQSubType::UINICQSubType()
-    : m_source(0), m_destination(0), m_ack(false), m_advanced(false) { }
+    : m_source(0), m_destination(0), m_ack(false), m_advanced(false), m_status(0) { }
 
   UINICQSubType::UINICQSubType(unsigned int s, unsigned int d)
-    : m_source(s), m_destination(d), m_ack(false), m_advanced(false) { }
+    : m_source(s), m_destination(d), m_ack(false), m_advanced(false), m_status(0) { }
 
   unsigned int UINICQSubType::getSource() const { return m_source; }
 
@@ -117,6 +111,31 @@ namespace ICQ2000 {
 
   void UINICQSubType::setACK(bool b) { m_ack = b; }
 
+  unsigned short UINICQSubType::getStatus() const { return m_status; }
+
+  void UINICQSubType::setStatus(unsigned short s) { m_status = s; }
+
+  void UINICQSubType::ParseBody(Buffer& b)
+  {
+    if (m_advanced) {
+      unsigned short unknown;
+      b >> m_status
+	>> unknown;
+    }
+
+    ParseBodyUIN(b);
+  }
+
+  void UINICQSubType::OutputBody(Buffer& b) const
+  {
+    if (m_advanced) {
+      b << (unsigned short)m_status
+	<< (unsigned short)(m_ack ? 0x0000: 0x0001);
+    }
+
+    OutputBodyUIN(b);
+  }
+
   NormalICQSubType::NormalICQSubType(bool multi)
     : m_multi(multi), m_foreground(0x00000000),
       m_background(0x00ffffff) { }
@@ -131,7 +150,7 @@ namespace ICQ2000 {
 
   void NormalICQSubType::setMessage(const string& msg) { m_message = msg; }
 
-  void NormalICQSubType::Parse(Buffer& b) {
+  void NormalICQSubType::ParseBodyUIN(Buffer& b) {
     b.UnpackUint16StringNull(m_message);
     b.ServerToClient(m_message);
 
@@ -144,12 +163,7 @@ namespace ICQ2000 {
     }
   }
 
-  void NormalICQSubType::OutputBody(Buffer& b) const {
-    if (m_advanced) {
-      b << (unsigned short)0x0000
-	<< (unsigned short)(m_ack ? 0x0000: 0x0001);
-    }
-
+  void NormalICQSubType::OutputBodyUIN(Buffer& b) const {
     if (m_ack) {
       b.PackUint16StringNull("");
     } else {
@@ -200,7 +214,7 @@ namespace ICQ2000 {
 
   void URLICQSubType::setURL(const string& url) { m_url = url; }
 
-  void URLICQSubType::Parse(Buffer& b) {
+  void URLICQSubType::ParseBodyUIN(Buffer& b) {
     string text;
     b.UnpackUint16StringNull(text);
     
@@ -220,12 +234,7 @@ namespace ICQ2000 {
 
   }
 
-  void URLICQSubType::OutputBody(Buffer& b) const {
-    if (m_advanced) {
-      b << (unsigned short)0x0000
-	<< (unsigned short)0x0001;
-    }
-
+  void URLICQSubType::OutputBodyUIN(Buffer& b) const {
     if (m_ack) {
       b.PackUint16StringNull("");
     } else {
@@ -275,15 +284,12 @@ namespace ICQ2000 {
 
   }
 
-  void AwayMsgSubType::Parse(Buffer& b) {
+  void AwayMsgSubType::ParseBodyUIN(Buffer& b) {
     b.UnpackUint16StringNull(m_message);
     b.ServerToClient(m_message);
   }
 
-  void AwayMsgSubType::OutputBody(Buffer& b) const {
-    b << (unsigned short)0x0000
-      << (unsigned short)0x0001;
-
+  void AwayMsgSubType::OutputBodyUIN(Buffer& b) const {
     string tekst = m_message;
     b.ClientToServer(tekst);
     b.PackUint16StringNull(tekst);
@@ -309,7 +315,7 @@ namespace ICQ2000 {
 
   SMSICQSubType::Type SMSICQSubType::getSMSType() const { return m_type; }
 
-  void SMSICQSubType::Parse(Buffer& b) {
+  void SMSICQSubType::ParseBody(Buffer& b) {
     /*
      * Here we go... this is a biggy
      */
@@ -458,7 +464,7 @@ namespace ICQ2000 {
   string AuthReqICQSubType::getLastName() const { return m_lastname; }
   string AuthReqICQSubType::getEmail() const { return m_email; }
   
-  void AuthReqICQSubType::Parse(Buffer& b) {
+  void AuthReqICQSubType::ParseBodyUIN(Buffer& b) {
     unsigned char skip;
     b.UnpackUint16StringNull(m_nick);
     b.ServerToClient(m_nick);
@@ -478,7 +484,7 @@ namespace ICQ2000 {
     b.ServerToClient(m_message);
   }
 
-  void AuthReqICQSubType::OutputBody(Buffer& b) const {
+  void AuthReqICQSubType::OutputBodyUIN(Buffer& b) const {
     string m_text = m_message;
     b.ClientToServer(m_text);
     b.PackUint16StringNull(m_text);
@@ -501,12 +507,12 @@ namespace ICQ2000 {
   
   void AuthRejICQSubType::setMessage(const string& msg) { m_message = msg; }
 
-  void AuthRejICQSubType::Parse(Buffer& b) {
+  void AuthRejICQSubType::ParseBodyUIN(Buffer& b) {
     b.UnpackUint16StringNull(m_message);
     b.ServerToClient(m_message);
   }
 
-  void AuthRejICQSubType::OutputBody(Buffer& b) const {
+  void AuthRejICQSubType::OutputBodyUIN(Buffer& b) const {
     string m_text = m_message;
     b.ClientToServer(m_text);
     b.PackUint16StringNull(m_text);
@@ -525,10 +531,10 @@ namespace ICQ2000 {
                                        unsigned int destination)
     : UINICQSubType(source,destination) { }
 
-  void AuthAccICQSubType::Parse(Buffer& b) {
+  void AuthAccICQSubType::ParseBodyUIN(Buffer& b) {
   }
 
-  void AuthAccICQSubType::OutputBody(Buffer& b) const {
+  void AuthAccICQSubType::OutputBodyUIN(Buffer& b) const {
   }
 
   unsigned short AuthAccICQSubType::Length() const {

@@ -213,6 +213,7 @@ namespace ICQ2000 {
       Status old_st = (*curr).getStatus();
       if ( old_st != STATUS_OFFLINE ) {
 	(*curr).setStatus(STATUS_OFFLINE);
+	(*curr).setInvisible(true);
 	StatusChangeEvent ev(&(*curr), (*curr).getStatus(), old_st);
 	contactlist.emit(&ev);
       }
@@ -528,6 +529,7 @@ namespace ICQ2000 {
 	    c.setLastName(snac->getLastName());
 	    c.setEmail(snac->getEmail());
 	    c.setStatus(snac->getStatus());
+	    c.setInvisible(false);
 	    c.setAuthReq(snac->getAuthReq());
 	    ContactList& cl = ev->getContactList();
 	    ev->setLastContactAdded( &(cl.add(c)) );
@@ -580,6 +582,7 @@ namespace ICQ2000 {
 	    c.setLastName(snac->getLastName());
 	    c.setEmail(snac->getEmail());
 	    c.setStatus(snac->getStatus());
+	    c.setInvisible(false);
 	    c.setAuthReq(snac->getAuthReq());
 	    ContactList& cl = ev->getContactList();
 	    ev->setLastContactAdded( &(cl.add(c)) );
@@ -791,7 +794,7 @@ namespace ICQ2000 {
       contactlist.emit(&ev);
 
       ostringstream ostr;
-      ostr << "Received Buddy Online for " << c.getAlias() << " (" << c.getUIN() << ") from server";
+      ostr << "Received Buddy Online for " << c.getAlias() << " (" << c.getUIN() << ") Status " << Status_text[c.getStatus()] << " from server";
       SignalLog(LogEvent::INFO, ostr.str() );
     } else {
       ostringstream ostr;
@@ -806,6 +809,7 @@ namespace ICQ2000 {
       Contact& c = m_contact_list[userinfo.getUIN()];
       Status old_st = c.getStatus();
       c.setStatus(STATUS_OFFLINE);
+      c.setInvisible(false);
       StatusChangeEvent ev(&c, c.getStatus(), old_st);
       contactlist.emit(&ev);
 
@@ -1716,6 +1720,7 @@ namespace ICQ2000 {
     Contact *c = ev->getContact();
     UINICQSubType *ist = EventToUINICQSubType(ev);
     ist->setAdvanced(true);
+    ist->setStatus( MapStatusToICQStatus(m_status, m_invisible) );
     
     MsgSendSNAC msnac(ist);
     msnac.setAdvanced(true);

@@ -78,7 +78,7 @@ namespace ICQ2000 {
     static ICQSubType* ParseICQSubType(Buffer& b, bool adv);
     void Output(Buffer& b) const;
 
-    virtual void Parse(Buffer& b) = 0;
+    virtual void ParseBody(Buffer& b) = 0;
     virtual void OutputBody(Buffer& b) const = 0;
     virtual unsigned short Length() const = 0;
 
@@ -94,6 +94,7 @@ namespace ICQ2000 {
    protected:
     unsigned int m_source, m_destination;
     bool m_advanced, m_ack;
+    unsigned short m_status;
 
    public:
     UINICQSubType();
@@ -103,6 +104,15 @@ namespace ICQ2000 {
     void setSource(unsigned int uin);
     unsigned int getSource() const;
     unsigned int getDestination() const;
+
+    unsigned short getStatus() const;
+    void setStatus(unsigned short s);
+
+    void ParseBody(Buffer& b);
+    void OutputBody(Buffer& b) const;
+
+    virtual void ParseBodyUIN(Buffer& b) = 0;
+    virtual void OutputBodyUIN(Buffer& b) const = 0;
 
     bool isAdvanced() const;
     void setAdvanced(bool b);
@@ -129,8 +139,8 @@ namespace ICQ2000 {
     unsigned int getForeground() const;
     unsigned int getBackground() const;
 
-    void Parse(Buffer& b);
-    void OutputBody(Buffer& b) const;
+    void ParseBodyUIN(Buffer& b);
+    void OutputBodyUIN(Buffer& b) const;
     unsigned short Length() const;
     unsigned char getType() const;
   };
@@ -150,8 +160,8 @@ namespace ICQ2000 {
     string getURL() const;
     void setURL(const string& url);
     
-    void Parse(Buffer& b);
-    void OutputBody(Buffer& b) const;
+    void ParseBodyUIN(Buffer& b);
+    void OutputBodyUIN(Buffer& b) const;
     unsigned short Length() const;
     unsigned char getType() const;
   };
@@ -165,8 +175,8 @@ namespace ICQ2000 {
     AwayMsgSubType(Status s, unsigned int destination);
     AwayMsgSubType(unsigned char m_type);
 
-    void Parse(Buffer& b);
-    void OutputBody(Buffer& b) const;
+    void ParseBodyUIN(Buffer& b);
+    void OutputBodyUIN(Buffer& b) const;
 
     string getMessage() const;
     void setMessage(const string& msg);
@@ -200,7 +210,7 @@ namespace ICQ2000 {
     string getMessage() const;
     Type getSMSType() const;
 
-    void Parse(Buffer& b);
+    void ParseBody(Buffer& b);
     void OutputBody(Buffer& b) const;
     unsigned short Length() const;
     unsigned char getType() const;
@@ -239,8 +249,8 @@ namespace ICQ2000 {
     string getLastName() const;
     string getEmail() const;
 
-    void Parse(Buffer& b);
-    void OutputBody(Buffer& b) const;
+    void ParseBodyUIN(Buffer& b);
+    void OutputBodyUIN(Buffer& b) const;
     unsigned short Length() const;
     unsigned char getType() const;
 
@@ -251,8 +261,8 @@ namespace ICQ2000 {
     AuthAccICQSubType();
     AuthAccICQSubType(unsigned int source, unsigned int destination);
 
-    void Parse(Buffer& b);
-    void OutputBody(Buffer& b) const;
+    void ParseBodyUIN(Buffer& b);
+    void OutputBodyUIN(Buffer& b) const;
     unsigned short Length() const;
     unsigned char getType() const;
 
@@ -270,8 +280,8 @@ namespace ICQ2000 {
     string getMessage() const;
     void setMessage(const string& msg);
 
-    void Parse(Buffer& b);
-    void OutputBody(Buffer& b) const;
+    void ParseBodyUIN(Buffer& b);
+    void OutputBodyUIN(Buffer& b) const;
     unsigned short Length() const;
     unsigned char getType() const;
 
