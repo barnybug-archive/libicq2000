@@ -466,6 +466,26 @@ namespace ICQ2000 {
   
   void AuthReqICQSubType::ParseBodyUIN(Buffer& b) {
     unsigned char skip;
+
+    m_nick = m_firstname = m_lastname = m_email = "";
+    /*
+    *
+    * This info is better to obtain with user info request,
+    * for it's not there in the packet in fact. (konst)
+    *
+    */
+
+    b>>skip;
+    b>>skip;
+    b>>skip;
+    b>>skip;
+    b>>skip;
+    b>>skip;
+
+    b.UnpackUint16StringNull(m_message);
+    b.ServerToClient(m_message);
+
+    /*
     b.UnpackUint16StringNull(m_nick);
     b.ServerToClient(m_nick);
     b>>skip;
@@ -482,6 +502,7 @@ namespace ICQ2000 {
     b>>skip;
     b.UnpackUint16StringNull(m_message);
     b.ServerToClient(m_message);
+    */
   }
 
   void AuthReqICQSubType::OutputBodyUIN(Buffer& b) const {
