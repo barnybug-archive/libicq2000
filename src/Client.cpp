@@ -1328,8 +1328,8 @@ namespace ICQ2000 {
 	} else {
 	  st = DisconnectedEvent::REQUESTED;
 	}
-	SignalDisconnect(st); // signal client (error)
 	DisconnectAuthorizer();
+	SignalDisconnect(st); // signal client (error)
       }
 
     } else {
@@ -1353,8 +1353,8 @@ namespace ICQ2000 {
 	  SignalLog(LogEvent::WARN, "Unknown packet received on channel 4, disconnecting");
 	  st = DisconnectedEvent::FAILED_UNKNOWN;
 	}
-	SignalDisconnect(st); // signal client (error)
 	DisconnectBOS();
+	SignalDisconnect(st); // signal client (error)
     }
 
   }
@@ -1419,9 +1419,6 @@ namespace ICQ2000 {
 	  && (m & SocketEvent::WRITE)) {
 	// the non-blocking connect has completed (good/bad)
 
-	SignalRemoveSocket(fd);
-	// no longer select on write
-
 	try {
 	  m_serverSocket.FinishNonBlockingConnect();
 	} catch(SocketException e) {
@@ -1432,6 +1429,9 @@ namespace ICQ2000 {
 	  Disconnect(DisconnectedEvent::FAILED_LOWLEVEL);
 	  return;
 	}
+
+	SignalRemoveSocket(fd);
+	// no longer select on write
 
 	SignalAddSocket(fd, SocketEvent::READ);
 	// select on read now
@@ -1520,17 +1520,8 @@ namespace ICQ2000 {
     }
   }
 
-  void Client::Connect() {
-    if (m_state == NOT_CONNECTED)
-      ConnectAuthorizer(AUTH_AWAITING_CONN_ACK);
-  }
-
   /**
-   *  Register a new UIN. Although support for this has been coded
-   *  there isn't any support for settings your details yet, so being
-   *  able to create a new user is largely useless.
-   *
-   * @todo settings your user information
+   *  Register a new UIN.
    */
   void Client::RegisterUIN() {
     if (m_state == NOT_CONNECTED)
@@ -1793,12 +1784,14 @@ namespace ICQ2000 {
     m_status_wanted = st;
     m_invisible_wanted = inv;
 
-    if (m_state == BOS_LOGGED_IN) {
-      if (st == STATUS_OFFLINE) {
+    if (st == STATUS_OFFLINE) {
+      if (m_state != NOT_CONNECTED)
 	Disconnect(DisconnectedEvent::REQUESTED);
-	return;
-      }
 
+      return;
+    }
+
+    if (m_state == BOS_LOGGED_IN) {
       /*
        * The correct sequence of events are:
        * - when going from visible to invisible
@@ -1826,11 +1819,13 @@ namespace ICQ2000 {
       Send(b);
 
     } else {
-      // We'll set this as the initial status upon Connect()
+      // We'll set this as the initial status upon connecting
       m_status_wanted = st;
       m_invisible_wanted = inv;
-      if (st != STATUS_OFFLINE) Connect();
-      if (m_state != NOT_CONNECTED && st == STATUS_OFFLINE) Disconnect(DisconnectedEvent::REQUESTED);
+      
+      // start connecting if not already
+      if (m_state == NOT_CONNECTED)
+	ConnectAuthorizer(AUTH_AWAITING_CONN_ACK);
     }
   }
 
@@ -2149,19 +2144,14 @@ namespace ICQ2000 {
 
     SignalLog(LogEvent::INFO, "Client disconnecting");
 
-    SignalDisconnect(r);
-    DisconnectInt();
-  }
-
-  void Client::DisconnectInt() {
-    if (m_state == NOT_CONNECTED) return;
-
-    if (m_state == AUTH_AWAITING_CONN_ACK || m_state == AUTH_AWAITING_AUTH_REPLY|| 
-        m_state == UIN_AWAITING_CONN_ACK || m_state == UIN_AWAITING_UIN_REPLY) {
+    if (m_state == AUTH_AWAITING_CONN_ACK || m_state == AUTH_AWAITING_AUTH_REPLY
+	|| m_state == UIN_AWAITING_CONN_ACK || m_state == UIN_AWAITING_UIN_REPLY) {
       DisconnectAuthorizer();
     } else {
       DisconnectBOS();
     }
+
+    SignalDisconnect(r);
   }
 
   /**
@@ -2346,7 +2336,7 @@ namespace ICQ2000 {
    */
   void Client::setAcceptInDC(bool d) {
     m_in_dc = d;
-    if (m_in_dc && m_listenServer.isStarted()) {
+    if (!m_in_dc && m_listenServer.isStarted()) {
       SignalRemoveSocket( m_listenServer.getSocketHandle() );
       m_listenServer.Disconnect();
     }

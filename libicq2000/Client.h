@@ -130,7 +130,6 @@ namespace ICQ2000 {
     void DisconnectAuthorizer();
     void ConnectBOS();
     void DisconnectBOS();
-    void DisconnectInt();
 
     // -- Ping server --
     void PingServer();
@@ -223,7 +222,6 @@ namespace ICQ2000 {
     void SendViaServerAdvanced(MessageEvent *ev);
     void SendViaServerNormal(MessageEvent *ev);
     
-    void Connect();
     void Disconnect(DisconnectedEvent::Reason r = DisconnectedEvent::REQUESTED);
 
    public:

@@ -114,6 +114,7 @@ void TCPSocket::FinishNonBlockingConnect() {
   if (getsockopt(socketDescriptor, SOL_SOCKET, SO_ERROR, &so_error, &optlen) == -1 || so_error != 0) {
     close(socketDescriptor);
     socketDescriptor = -1;
+    m_state = NOT_CONNECTED;
     throw SocketException("Couldn't connect socket");
   }
 
@@ -169,7 +170,13 @@ void TCPSocket::Send(Buffer& b) {
   while (sent < b.size())
   {
     ret = send(socketDescriptor, data + sent, b.size() - sent, 0);
-    if (ret == -1) throw SocketException("Sending on socket");
+    if (ret == -1) {
+      close(socketDescriptor);
+      socketDescriptor = -1;
+      m_state = NOT_CONNECTED;
+      throw SocketException("Sending on socket");
+    }
+    
     sent += ret;
   }
 }
@@ -180,12 +187,17 @@ bool TCPSocket::Recv(Buffer& b) {
   unsigned char buffer[max_receive_size];
 
   int ret = recv(socketDescriptor, buffer, max_receive_size, 0);
-  if (ret == 0) throw SocketException( "Other end closed connection" );
-  if (ret == -1) {
-    if (errno == EAGAIN || errno == EWOULDBLOCK) return false;
+  if (ret < 0) {
+    if (ret == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) return false;
+
+    m_state = NOT_CONNECTED;
+    close(socketDescriptor);
+    socketDescriptor = -1;
+
+    if (ret == 0) throw SocketException( "Other end closed connection" );
     else throw SocketException( strerror(errno) );
   }
-
+  
   b.Pack(buffer,ret);
   return true;
 }
