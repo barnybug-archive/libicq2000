@@ -367,6 +367,29 @@ namespace ICQ2000 {
    */
   void MessageEvent::setDirect(bool f) { m_direct = f; }
 
+  /**
+   *  set the reason for delivery failure.  This is used
+   *  internally by the library and is of no interest to the client.
+   *
+   * @param d delivery failure reason
+   */
+  void MessageEvent::setDeliveryFailureReason(DeliveryFailureReason d)
+  {
+    m_failure_reason = d;
+  }
+
+  /**
+   *  get the reason for delivery failure. Defined when getFinished ==
+   *  false and getDelivered == false too.  This is used in the
+   *  message ack'ing system.
+   *
+   * @return reason for delivery failing
+   */
+  MessageEvent::DeliveryFailureReason MessageEvent::getDeliveryFailureReason() const
+  {
+    return m_failure_reason;
+  }
+
   // --------------- ICQ Message Event -------------------
 
   /**

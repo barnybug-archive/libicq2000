@@ -282,16 +282,6 @@ namespace ICQ2000 {
    *  SMSs, Authorisation request/responses and away messages.
    */
   class MessageEvent : public Event {
-   protected:
-    /// the contact related to the MessageEvent
-    Contact* m_contact; 
-    /// whether the event is finished    
-    bool m_finished;
-    /// whether the event was delivered
-    bool m_delivered;
-    /// whether the event was sent direct
-    bool m_direct;
-
    public:
     /**
      *  enum of the type of the message
@@ -308,6 +298,24 @@ namespace ICQ2000 {
       UserAdd
     };
 
+    enum DeliveryFailureReason {
+      Failed_Denied,
+      Failed_SendAsUrgentOrToContactList
+    };
+
+   protected:
+    /// the contact related to the MessageEvent
+    Contact* m_contact; 
+    /// whether the event is finished    
+    bool m_finished;
+    /// whether the event was delivered
+    bool m_delivered;
+    /// whether the event was sent direct
+    bool m_direct;
+
+    DeliveryFailureReason m_failure_reason;
+
+   public:
     MessageEvent(Contact* c);
     virtual ~MessageEvent();
 
@@ -327,6 +335,8 @@ namespace ICQ2000 {
     void setDelivered(bool f);
     void setDirect(bool f);
 
+    DeliveryFailureReason getDeliveryFailureReason() const;
+    void setDeliveryFailureReason(DeliveryFailureReason d);
   };
 
   /**

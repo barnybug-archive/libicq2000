@@ -592,13 +592,13 @@ namespace ICQ2000 {
       // -- deliverable = SMTP --
       
       XmlLeaf *smtp_from = sms_response->getLeaf("from");
-      if (from != NULL) m_smtp_from = smtp_from->getValue();
+      if (smtp_from != NULL) m_smtp_from = smtp_from->getValue();
 
       XmlLeaf *smtp_to = sms_response->getLeaf("to");
-      if (to != NULL) m_smtp_to = smtp_to->getValue();
+      if (smtp_to != NULL) m_smtp_to = smtp_to->getValue();
 
       XmlLeaf *smtp_subject = sms_response->getLeaf("subject");
-      if (subject != NULL) m_smtp_subject = smtp_subject->getValue();
+      if (smtp_subject != NULL) m_smtp_subject = smtp_subject->getValue();
 
     } else {
       // -- deliverable = No --
