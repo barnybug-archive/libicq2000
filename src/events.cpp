@@ -235,8 +235,8 @@ namespace ICQ2000 {
 
   // ----------------- ServerBasedContact Event -------------------
 
-  ServerBasedContactEvent::ServerBasedContactEvent(Contact* contact) : ContactListEvent(contact) { }
-  ContactListEvent::EventType ServerBasedContactEvent::getType() const { return ServerBasedContact; }
+  ServerBasedContactEvent::ServerBasedContactEvent(const ContactList& l) : m_clist(l) { }
+  ContactList& ServerBasedContactEvent::getContactList() { return m_clist; }
 
   // ----------------- UserRemoved Event -------------------
 

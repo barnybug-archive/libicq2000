@@ -1280,13 +1280,7 @@ namespace ICQ2000 {
       case SNAC_SBL_List_From_Server:
 	SignalLog(LogEvent::INFO, "Received server-based list from server\n");
         SBLListSNAC *sbs = static_cast<SBLListSNAC*>(snac);
-        ContactList l = sbs->getContactList();
-        ContactList::iterator curr = l.begin();
-        while (curr != l.end()) {
-            if ((*curr).isICQContact()) 
-                SignalServerBasedContact(&(*curr));
-            ++curr;
-            }
+        SignalServerBasedContactList( sbs->getContactList() );
 	break;
       }
       break;
@@ -1956,9 +1950,9 @@ namespace ICQ2000 {
   }
   
 
-  void Client::SignalServerBasedContact(Contact *c) {
-    ServerBasedContactEvent ev(c);
-    contactlist.emit(&ev);
+  void Client::SignalServerBasedContactList(const ContactList& l) {
+    ServerBasedContactEvent ev(l);
+    server_based_contact_list.emit(&ev);
   }
 
   void Client::SignalUserAdded(Contact *c) {

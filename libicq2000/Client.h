@@ -146,7 +146,7 @@ namespace ICQ2000 {
     void SignalUserOnline(BuddyOnlineSNAC *snac);
     void SignalUserOffline(BuddyOfflineSNAC *snac);
     void SignalUserAdded(Contact *c);
-    void SignalServerBasedContact(Contact *c);
+    void SignalServerBasedContactList(const ContactList& l);
     void SignalUserRemoved(Contact *c);
     void SignalAddSocket(int fd, SocketEvent::Mode m);
     void SignalRemoveSocket(int fd);
@@ -344,6 +344,9 @@ namespace ICQ2000 {
      *  event is finished and deleted from memory by the library.
      */
     Signal1<void,SearchResultEvent*> search_result;
+    
+    Signal1<void,ServerBasedContactEvent*> server_based_contact_list;
+    
     // -------------
 
     // -- Signal Dispatchers --

@@ -199,8 +199,7 @@ namespace ICQ2000 {
       UserInfoChange,
       UserAdded,
       UserRemoved,
-      MessageQueueChanged,
-      ServerBasedContact
+      MessageQueueChanged
     };
     
    protected:
@@ -230,15 +229,6 @@ namespace ICQ2000 {
   class UserInfoChangeEvent : public ContactListEvent {
    public:
     UserInfoChangeEvent(Contact* c);
-    EventType getType() const;
-  };
-
-  /**
-   *  The event signalled when a contact entry from the server-based contact list is received.
-   */
-  class ServerBasedContactEvent : public ContactListEvent {
-   public:
-    ServerBasedContactEvent(Contact *c);
     EventType getType() const;
   };
 
@@ -616,6 +606,17 @@ namespace ICQ2000 {
     bool isExpired() const;
     void setExpired(bool b);
     void setNumberMoreResults(unsigned int m);
+  };
+
+  /**
+   *  The event signalled when entries from the server-based contact list is received.
+   */
+  class ServerBasedContactEvent : public Event {
+   private:
+    ContactList m_clist;
+   public:
+    ServerBasedContactEvent(const ContactList& l);
+    ContactList& getContactList();
   };
 
   // --------------------- NewUIN Event -----------------------------
