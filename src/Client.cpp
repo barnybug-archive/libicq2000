@@ -1191,10 +1191,8 @@ namespace ICQ2000
       FLAPwrapSNAC(b, AddBuddySNAC(m_contact_tree) );
     /* hack - for the moment still send older style buddy list */
 
-    /*
     if (m_invisible_wanted)
       FLAPwrapSNAC(b, AddVisibleSNAC(m_visible_list) );
-    */
 
     SetStatusSNAC sss(Contact::MapStatusToICQStatus(m_status_wanted, m_invisible_wanted), m_web_aware);
 
@@ -1826,7 +1824,7 @@ namespace ICQ2000
     } else if ( m_ftcache->exists_listenfd( fd ) ) {
       
       FileTransferClient *ftc = (*m_ftcache)[fd];
-      if (ftc->getSocket() != NULL)
+      if ( (ftc->getSocket()==0) )
       {
 	ftc->setSocket();
 	ftc->logger.connect( this, &Client::dc_log_cb );
@@ -2834,6 +2832,7 @@ namespace ICQ2000
 	return;
       } else {
 	ev->setState(FileTransferEvent::WAIT_RESPONS);
+	filetransfer_update_signal.emit(ev);
 	ev->setDirect(ev->getContact()->getDirect());
 	SendEvent(ev);
 	return;
@@ -2858,6 +2857,7 @@ namespace ICQ2000
       SignalLog(LogEvent::WARN, e.what());
       ev->setError("ERROR while trying to connect");
       ev->setState(FileTransferEvent::ERROR);
+      filetransfer_update_signal.emit(ev);
       delete ftc;
       return;
     }
@@ -2866,6 +2866,7 @@ namespace ICQ2000
       SignalLog(LogEvent::WARN, e.what());
       ev->setError("ERROR while trying to connect");
       ev->setState(FileTransferEvent::ERROR);
+      filetransfer_update_signal.emit(ev);
       delete ftc;
       return;
     }
@@ -2880,6 +2881,8 @@ namespace ICQ2000
     try
     {
       ftc->SendEvent(NULL);
+      ev->setState(FileTransferEvent::SEND);
+      filetransfer_update_signal.emit(ev);
     }
     catch(DisconnectedException e)
     {
@@ -2921,8 +2924,8 @@ namespace ICQ2000
 	 }
 	 
 	 try {
-	   dc->SendFTACK(ev);
 	   SignalLog(LogEvent::INFO, "Sending FileTransfer ACK direct");
+	   dc->SendFTACK(ev);
 	 } catch(DisconnectedException e) {
 	   // tear down connection
 	   SignalLog(LogEvent::WARN, e.what());
@@ -2942,7 +2945,7 @@ namespace ICQ2000
 	 snac->setICBMCookie(cookie);
 	 FTICQSubType *fst = new FTICQSubType(ev->getMessage(),
 								   ev->getDescription(),
-								   ev->getSize());
+								   ev->getTotalSize());
 	 if (ev->getState() == FileTransferEvent::ACCEPTED) {
 	    FileTransferClient *ftc =
 		    new FileTransferClient(m_self,
@@ -2967,6 +2970,7 @@ namespace ICQ2000
 	 //Don't know if it should be advanced???
 	 SendAdvancedACK(snac);
     }
+    filetransfer_update_signal.emit(ev);
   }
     
   void Client::CancelFileTransfer(FileTransferEvent *ev)
@@ -3006,6 +3010,7 @@ namespace ICQ2000
 		    }
 		    break;
 	    case FileTransferEvent::CLOSE:
+	    case FileTransferEvent::ACCEPTED:
 	    case FileTransferEvent::TIMEOUT:
 		    FileTransferClient *ftc = m_ftcache->getByEvent(ev);
 		    if (ftc != NULL)
@@ -3015,6 +3020,7 @@ namespace ICQ2000
 	  }
 
 	  ev->setState(FileTransferEvent::NOT_CONNECTED);
+          filetransfer_update_signal.emit(ev);
   }
 
 

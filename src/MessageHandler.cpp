@@ -207,13 +207,15 @@ namespace ICQ2000
 
   void MessageHandler::handleIncomingFTACK(FileTransferEvent *ev, FTICQSubType *ft)
   {
-    if (ft->getPort() != 0)
+    if ( ft->getStatus()==AcceptStatus_Online && ( ft->getPort() != 0 || ft->getRevPort() != 0 ) )
       ev->setState(FileTransferEvent::ACCEPTED);
     else
       ev->setState(FileTransferEvent::REJECTED);
 
     ev->setRefusalMessage(ft->getMessage());
     ev->setPort(ft->getPort());
+    if ( ev->getPort()==0 )
+      ev->setPort( ft->getRevPort() );
     ostringstream ostr;
     ostr << "Incoming file transfer ACK: ";
         
@@ -487,7 +489,7 @@ namespace ICQ2000
 
       FileTransferEvent *uv = static_cast<FileTransferEvent*>(ev);
       ist = new FTICQSubType( m_translator->client_to_server( uv->getMessage(), ENCODING_CONTACT_LOCALE, c ),
-						m_translator->client_to_server( uv->getDescription(),     ENCODING_CONTACT_LOCALE, c ), uv->getSize());
+						m_translator->client_to_server( uv->getDescription(),     ENCODING_CONTACT_LOCALE, c ), uv->getTotalSize());
 					    
    
     } else if (ev->getType() == MessageEvent::AwayMessage) {

@@ -1144,7 +1144,7 @@ namespace ICQ2000 {
 
   FileTransferEvent::FileTransferEvent(ContactRef c, const string& msg,
 				       const string& desc, unsigned int size, unsigned short seqnum)
-    : ICQMessageEvent(c), m_message(msg), m_description(desc), m_size(size),
+    : ICQMessageEvent(c), m_message(msg), m_description(desc), m_totsize(size),
 	 m_seqnum(seqnum), m_state(NOT_CONNECTED),
 	 m_speed(100), m_pos(0), m_totpos(0)
   { }

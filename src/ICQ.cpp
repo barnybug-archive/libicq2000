@@ -817,6 +817,17 @@ namespace ICQ2000 {
     b << (unsigned short)0;
   }
   
+  void FTICQSubType::OutputBodyUINACK(Buffer& b) const
+  {
+    b.PackUint16StringNull(m_message);
+    b << m_revport;
+    b << (unsigned short)0;
+    b.PackUint16StringNull(m_description);
+    b << m_size;
+    b << m_port;
+    b << (unsigned short)0;
+  }
+  
   unsigned short FTICQSubType::Length() const 
   {
     return 0;
@@ -839,7 +850,7 @@ namespace ICQ2000 {
   
   unsigned short FTICQSubType::getRevPort() const
   {
-    return m_revport;
+    return ( ((m_revport & 0xFF) << 8) + ((m_revport >> 8) &0xFF) );
   }
 
   

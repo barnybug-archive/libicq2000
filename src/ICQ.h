@@ -375,6 +375,7 @@ namespace ICQ2000 {
     void ParseBodyUIN(Buffer& b);
     void ParseBodyUINACK(Buffer& b);
     void OutputBodyUIN(Buffer& b) const;
+    void OutputBodyUINACK(Buffer& b) const;
     unsigned short Length() const;
     unsigned char getType() const;
 

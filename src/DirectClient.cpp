@@ -741,6 +741,7 @@ namespace ICQ2000 {
     FTICQSubType icqsubtype;
     icqsubtype.setAdvanced(true);
     icqsubtype.setSeqNum(ev->getSeqNum());
+    icqsubtype.setACK(true);
     if (ev->getState() == FileTransferEvent::ACCEPTED)
     {
       icqsubtype.setPort(ev->getPort());
@@ -752,6 +753,7 @@ namespace ICQ2000 {
     }
     else
     {
+      icqsubtype.setStatus( AcceptStatus_Denied );
       icqsubtype.setPort(0);
       icqsubtype.setSize(0);
       icqsubtype.setMessage( ev->getRefusalMessage() );

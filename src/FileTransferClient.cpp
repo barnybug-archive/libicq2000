@@ -52,8 +52,8 @@ namespace ICQ2000
       m_message_handler(mh), m_incoming(true), m_local_ext_ip(ext_ip),
       m_ev(ev)
   {
-    m_listenserver.StartServer();
     Init();
+    m_listenserver.StartServer();
   }
 
   /*
@@ -105,8 +105,6 @@ namespace ICQ2000
     else if (m_remote_tcp_version == 6) m_eff_tcp_version = 6;
     else throw DisconnectedException("Cannot direct connect to client with too old TCP version");
 
-    //Forcing version to be 6.. has to be worked on... 
-    m_eff_tcp_version = 6;
     m_socket->setRemoteIP( m_contact->getLanIP() );
     m_socket->setRemotePort( m_ev->getPort() );
     m_socket->setBlocking(false);
@@ -138,11 +136,8 @@ namespace ICQ2000
     {
       SendPacket0x00();
       m_msgqueue = false;
-      return;
     }
-
-
-    if (m_continue)
+    else if (m_continue)
     {
       if (m_more)
       {
@@ -163,6 +158,7 @@ namespace ICQ2000
 	m_continue = false;
       }
     }
+    m_message_handler->handleUpdateFT(m_ev);
   }
   
   void FileTransferClient::expired()
@@ -235,14 +231,9 @@ namespace ICQ2000
 	  m_state = WAITING_FOR_INIT_ACK;
 	} else {
 	  SendInitAck();
-	  if (m_eff_tcp_version == 7) {
-	    SendInit2();
-	    m_state = WAITING_FOR_INIT2;
-	  } else {
-	    m_state = CONNECTED;
-	    flush_queue();
-	    connected.emit(this);
-	  }
+          m_state = CONNECTED;
+	  flush_queue();
+	  connected.emit(this);
 	}
 
       }
@@ -251,15 +242,11 @@ namespace ICQ2000
 	ParseInitAck(sb);
 
 	if (m_incoming) {
-	  // Incoming
-	  //if (m_eff_tcp_version == 7)
-	  //  m_state = WAITING_FOR_INIT2; // v7 has an extra stage of handshaking
-	  //else {
+          // Incoming
 	  ConfirmUIN();
 	  m_state = CONNECTED;          // v5 is done handshaking now
 	  flush_queue();
 	  connected.emit(this);
-	  //}
 
 	}
 	else
@@ -703,8 +690,12 @@ namespace ICQ2000
     unsigned short length;
     length = b.remains();
 
-    b.Unpack(m_const_buf, length);
-    m_fout.write((const char*)m_const_buf, length);
+    while ( length>0 )
+    {
+        b.Unpack( m_const_buf, MIN(length, MAX_FileChunk) );
+        m_fout.write((const char*)m_const_buf, MIN(length, MAX_FileChunk) );
+        length = MAX(0, length-MAX_FileChunk);
+    }
     m_fout.flush();  //prob. isn't needed.. but I feel safer ;)
 
     m_ev->setPos(m_ev->getPos()+length);
@@ -788,7 +779,10 @@ namespace ICQ2000
       m_senddir = false;
 	 	 
       if (m_fin.is_open())
+      {
+        m_fin.clear();
 	m_fin.close();
+      }
 	 
       m_fin.open(tmp_name.c_str(), std::ios::in | std::ios::binary);
       if (!m_fin.good())
@@ -1035,6 +1029,7 @@ namespace ICQ2000
     struct stat tmp_stat;
     std::string str = ev->getDescription();
     stat(str.c_str(), &tmp_stat);
+/* MITZ - what's the idea?!
     if (S_ISDIR(tmp_stat.st_mode))
     {
       int size = 0;
@@ -1066,6 +1061,7 @@ namespace ICQ2000
     {
       return false;
     }
+*/
     
     ev->setTotalFiles(ev->getFilesInQueue());
     ev->setCurrFile(0);
