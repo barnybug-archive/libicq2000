@@ -23,6 +23,7 @@
 #define ICQ_H
 
 #include <string>
+#include <list>
 
 #include <libicq2000/Xml.h>
 #include <libicq2000/buffer.h>
@@ -257,13 +258,16 @@ namespace ICQ2000 {
 
   class AuthReqICQSubType : public UINICQSubType {
    private:
-    string m_message;
+    std::string m_alias, m_firstname, m_lastname, m_email, m_message;
+    bool m_auth;
 
    public:
     AuthReqICQSubType();
-    AuthReqICQSubType(const string& msg);
+    AuthReqICQSubType(const string& alias, const string& firstname,
+		      const string& lastname, const string& email, bool auth,
+		      const string& msg);
 
-    string getMessage() const;
+    std::string getMessage() const;
 
     void ParseBodyUIN(Buffer& b);
     void OutputBodyUIN(Buffer& b) const;
@@ -329,6 +333,8 @@ namespace ICQ2000 {
     unsigned char getType() const;
   };
 
+  void string_split(const std::string& in, const std::string& sep,
+		    int count, std::list<std::string>& fields);
 }
 
 #endif

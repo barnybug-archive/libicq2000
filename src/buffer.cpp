@@ -332,6 +332,12 @@ void Buffer::ServerToClient(string& szString){
 void Buffer::ClientToServer(string& szString){
   m_translator->ClientToServer(szString);
 }
+string Buffer::ServerToClientCC(const string& szString){
+  return m_translator->ServerToClientCC(szString);
+}
+string Buffer::ClientToServerCC(const string& szString){
+  return m_translator->ClientToServerCC(szString);
+}
 void Buffer::ServerToClient(char &_cChar){
   m_translator->ServerToClient(_cChar);
 }

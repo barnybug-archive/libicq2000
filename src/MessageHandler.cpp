@@ -281,7 +281,12 @@ namespace ICQ2000 {
     } else if (ev->getType() == MessageEvent::AuthReq) {
 
       AuthReqEvent *uv = static_cast<AuthReqEvent*>(ev);
-      ist = new AuthReqICQSubType(uv->getMessage());
+      ist = new AuthReqICQSubType(m_self_contact->getAlias(),
+				  m_self_contact->getFirstName(),
+				  m_self_contact->getLastName(),
+				  m_self_contact->getEmail(),
+				  m_self_contact->getAuthReq(),
+				  uv->getMessage());
 
     } else if (ev->getType() == MessageEvent::AuthAck) {
 

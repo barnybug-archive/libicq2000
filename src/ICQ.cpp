@@ -541,39 +541,51 @@ namespace ICQ2000 {
   AuthReqICQSubType::AuthReqICQSubType()
     { }
 
-  AuthReqICQSubType::AuthReqICQSubType(const string& msg)
-    : m_message(msg)  { }
+  AuthReqICQSubType::AuthReqICQSubType(const string& alias, const string& firstname,
+				       const string& lastname, const string& email, bool auth,
+				       const string& msg)
+    : m_alias(alias), m_firstname(firstname), m_lastname(lastname),
+      m_email(email), m_auth(auth), m_message(msg)  { }
 
   string AuthReqICQSubType::getMessage() const { return m_message; }
   
   void AuthReqICQSubType::ParseBodyUIN(Buffer& b) {
-    int pos;
+    string::size_type pos = 0, lpos = 0;
     string text;
 
     b.UnpackUint16StringNull(text);
 
     /*
-    *
-    * The packet does have nickname, first and last name fields,
-    * but they're better to fetch with user details lookup request
-    * for different versions of Windows client either have or don't
-    * have them in packets they send. <konst>
-    *
-    * Here we read only the last field, which contains a message.
-    *
-    */
+     *
+     * The packet does have nickname, first and last name fields,
+     * but they're better to fetch with user details lookup request
+     * for different versions of Windows client either have or don't
+     * have them in packets they send. <konst>
+     *
+     */
 
-    if((pos = text.rfind(0xfe)) != -1) {
-	m_message = text.substr(pos+1);
-    } else {
-	m_message = "";
-    }
+    list<string> fields;
+    string_split( text, string("\xfe"), 6, fields);
 
-    b.ServerToClient(m_message);
+    list<string>::iterator iter = fields.begin();
+    m_alias = b.ServerToClientCC(*(iter++));
+    m_firstname = b.ServerToClientCC(*(iter++));
+    m_lastname = b.ServerToClientCC(*(iter++));
+    m_email = b.ServerToClientCC(*(iter++));
+    m_auth = ((*(iter++)) == "1");
+    m_message = b.ServerToClientCC(*(iter++));
   }
 
   void AuthReqICQSubType::OutputBodyUIN(Buffer& b) const {
-    b.PackUint16TranslatedNull( m_message );
+    ostringstream ostr;
+    ostr << b.ClientToServerCC(m_alias) << (unsigned char)0xfe
+	 << b.ClientToServerCC(m_firstname) << (unsigned char)0xfe
+	 << b.ClientToServerCC(m_lastname) << (unsigned char)0xfe
+	 << b.ClientToServerCC(m_email) << (unsigned char)0xfe
+	 << (m_auth ? "1" : "0") << (unsigned char)0xfe
+	 << b.ClientToServerCC(m_message);
+    
+    b.PackUint16StringNull( ostr.str() );
   }
 
   unsigned short AuthReqICQSubType::Length() const {
@@ -690,4 +702,27 @@ namespace ICQ2000 {
 
   unsigned char UserAddICQSubType::getType() const { return MSG_Type_UserAdd; }
 
+  void string_split(const string& in, const string& sep, int count, std::list<string>& fields)
+  {
+    // oh for perl.. :-)
+    string::size_type lpos = 0, pos = 0;
+    while (lpos != in.size()) {
+      pos = in.find(sep, lpos);
+      fields.push_back(in.substr(lpos, pos));
+      if (pos == string::npos) {
+	lpos = in.size();
+      } else {
+	lpos = pos + sep.size();
+      }
+    }
+
+    // add blank fields if necessary
+    count -= fields.size();
+    while(count > 0) {
+      fields.push_back(string());
+      --count;
+    }
+    
+  }
+  
 }

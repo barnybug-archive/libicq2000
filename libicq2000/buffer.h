@@ -120,6 +120,8 @@ class Buffer {
   void setTranslator(Translator *translator);
   void ServerToClient(string& szString);
   void ClientToServer(string& szString);
+  std::string ServerToClientCC(const string& szString);
+  std::string ClientToServerCC(const string& szString);
   void ServerToClient(char &_cChar);
   void ClientToServer(char &_cChar);
 
