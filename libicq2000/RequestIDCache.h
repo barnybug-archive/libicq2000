@@ -79,6 +79,10 @@ namespace ICQ2000 {
   class RequestIDCache : public Cache<unsigned int, RequestIDCacheValue*> {
    public:
     RequestIDCache() { }
+    ~RequestIDCache()
+    {
+      removeAll();
+    }
 
     SigC::Signal1<void,RequestIDCacheValue*> expired;
     

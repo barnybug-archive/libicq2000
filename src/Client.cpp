@@ -1662,6 +1662,7 @@ namespace ICQ2000 {
     if ((cev = dynamic_cast<ICQMessageEvent*>(ev)) != NULL) cev->setOfflineMessage(true);
     
     messageack.emit(ev);
+    delete ist;
   }
   
   void Client::PingServer() {

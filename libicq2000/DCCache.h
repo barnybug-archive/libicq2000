@@ -40,6 +40,10 @@ namespace ICQ2000 {
   class DCCache : public Cache<int, DirectClient*> {
    public:
     DCCache() { }
+    ~DCCache()
+    {
+      removeAll();
+    }
 
     void removeItem(const DCCache::literator& l) {
       delete ((*l).getValue());

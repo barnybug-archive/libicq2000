@@ -35,6 +35,10 @@ namespace ICQ2000 {
   class ICBMCookieCache : public Cache<ICBMCookie, MessageEvent*> {
    public:
     ICBMCookieCache() { }
+    ~ICBMCookieCache()
+    {
+      removeAll();
+    }
 
     void removeItem(const ICBMCookieCache::literator& l) {
       delete ((*l).getValue());

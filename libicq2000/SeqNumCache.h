@@ -32,7 +32,11 @@ namespace ICQ2000 {
   class SeqNumCache : public Cache<unsigned short, MessageEvent*> {
    public:
     SeqNumCache() { }
-
+    ~SeqNumCache()
+    {
+      removeAll();
+    }
+    
     void expireItem(const SeqNumCache::literator& l) {
       expired.emit( (*l).getValue() );
       Cache<unsigned short, MessageEvent*>::expireItem(l);
