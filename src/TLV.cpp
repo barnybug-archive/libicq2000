@@ -88,6 +88,9 @@ namespace ICQ2000 {
       case TLV_Capabilities:
 	tlv = new CapabilitiesTLV();
 	break;
+      case TLV_Unknown:
+	tlv = new UnknownTLV();
+	break;
       }
       break;
 
@@ -354,13 +357,15 @@ namespace ICQ2000 {
     }
 
     unsigned short no_timestamps;
+    unsigned int unknown;
     b >> m_firewall
       >> m_tcp_version
       >> m_dc_cookie;
-    b.advance(4); // always 0x00000050
+    b >> unknown; // always 0x00000050 WRONG: seen 0x00000000, then no_timestamps is 0
     b.advance(2); // unknown
 
     b >> no_timestamps;
+    if (unknown==0x00000000) no_timestamps = 3;
     if (no_timestamps > 100) no_timestamps = 100; // place a sensible limit
     
     while(no_timestamps-- > 0) {
