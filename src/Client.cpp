@@ -271,13 +271,14 @@ namespace ICQ2000 {
     case MSG_Type_AutoReq_NA:
     case MSG_Type_AutoReq_DND:
     case MSG_Type_AutoReq_FFC:
-      {
-	MessageEvent *ev = NULL;
-	UINICQSubType *ist = static_cast<UINICQSubType*>(st);
-	bool ack = m_message_handler.handleIncoming( ist ) && ist->isAdvanced();
-	if (ack) SendAdvancedACK(snac);
-      }
-      break;
+    case MSG_Type_UserAdd:
+    {
+      MessageEvent *ev = NULL;
+      UINICQSubType *ist = static_cast<UINICQSubType*>(st);
+      bool ack = m_message_handler.handleIncoming( ist ) && ist->isAdvanced();
+      if (ack) SendAdvancedACK(snac);
+    }
+    break;
       
     case MSG_Type_EmailEx:
       {
@@ -336,19 +337,19 @@ namespace ICQ2000 {
     case MSG_Type_AutoReq_NA:
     case MSG_Type_AutoReq_DND:
     case MSG_Type_AutoReq_FFC:
-      {
-	ICBMCookie c = snac->getICBMCookie();
-	if ( m_cookiecache.exists( c ) ) {
-	  MessageEvent *ev = m_cookiecache[c];
-	  ev->setDirect(false);
-	  m_message_handler.handleIncomingACK( ev, st );
-	  m_cookiecache.remove(c);
-	} else {
-	  SignalLog(LogEvent::WARN, "Received ACK for unknown message");
-	}
+    {
+      ICBMCookie c = snac->getICBMCookie();
+      if ( m_cookiecache.exists( c ) ) {
+	MessageEvent *ev = m_cookiecache[c];
+	ev->setDirect(false);
+	m_message_handler.handleIncomingACK( ev, st );
+	m_cookiecache.remove(c);
+      } else {
+	SignalLog(LogEvent::WARN, "Received ACK for unknown message");
       }
-
-      break;
+    }
+    
+    break;
 
     default:
       SignalLog(LogEvent::WARN, "Received ACK for unknown message type");
@@ -402,12 +403,11 @@ namespace ICQ2000 {
 
     } else if (snac->getType() == SrvResponseSNAC::OfflineMessage) {
 
-      unsigned int uin = snac->getSenderUIN();
-      ContactRef contact = lookupICQ(uin);
       ICQSubType *st = snac->getICQSubType();
 
       MessageEvent *e = NULL;
       if (st->getType() == MSG_Type_Normal) {
+	ContactRef contact = lookupICQ(snac->getSenderUIN());
 
 	NormalICQSubType *nst = static_cast<NormalICQSubType*>(st);
 	e = new NormalMessageEvent(contact,
@@ -415,6 +415,7 @@ namespace ICQ2000 {
 				   snac->getTime(), nst->isMultiParty() );
       }
       else if (st->getType() == MSG_Type_URL) {
+	ContactRef contact = lookupICQ(snac->getSenderUIN());
 
 	URLICQSubType *ust = static_cast<URLICQSubType*>(st);
 	e = new URLMessageEvent(contact,
@@ -423,29 +424,32 @@ namespace ICQ2000 {
 				snac->getTime());
       }
       else if (st->getType() == MSG_Type_EmailEx) {
-
 	EmailExICQSubType *ust = static_cast<EmailExICQSubType*>(st);
-	contact = lookupEmail( ust->getEmail() );
+	ContactRef contact = lookupEmail( ust->getEmail() );
+
 	e = new EmailExEvent(contact, ust->getEmail(), ust->getSender(), ust->getMessage());
       }
       else if (st->getType() == MSG_Type_UserAdd) {
+	ContactRef contact = lookupICQ(snac->getSenderUIN());
 
 	UserAddICQSubType *ust = static_cast<UserAddICQSubType*>(st);
-	contact = lookupICQ( ust->getSource() );
 	e = new UserAddEvent(contact);
       }
       else if (st->getType() == MSG_Type_AuthReq) {
+	ContactRef contact = lookupICQ(snac->getSenderUIN());
 
         AuthReqICQSubType *ust = static_cast<AuthReqICQSubType*>(st);
 	e = new AuthReqEvent(contact, ust->getMessage(), snac->getTime());
       }
       else if (st->getType() == MSG_Type_AuthRej) {
+	ContactRef contact = lookupICQ(snac->getSenderUIN());
 
         AuthRejICQSubType *ust = static_cast<AuthRejICQSubType*>(st);
         e = new AuthAckEvent(contact, ust->getMessage(), false, 
                              snac->getTime());
       }
       else if (st->getType() == MSG_Type_AuthAcc) {
+	ContactRef contact = lookupICQ(snac->getSenderUIN());
 
         e = new AuthAckEvent(contact, true, snac->getTime());
       }
@@ -1689,11 +1693,12 @@ namespace ICQ2000 {
       }
       
     } else if (ev->getType() == MessageEvent::AuthReq
-	       || ev->getType() == MessageEvent::AuthAck) {
+	       || ev->getType() == MessageEvent::AuthAck
+	       || ev->getType() == MessageEvent::UserAdd) {
       
       /*
-       * This seems the sure way of sending authorisation messages
-       * Sending them advanced doesn't work as far as I can tell.
+       * This seems the sure way of sending authorisation messages and
+       * user added me notices. They can't be sent direct.
        */
       SendViaServerNormal(ev);
       delete ev;

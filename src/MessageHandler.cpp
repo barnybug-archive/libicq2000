@@ -243,6 +243,12 @@ namespace ICQ2000 {
       break;
     }
 
+    case MSG_Type_UserAdd:
+    {
+      e = new UserAddEvent(contact);
+      break;
+    }
+
     default:
       break;
 
@@ -295,6 +301,13 @@ namespace ICQ2000 {
         ist = new AuthAccICQSubType();
       else
         ist = new AuthRejICQSubType(uv->getMessage());
+    } else if (ev->getType() == MessageEvent::UserAdd) {
+
+      ist = new UserAddICQSubType(m_self_contact->getAlias(),
+				  m_self_contact->getFirstName(),
+				  m_self_contact->getLastName(),
+				  m_self_contact->getEmail(),
+				  m_self_contact->getAuthReq());
     }
     
     ICQMessageEvent *iev;

@@ -323,9 +323,14 @@ namespace ICQ2000 {
   };
 
   class UserAddICQSubType : public UINICQSubType {
+   private:
+    std::string m_alias, m_firstname, m_lastname, m_email;
+    bool m_auth;
+
    public:
     UserAddICQSubType();
-    UserAddICQSubType(unsigned int source, unsigned int destination);
+    UserAddICQSubType(const std::string& alias, const std::string& firstname,
+		      const std::string& lastname, const std::string& email, bool auth);
 
     void ParseBodyUIN(Buffer& b);
     void OutputBodyUIN(Buffer& b) const;

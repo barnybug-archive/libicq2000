@@ -574,7 +574,7 @@ namespace ICQ2000 {
   /**
    *  A "You were added" message
    */
-  class UserAddEvent : public MessageEvent {
+  class UserAddEvent : public ICQMessageEvent {
    public:
     UserAddEvent(ContactRef c);
 

@@ -959,7 +959,7 @@ namespace ICQ2000 {
   //  "You were added" message
   // ============================================================================
 
-  UserAddEvent::UserAddEvent(ContactRef c) : MessageEvent(c) { }
+  UserAddEvent::UserAddEvent(ContactRef c) : ICQMessageEvent(c) { }
 
   MessageEvent::MessageType UserAddEvent::getType() const { return MessageEvent::UserAdd; }
 

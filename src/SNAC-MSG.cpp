@@ -170,7 +170,8 @@ namespace ICQ2000 {
     } else if (m_icqsubtype->getType() == MSG_Type_URL
 	       || m_icqsubtype->getType() == MSG_Type_AuthReq
 	       || m_icqsubtype->getType() == MSG_Type_AuthAcc
-	       || m_icqsubtype->getType() == MSG_Type_AuthRej) {
+	       || m_icqsubtype->getType() == MSG_Type_AuthRej
+	       || m_icqsubtype->getType() == MSG_Type_UserAdd) {
       UINICQSubType *ust = dynamic_cast<UINICQSubType*>(m_icqsubtype);
       if (ust == NULL) return;
       

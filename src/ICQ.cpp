@@ -640,33 +640,26 @@ namespace ICQ2000 {
   EmailExICQSubType::EmailExICQSubType() { }
 
   void EmailExICQSubType::ParseBody(Buffer& b) {
-    int pos, i;
-    string text, fld;
+    string::size_type pos = 0, lpos = 0;
+    string text;
 
     b.UnpackUint16StringNull(text);
 
-    for(i = 0; i < 6; i++) {
-	if((pos = text.find(0xfe)) != -1) {
-	  fld = text.substr(0, pos);
-	  text.erase(0, pos+1);
-	} else {
-	  fld = text;
-	  text = "";
-	}
+    list<string> fields;
+    string_split( text, string("\xfe"), 6, fields);
 
-	switch(i) {
-	  case 0: m_sender = fld; break;
-	  case 3: m_email = fld; break;
-	  case 5: m_message = fld; break;
-	}
-    }
-
-    b.ServerToClient(m_sender);
-    b.ServerToClient(m_email);
-    b.ServerToClient(m_message);
+    list<string>::iterator iter = fields.begin();
+    m_sender = b.ServerToClientCC(*(iter++));
+    ++iter; // ???
+    ++iter; // ???
+    m_email = b.ServerToClientCC(*(iter++));
+    ++iter; // ???
+    m_message = b.ServerToClientCC(*(iter++));
   }
 
-  void EmailExICQSubType::OutputBody(Buffer& b) const { }
+  void EmailExICQSubType::OutputBody(Buffer& b) const {
+    // never sent
+  }
 
   unsigned short EmailExICQSubType::Length() const {
     return 0;
@@ -682,21 +675,48 @@ namespace ICQ2000 {
 
   UserAddICQSubType::UserAddICQSubType() { }
 
-  UserAddICQSubType::UserAddICQSubType(unsigned int source, unsigned int destination)
-    : UINICQSubType(source, destination) { }
+  UserAddICQSubType::UserAddICQSubType(const string& alias, const string& firstname,
+				       const string& lastname, const string& email, bool auth)
+    : m_alias(alias), m_firstname(firstname), m_lastname(lastname),
+      m_email(email), m_auth(auth) { }
 
-  void UserAddICQSubType::ParseBodyUIN(Buffer& b) {
-  /*
-  *
-  * The packet does have nickname, first and last name fields,
-  * but they're better to fetch with user details lookup request
-  * for different versions of Windows client either have or don't
-  * have them in packets they send. <konst>
-  *
-  */
+  void UserAddICQSubType::ParseBodyUIN(Buffer& b)
+  {
+    string::size_type pos = 0, lpos = 0;
+    string text;
+
+    b.UnpackUint16StringNull(text);
+
+    /*
+     *
+     * The packet does have nickname, first and last name fields,
+     * but they're better to fetch with user details lookup request
+     * for different versions of Windows client either have or don't
+     * have them in packets they send. <konst>
+     *
+     */
+
+    list<string> fields;
+    string_split( text, string("\xfe"), 5, fields);
+
+    list<string>::iterator iter = fields.begin();
+    m_alias = b.ServerToClientCC(*(iter++));
+    m_firstname = b.ServerToClientCC(*(iter++));
+    m_lastname = b.ServerToClientCC(*(iter++));
+    m_email = b.ServerToClientCC(*(iter++));
+    m_auth = ((*(iter++)) == "1");
   }
 
-  void UserAddICQSubType::OutputBodyUIN(Buffer& b) const { }
+  void UserAddICQSubType::OutputBodyUIN(Buffer& b) const {
+    ostringstream ostr;
+    ostr << b.ClientToServerCC(m_alias) << (unsigned char)0xfe
+	 << b.ClientToServerCC(m_firstname) << (unsigned char)0xfe
+	 << b.ClientToServerCC(m_lastname) << (unsigned char)0xfe
+	 << b.ClientToServerCC(m_email) << (unsigned char)0xfe
+	 << (m_auth ? "1" : "0") << (unsigned char)0xfe;
+    
+    b.PackUint16StringNull( ostr.str() );
+  }
 
   unsigned short UserAddICQSubType::Length() const { return 0; }
 
