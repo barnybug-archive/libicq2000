@@ -33,6 +33,15 @@ using std::string;
 
 namespace ICQ2000 {
 
+  // -- Status Codes Flags --
+  const unsigned short STATUS_FLAG_ONLINE = 0x0000;
+  const unsigned short STATUS_FLAG_AWAY = 0x0001;
+  const unsigned short STATUS_FLAG_DND = 0x0002;
+  const unsigned short STATUS_FLAG_NA = 0x0004;
+  const unsigned short STATUS_FLAG_OCCUPIED = 0x0010;
+  const unsigned short STATUS_FLAG_FREEFORCHAT = 0x0020;
+  const unsigned short STATUS_FLAG_INVISIBLE = 0x0100;
+
   class MessageEvent;
 
   // DetailedUserInfo classes
@@ -222,6 +231,10 @@ namespace ICQ2000 {
 
     static string UINtoString(unsigned int uin);
     static unsigned int StringtoUIN(const string& s);
+    
+    static unsigned short MapStatusToICQStatus(Status st, bool inv);
+    static Status MapICQStatusToStatus(unsigned short st);
+    static bool MapICQStatusToInvisible(unsigned short st);
 
     static unsigned int nextImaginaryUIN();
 

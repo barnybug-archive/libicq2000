@@ -45,9 +45,11 @@ namespace ICQ2000 {
   /*
    * Constructor when receiving an incoming connection
    */
-  DirectClient::DirectClient(TCPSocket *sock, ContactList *cl, unsigned int uin, unsigned int ext_ip, unsigned short server_port, Translator* translator)
-    : m_socket(sock), m_state(WAITING_FOR_INIT),
-      m_local_uin(uin), m_local_ext_ip(ext_ip),
+  DirectClient::DirectClient(Contact& self, TCPSocket *sock, ContactList *cl,
+			     unsigned int ext_ip, unsigned short server_port,
+			     Translator* translator)
+    : m_self_contact(self), m_socket(sock), m_state(WAITING_FOR_INIT),
+      m_local_ext_ip(ext_ip),
       m_local_server_port(server_port),m_translator(translator), 
       m_recv(translator), m_contact_list(cl), m_incoming(true), m_contact(NULL)
   {
@@ -57,10 +59,12 @@ namespace ICQ2000 {
   /*
    * Constructor for making an outgoing connection
    */
-  DirectClient::DirectClient(Contact *c, unsigned int uin, unsigned int ext_ip, unsigned short server_port, Translator *translator)
-    : m_state(NOT_CONNECTED), m_local_uin(uin), m_local_ext_ip(ext_ip),
-      m_local_server_port(server_port), m_translator(translator),
-      m_recv(translator), m_incoming(false), m_contact(c)
+  DirectClient::DirectClient(Contact& self, Contact *c, unsigned int ext_ip,
+			     unsigned short server_port, Translator *translator)
+    : m_self_contact(self), m_state(NOT_CONNECTED),
+      m_local_ext_ip(ext_ip), m_local_server_port(server_port),
+      m_translator(translator), m_recv(translator), m_incoming(false),
+      m_contact(c)
   {
     Init();
     m_socket = new TCPSocket();
@@ -284,7 +288,7 @@ namespace ICQ2000 {
     b << (unsigned short)0x0000;
     b << (unsigned int)m_local_server_port;
 
-    b << m_local_uin;
+    b << m_self_contact.getUIN();
     b.setBigEndian();
     b << m_local_ext_ip;
     b << m_socket->getLocalIP();
@@ -325,7 +329,7 @@ namespace ICQ2000 {
     
     unsigned int our_uin;
     b >> our_uin;
-    if (our_uin != m_local_uin) throw ParseException("Local UIN in Init Packet not same as our Local UIN");
+    if (our_uin != m_self_contact.getUIN()) throw ParseException("Local UIN in Init Packet not same as our Local UIN");
 
     // 00 00
     // xx xx       senders open port
@@ -720,13 +724,15 @@ namespace ICQ2000 {
       ist = new NormalICQSubType(nv->getMessage(), co->getUIN());
     } else if (ev->getType() == MessageEvent::URL) {
       URLMessageEvent *uv = static_cast<URLMessageEvent*>(ev);
-      ist = new URLICQSubType(uv->getMessage(), uv->getURL(), m_local_uin, co->getUIN());
+      ist = new URLICQSubType(uv->getMessage(), uv->getURL(), m_self_contact.getUIN(), co->getUIN());
     } else if (ev->getType() == MessageEvent::AwayMessage) {
       ist = new AwayMsgSubType( co->getStatus(), co->getUIN() );
     }
     if (ist == NULL) return;
 
     ist->setAdvanced(true);
+    ist->setStatus( Contact::MapStatusToICQStatus( m_self_contact.getStatus(),
+						   m_self_contact.isInvisible() ) );
 
     b.setLittleEndian();
     b << (unsigned int)0x00000000 // checksum (filled in by Encrypt)

@@ -79,8 +79,8 @@ namespace ICQ2000 {
     m_cookie_data = NULL;
     m_cookie_length = 0;
 
-    m_status = STATUS_OFFLINE;
-    m_invisible = false;
+    m_self.setStatus(STATUS_OFFLINE);
+    m_self.setInvisible(false);
 
     m_ext_ip = 0;
 
@@ -201,9 +201,9 @@ namespace ICQ2000 {
     DisconnectedEvent ev(r);
     disconnected.emit(&ev);
 
-    if (m_status != STATUS_OFFLINE) {
-      m_status = STATUS_OFFLINE;
-      MyStatusChangeEvent ev(&m_self, m_status);
+    if (m_self.getStatus() != STATUS_OFFLINE) {
+      m_self.setStatus(STATUS_OFFLINE);
+      MyStatusChangeEvent ev(&m_self);
       self_event.emit( &ev );
     }
 
@@ -831,8 +831,8 @@ namespace ICQ2000 {
       Contact& c = m_contact_list[userinfo.getUIN()];
       Status old_st = c.getStatus();
       c.setDirect(true); // reset flags when a user goes online
-      c.setStatus( MapICQStatusToStatus(userinfo.getStatus()) );
-      c.setInvisible( MapICQStatusToInvisible(userinfo.getStatus()) );
+      c.setStatus( Contact::MapICQStatusToStatus(userinfo.getStatus()) );
+      c.setInvisible( Contact::MapICQStatusToInvisible(userinfo.getStatus()) );
       c.setExtIP( userinfo.getExtIP() );
       c.setLanIP( userinfo.getLanIP() );
       c.setExtPort( userinfo.getExtPort() );
@@ -1004,16 +1004,16 @@ namespace ICQ2000 {
     if (!m_contact_list.empty())
       FLAPwrapSNAC(b, AddBuddySNAC(m_contact_list) );
 
-    if (m_invisible)
+    if (m_self.isInvisible())
       FLAPwrapSNAC(b, AddVisibleSNAC() );
         
-    SetStatusSNAC sss(MapStatusToICQStatus(m_status, m_invisible));
+    SetStatusSNAC sss(Contact::MapStatusToICQStatus(m_self.getStatus(), m_self.isInvisible()));
 
     // explicitly set status to offline. If the user set the status
     // before calling Connect and we don't do this, we'll miss the
     // status change upon the user info reception and will not emit
     // the statuschanged signal correctly
-    m_status = STATUS_OFFLINE;
+    m_self.setStatus(STATUS_OFFLINE);
 
     sss.setSendExtra(true);
     sss.setIP( m_serverSocket.getLocalIP() );
@@ -1514,7 +1514,7 @@ namespace ICQ2000 {
        */
 
       TCPSocket *sock = m_listenServer.Accept();
-      DirectClient *dc = new DirectClient(sock, &m_contact_list, m_self.getUIN(), m_ext_ip, m_listenServer.getPort(), &m_translator);
+      DirectClient *dc = new DirectClient(m_self, sock, &m_contact_list, m_ext_ip, m_listenServer.getPort(), &m_translator);
       m_dccache[ sock->getSocketHandle() ] = dc;
       dc->logger.connect( slot(this, &Client::dc_log_cb) );
       dc->messaged.connect( slot(this, &Client::dc_messaged_cb) );
@@ -1613,12 +1613,12 @@ namespace ICQ2000 {
       if (ub.getExtIP() != 0) m_ext_ip = ub.getExtIP();
 
       // Check for status change
-      Status newstat = MapICQStatusToStatus( ub.getStatus() );
-      bool newinvis = MapICQStatusToInvisible( ub.getStatus() );
-      if( m_status != newstat  ||  m_invisible != newinvis ) {
-        m_status = newstat;
-        m_invisible = newinvis;
-        MyStatusChangeEvent ev(&m_self, m_status, m_invisible);
+      Status newstat = Contact::MapICQStatusToStatus( ub.getStatus() );
+      bool newinvis = Contact::MapICQStatusToInvisible( ub.getStatus() );
+      if( m_self.getStatus() != newstat  ||  m_self.isInvisible() != newinvis ) {
+        m_self.setStatus(newstat);
+        m_self.setInvisible(newinvis);
+        MyStatusChangeEvent ev(&m_self);
         self_event.emit( &ev );
       }
     }
@@ -1666,7 +1666,7 @@ namespace ICQ2000 {
       if ( c->getExtIP() != c->getLanIP() && m_ext_ip != c->getExtIP() ) return NULL;
       if ( c->getLanIP() == 0 ) return NULL;
       SignalLog(LogEvent::INFO, "Establishing direct connection");
-      dc = new DirectClient(c, m_self.getUIN(), m_ext_ip, (m_in_dc ? m_listenServer.getPort() : 0), &m_translator);
+      dc = new DirectClient(m_self, c, m_ext_ip, (m_in_dc ? m_listenServer.getPort() : 0), &m_translator);
       dc->logger.connect( slot(this, &Client::dc_log_cb) );
       dc->messaged.connect( slot(this, &Client::dc_messaged_cb) );
       dc->messageack.connect( slot(this, &Client::dc_messageack_cb) );
@@ -1701,7 +1701,7 @@ namespace ICQ2000 {
   void Client::SendViaServer(MessageEvent *ev) {
     Contact *c = ev->getContact();
 
-    if (m_status == STATUS_OFFLINE) {
+    if (m_self.getStatus() == STATUS_OFFLINE) {
       ev->setFinished(true);
       ev->setDelivered(false);
       ev->setDirect(false);
@@ -1772,7 +1772,7 @@ namespace ICQ2000 {
     Contact *c = ev->getContact();
     UINICQSubType *ist = EventToUINICQSubType(ev);
     ist->setAdvanced(true);
-    ist->setStatus( MapStatusToICQStatus(m_status, m_invisible) );
+    ist->setStatus( Contact::MapStatusToICQStatus(m_self.getStatus(), m_self.isInvisible()) );
     
     MsgSendSNAC msnac(ist);
     msnac.setAdvanced(true);
@@ -1889,14 +1889,14 @@ namespace ICQ2000 {
 
       Buffer b(&m_translator);
 
-      if (!m_invisible && inv) {
+      if (!m_self.isInvisible() && inv) {
 	// visible -> invisible
 	FLAPwrapSNAC( b, AddVisibleSNAC() );
       }
 	
-      FLAPwrapSNAC( b, SetStatusSNAC(MapStatusToICQStatus(st, inv)) );
+      FLAPwrapSNAC( b, SetStatusSNAC(Contact::MapStatusToICQStatus(st, inv)) );
       
-      if (m_invisible && !inv) {
+      if (m_self.isInvisible() && !inv) {
 	// invisible -> visible
 	FLAPwrapSNAC( b, AddInvisibleSNAC() );
       }
@@ -1905,8 +1905,8 @@ namespace ICQ2000 {
 
     } else {
       // We'll set this as the initial status upon Connect()
-      m_status = st;
-      m_invisible = inv;  
+      m_self.setStatus(st);
+      m_self.setInvisible(inv);
       if (st != STATUS_OFFLINE) Connect();
       if (m_state != NOT_CONNECTED && st == STATUS_OFFLINE) Disconnect(DisconnectedEvent::REQUESTED);
     }
@@ -1918,7 +1918,7 @@ namespace ICQ2000 {
    * @return your current status
    */
   Status Client::getStatus() const {
-    return m_status;
+    return m_self.getStatus();
   }
 
   /**
@@ -1928,7 +1928,7 @@ namespace ICQ2000 {
    */
   bool Client::getInvisible() const
   {
-    return m_invisible;
+    return m_self.isInvisible();
   }
 
   /**
@@ -2189,47 +2189,6 @@ namespace ICQ2000 {
     } else {
       DisconnectBOS();
     }
-  }
-
-  unsigned short Client::MapStatusToICQStatus(Status st, bool inv) {
-    unsigned short s;
-
-    switch(st) {
-    case STATUS_ONLINE:
-      s = 0x0000;
-      break;
-    case STATUS_AWAY:
-      s = 0x0001;
-      break;
-    case STATUS_NA:
-      s = 0x0005;
-      break;
-    case STATUS_OCCUPIED:
-      s = 0x0011;
-      break;
-    case STATUS_DND:
-      s = 0x0013;
-      break;
-    case STATUS_FREEFORCHAT:
-      s = 0x0020;
-      break;
-    }
-
-    if (inv) s |= STATUS_FLAG_INVISIBLE;
-    return s;
-  }
-
-  Status Client::MapICQStatusToStatus(unsigned short st) {
-    if (st & STATUS_FLAG_DND) return STATUS_DND;
-    else if (st & STATUS_FLAG_NA) return STATUS_NA;
-    else if (st & STATUS_FLAG_OCCUPIED) return STATUS_OCCUPIED;
-    else if (st & STATUS_FLAG_FREEFORCHAT) return STATUS_FREEFORCHAT;
-    else if (st & STATUS_FLAG_AWAY) return STATUS_AWAY;
-    else return STATUS_ONLINE;
-  }
-
-  bool Client::MapICQStatusToInvisible(unsigned short st) {
-    return (st & STATUS_FLAG_INVISIBLE);
   }
 
   /**

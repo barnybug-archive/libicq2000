@@ -62,15 +62,6 @@ namespace ICQ2000 {
   class UserInfoSNAC;
   class OutSNAC;
 
-  // -- Status Codes Flags --
-  const unsigned short STATUS_FLAG_ONLINE = 0x0000;
-  const unsigned short STATUS_FLAG_AWAY = 0x0001;
-  const unsigned short STATUS_FLAG_DND = 0x0002;
-  const unsigned short STATUS_FLAG_NA = 0x0004;
-  const unsigned short STATUS_FLAG_OCCUPIED = 0x0010;
-  const unsigned short STATUS_FLAG_FREEFORCHAT = 0x0020;
-  const unsigned short STATUS_FLAG_INVISIBLE = 0x0100;
-
   /**
    *  The main library object.  This is the object the user interface
    *  instantiates for a connection, hooks up to signal on and has the
@@ -102,8 +93,6 @@ namespace ICQ2000 {
 
     unsigned short m_client_seq_num;
     unsigned int m_requestid;
-    Status m_status;
-    bool m_invisible;
     
     Translator m_translator;
 
@@ -208,13 +197,6 @@ namespace ICQ2000 {
     Contact* lookupMobile(const string& m);
 
     Contact* getUserInfoCacheContact(unsigned int reqid);
-
-    /* Maps the Status enum code to the real uint16
-     * value ICQ sends and vice versa
-     */
-    unsigned short MapStatusToICQStatus(Status st, bool inv);
-    Status MapICQStatusToStatus(unsigned short st);
-    bool MapICQStatusToInvisible(unsigned short st);
 
     void ICBMCookieCache_expired_cb(MessageEvent *ev);
     void dccache_expired_cb(DirectClient *dc);

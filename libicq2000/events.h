@@ -485,7 +485,7 @@ namespace ICQ2000 {
    *  Base class for Self events.
    */
   class SelfEvent : public Event {
-   private:
+   protected:
     Contact *m_self_contact;
 
    public:
@@ -517,12 +517,8 @@ namespace ICQ2000 {
    *  Your status change
    */
   class MyStatusChangeEvent : public SelfEvent {
-   private:
-    Status m_status;
-    bool m_invisible;
-
    public:
-    MyStatusChangeEvent(Contact *self, Status s, bool inv = false);
+    MyStatusChangeEvent(Contact *self);
 
     Status getStatus() const;
     bool getInvisible() const;

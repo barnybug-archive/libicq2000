@@ -226,6 +226,51 @@ namespace ICQ2000 {
     return (--imag_uin);
   }
 
+
+
+  unsigned short Contact::MapStatusToICQStatus(Status st, bool inv) {
+    unsigned short s;
+
+    switch(st) {
+    case STATUS_ONLINE:
+      s = 0x0000;
+      break;
+    case STATUS_AWAY:
+      s = 0x0001;
+      break;
+    case STATUS_NA:
+      s = 0x0005;
+      break;
+    case STATUS_OCCUPIED:
+      s = 0x0011;
+      break;
+    case STATUS_DND:
+      s = 0x0013;
+      break;
+    case STATUS_FREEFORCHAT:
+      s = 0x0020;
+      break;
+    default:
+      s = 0x0000;
+    }
+
+    if (inv) s |= STATUS_FLAG_INVISIBLE;
+    return s;
+  }
+
+  Status Contact::MapICQStatusToStatus(unsigned short st) {
+    if (st & STATUS_FLAG_DND) return STATUS_DND;
+    else if (st & STATUS_FLAG_NA) return STATUS_NA;
+    else if (st & STATUS_FLAG_OCCUPIED) return STATUS_OCCUPIED;
+    else if (st & STATUS_FLAG_FREEFORCHAT) return STATUS_FREEFORCHAT;
+    else if (st & STATUS_FLAG_AWAY) return STATUS_AWAY;
+    else return STATUS_ONLINE;
+  }
+
+  bool Contact::MapICQStatusToInvisible(unsigned short st) {
+    return (st & STATUS_FLAG_INVISIBLE);
+  }
+
   // Extra Detailed info class implementations;
 
   MainHomeInfo::MainHomeInfo()

@@ -61,6 +61,7 @@ namespace ICQ2000 {
     TCPSocket *m_socket;
     Buffer m_recv;
 
+    Contact& m_self_contact;
     Contact *m_contact;
     ContactList *m_contact_list;
 
@@ -71,7 +72,7 @@ namespace ICQ2000 {
     unsigned char m_tcp_flags;
     unsigned short m_eff_tcp_version;
 
-    unsigned int m_local_uin, m_local_ext_ip, m_session_id;
+    unsigned int m_local_ext_ip, m_session_id;
     unsigned short m_local_server_port;
 
     void Parse();
@@ -108,8 +109,10 @@ namespace ICQ2000 {
     void SignalRemoveSocket(int fd);
 
    public:
-    DirectClient(TCPSocket *sock, ContactList *cl, unsigned int uin, unsigned int ext_ip, unsigned short server_port, Translator* translator);
-    DirectClient(Contact *c, unsigned int uin, unsigned int ext_ip, unsigned short server_port, Translator *translator);
+    DirectClient(Contact& self, TCPSocket *sock, ContactList *cl, unsigned int ext_ip,
+		 unsigned short server_port, Translator* translator);
+    DirectClient(Contact& self, Contact *c, unsigned int ext_ip,
+		 unsigned short server_port, Translator *translator);
     ~DirectClient();
 
     void Connect();

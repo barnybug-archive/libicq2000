@@ -834,22 +834,25 @@ namespace ICQ2000 {
    *
    * @param s your status
    */
-  MyStatusChangeEvent::MyStatusChangeEvent(Contact *self, Status s, bool inv)
-    : SelfEvent(self), m_status(s), m_invisible(inv) { }
+  MyStatusChangeEvent::MyStatusChangeEvent(Contact *self)
+    : SelfEvent(self)
+  {
+  }
+  
 
   /**
    *  get your status
    *
    * @return your status
    */
-  Status MyStatusChangeEvent::getStatus() const { return m_status; }
+  Status MyStatusChangeEvent::getStatus() const { return m_self_contact->getStatus(); }
 
   /**
    *  get your invisibility
    *
    * @return your invisibility
    */
-  bool MyStatusChangeEvent::getInvisible() const { return m_invisible; }
+  bool MyStatusChangeEvent::getInvisible() const { return m_self_contact->isInvisible(); }
 
   SelfEvent::EventType MyStatusChangeEvent::getType() const 
   {
