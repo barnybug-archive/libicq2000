@@ -805,7 +805,8 @@ namespace ICQ2000 {
       m_status = STATUS_ONLINE;
       break;
     case 2:
-      m_status = STATUS_NA;
+      // status disabled
+      m_status = STATUS_OFFLINE;
       break;
     default:
       m_status = STATUS_OFFLINE;
