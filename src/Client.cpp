@@ -1740,8 +1740,11 @@ namespace ICQ2000 {
       m_invisible_wanted = inv;
       
       // start connecting if not already
-      if (m_state == NOT_CONNECTED)
+      if (m_state == NOT_CONNECTED) {
+	ConnectingEvent ev;
+        connecting.emit(&ev);
 	ConnectAuthorizer(AUTH_AWAITING_CONN_ACK);
+      }
     }
   }
 

@@ -26,3 +26,7 @@ Serhiy Brytskyy
 
 Jason Townsend
  - Warnings fixes when compiling with (the somewhat pedantic) -Wall.
+
+Nils Björklund <nilbjo@telia.com>
+ - connecting signal
+

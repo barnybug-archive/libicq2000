@@ -248,6 +248,13 @@ namespace ICQ2000 {
 
     // -- Signals --
     /**
+     *  The signal to connect to for listening to ConnectingEvent's.
+     *  A ConnectingEvent is signalled when the client is trying to go online.
+     * @see connected, ConnectingEvent
+     */
+    SigC::Signal1<void,ConnectingEvent*> connecting;
+
+    /**
      *  The signal to connect to for listening to ConnectedEvent's.
      *  A ConnectedEvent is signalled when the client is online proper.
      * @see disconnected, ConnectedEvent
