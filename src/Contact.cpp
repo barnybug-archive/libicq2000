@@ -513,6 +513,12 @@ namespace ICQ2000 {
       lang1(LANGUAGE_UNKNOWN), lang2(LANGUAGE_UNKNOWN), lang3(LANGUAGE_UNKNOWN)
   { }
 
+  /**
+   *  Get a string representation of the birthdate.
+   *
+   * @deprecated This function is not internationalized - it does not
+   * return utf-8, and returns the hard-coded "Unspecified" also.
+   */
   string Contact::HomepageInfo::getBirthDate() const
   {
     if (birth_day == 0 || birth_year == 0) return "Unspecified";
