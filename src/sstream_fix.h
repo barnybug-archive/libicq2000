@@ -34,7 +34,8 @@
 # error "No sstream/strstream implementation"
 #endif
 
-#ifdef USE_STRSTREAM_WRAPPERS
+#if defined(USE_STRSTREAM_WRAPPERS) && !defined(SSTREAM_FIX_H)
+#define SSTREAM_FIX_H
 
 #include <string>
 #include <strstream>
@@ -50,7 +51,7 @@ namespace std
    public:
     string str() {
       char *cstr = ostrstream::str();
-      freeze(false);
+      freeze(0);
       if (cstr == 0) return string();
       return string(cstr,pcount());
     }

@@ -475,7 +475,7 @@ namespace ICQ2000 {
 
     b.advance(27); // unknown
 
-    b.setEndianness(Buffer::LITTLE);
+    b.setLittleEndian();
     unsigned short seqnum;
     b >> seqnum
       >> unknown
@@ -524,7 +524,7 @@ namespace ICQ2000 {
      * the ICQ folks take over from the AOL folks
      * Intel byte ordering from now on..
      */
-    b.setEndianness(Buffer::LITTLE);
+    b.setLittleEndian();
     
     /*
      * UIN

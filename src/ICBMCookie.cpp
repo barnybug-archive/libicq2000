@@ -34,13 +34,13 @@ namespace ICQ2000 {
   }
 
   void ICBMCookie::Parse(Buffer& b) {
-    b.setEndianness(Buffer::BIG);
+    b.setBigEndian();
     b >> m_c1
       >> m_c2;
   }
 
   void ICBMCookie::Output(Buffer& b) const {
-    b.setEndianness(Buffer::BIG);
+    b.setBigEndian();
     b << m_c1
       << m_c2;
   }

@@ -262,13 +262,32 @@ namespace ICQ2000 {
 
   /**
    *  Constructor for a SearchResultEvent
-   *
-   * @param contact a contact matching the search criteria
-   * @param is_last a flag indicating whether this result is the last match
    */
-  SearchResultEvent::SearchResultEvent(Contact* contact, bool is_last) : ContactListEvent(contact), m_is_last(is_last) { }
-  SearchResultEvent::EventType SearchResultEvent::getType() const { return SearchResult; }
+  SearchResultEvent::SearchResultEvent(SearchResultEvent::SearchType t)
+    : m_searchtype(t), m_finished(false), m_expired(false),
+      m_last_contact(NULL), m_more_results(0)
+  { }
+
+  Contact* SearchResultEvent::getLastContactAdded() const { return m_last_contact; }
   
+  ContactList& SearchResultEvent::getContactList() { return m_clist; }
+  
+  void SearchResultEvent::setLastContactAdded(Contact *c) { m_last_contact = c; }
+  
+  SearchResultEvent::SearchType SearchResultEvent::getSearchType() const { return m_searchtype; }
+  
+  bool SearchResultEvent::isFinished() const { return m_finished; }
+
+  void SearchResultEvent::setFinished(bool b) { m_finished = b; }
+
+  bool SearchResultEvent::isExpired() const { return m_expired; }
+  
+  void SearchResultEvent::setExpired(bool b) { m_expired = b; }
+
+  unsigned int SearchResultEvent::getNumberMoreResults() const { return m_more_results; }
+  
+  void SearchResultEvent::setNumberMoreResults(unsigned int m) { m_more_results = m; }
+
   // ----------------- MessageQueueChangedEvent -------------------
 
   /**
@@ -681,11 +700,11 @@ namespace ICQ2000 {
    * @param msg authorisation message
    */
   AuthReqEvent::AuthReqEvent(Contact* c, const string& nick, 
-                             const string& first_name, 
-                             const string& last_name,
+                             const string& firstname, 
+                             const string& lastname,
                              const string& email, const string& msg)
-    : MessageEvent(c), m_nick(nick), m_first_name(first_name),
-      m_last_name(last_name), m_email(email), m_message(msg), 
+    : MessageEvent(c), m_nick(nick), m_firstname(firstname),
+      m_lastname(lastname), m_email(email), m_message(msg), 
       m_offline(false) {}
 
   /**
@@ -695,12 +714,12 @@ namespace ICQ2000 {
    * @param msg authorisation message
    */
   AuthReqEvent::AuthReqEvent(Contact* c, const string& nick, 
-                             const string& first_name, 
-                             const string& last_name,
+                             const string& firstname, 
+                             const string& lastname,
                              const string& email, 
                              const string& msg,time_t t)
-    : MessageEvent(c), m_nick(nick), m_first_name(first_name),
-      m_last_name(last_name), m_email(email), m_message(msg), 
+    : MessageEvent(c), m_nick(nick), m_firstname(firstname),
+      m_lastname(lastname), m_email(email), m_message(msg), 
       m_offline(true) {
     m_time=t;  
   }
@@ -728,14 +747,14 @@ namespace ICQ2000 {
    *
    * @return the first name
    */
-  string AuthReqEvent::getFirstName() const { return m_first_name; }
+  string AuthReqEvent::getFirstName() const { return m_firstname; }
 
   /**
    *  get the last name
    *
    * @return the last name
    */
-  string AuthReqEvent::getLastName() const { return m_last_name; }
+  string AuthReqEvent::getLastName() const { return m_lastname; }
 
   /**
    *  get the email address

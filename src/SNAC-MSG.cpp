@@ -67,7 +67,7 @@ namespace ICQ2000 {
     if (m_advanced) {
       b << (unsigned short)0x0002;
       
-      UINRelatedSubType *ust = dynamic_cast<UINRelatedSubType*>(m_icqsubtype);
+      UINICQSubType *ust = dynamic_cast<UINICQSubType*>(m_icqsubtype);
       if (ust == NULL) return;
       // should fix
       
@@ -106,7 +106,7 @@ namespace ICQ2000 {
 
       b << (unsigned char) 0x00;
 
-      b.setEndianness(Buffer::LITTLE);
+      b.setLittleEndian();
       b << m_seqnum
 	<< (unsigned short)0x000e
 	<< m_seqnum;
@@ -118,7 +118,7 @@ namespace ICQ2000 {
 
       m_icqsubtype->Output(b);
       
-      b.setEndianness(Buffer::BIG);
+      b.setBigEndian();
       b << (unsigned short)0x0003
 	<< (unsigned short)0x0000;
 
@@ -182,7 +182,7 @@ namespace ICQ2000 {
       b << (unsigned short)0x0005
 	<< (unsigned short)(8+total_size);
 
-      b.setEndianness(Buffer::LITTLE);
+      b.setLittleEndian();
       b << (unsigned int)ust->getSource()
 	<< (unsigned short)MSG_Type_URL // ICQ Subtype
 	<< (unsigned short)total_size;
@@ -207,7 +207,7 @@ namespace ICQ2000 {
       b << (unsigned short)0x0005
 	<< (unsigned short)(9+m_text.size());
 
-      b.setEndianness(Buffer::LITTLE);
+      b.setLittleEndian();
       b << (unsigned int)ust->getSource()
 	<< (unsigned short)MSG_Type_AuthReq; // ICQ Subtype
       b.PackUint16StringNull(m_text);
@@ -228,7 +228,7 @@ namespace ICQ2000 {
       b << (unsigned short)0x0005
 	<< (unsigned short)(9+m_text.size());
 
-      b.setEndianness(Buffer::LITTLE);
+      b.setLittleEndian();
       b << (unsigned int)ust->getSource()
 	<< (unsigned short)MSG_Type_AuthRej; // ICQ Subtype
       b.PackUint16StringNull(m_text);
@@ -245,7 +245,7 @@ namespace ICQ2000 {
        */
       b << (unsigned short)0x0005
 	<< (unsigned short)0x9;
-      b.setEndianness(Buffer::LITTLE);
+      b.setLittleEndian();
       b << (unsigned int)ust->getSource()
 	<< (unsigned short)MSG_Type_AuthAcc; // ICQ Subtype
       b.PackUint16StringNull("");
@@ -255,7 +255,7 @@ namespace ICQ2000 {
     /* Another TLV - dunno what it means
      * - it doesn't seem to matter if I take this out
      */
-    b.setEndianness(Buffer::BIG);
+    b.setBigEndian();
     b << (unsigned short)0x0006
       << (unsigned short)0x0000;
 
@@ -308,7 +308,8 @@ namespace ICQ2000 {
 
       MessageDataTLV *t = static_cast<MessageDataTLV*>(tlvlist[TLV_MessageData]);
       // coerce this into the NormalICQSubType
-      NormalICQSubType *nst = new NormalICQSubType(false,false);
+      NormalICQSubType *nst = new NormalICQSubType(false);
+      nst->setAdvanced(false);
       nst->setMessage( t->getMessage() );
       m_icqsubtype = nst;
 
@@ -347,8 +348,8 @@ namespace ICQ2000 {
 
     }
 
-    if (m_icqsubtype != NULL && dynamic_cast<UINRelatedSubType*>(m_icqsubtype) != NULL) {
-      UINRelatedSubType *ust = dynamic_cast<UINRelatedSubType*>(m_icqsubtype);
+    if (m_icqsubtype != NULL && dynamic_cast<UINICQSubType*>(m_icqsubtype) != NULL) {
+      UINICQSubType *ust = dynamic_cast<UINICQSubType*>(m_icqsubtype);
       ust->setSource( m_userinfo.getUIN() );
     }
    
@@ -357,7 +358,7 @@ namespace ICQ2000 {
   MessageACKSNAC::MessageACKSNAC()
     : m_icqsubtype(NULL) { }
 
-  MessageACKSNAC::MessageACKSNAC(ICBMCookie c, UINRelatedSubType *icq)
+  MessageACKSNAC::MessageACKSNAC(ICBMCookie c, UINICQSubType *icq)
     : m_cookie(c), m_icqsubtype(icq) { }
 
   MessageACKSNAC::~MessageACKSNAC() {
@@ -383,7 +384,7 @@ namespace ICQ2000 {
     
     b << (unsigned char)0x00; // unknown 0 for normal 4 for away message request
     
-    b.setEndianness(Buffer::LITTLE);
+    b.setLittleEndian();
     b << m_icqsubtype->getSeqNum()
       << (unsigned short)0x000e
       << m_icqsubtype->getSeqNum();
@@ -413,7 +414,7 @@ namespace ICQ2000 {
     b.advance(1);
 
     unsigned short seqnum, junk;
-    b.setEndianness(Buffer::LITTLE);
+    b.setLittleEndian();
     b >> seqnum
       >> junk
       >> seqnum;
@@ -421,7 +422,7 @@ namespace ICQ2000 {
     b.advance(12);
     ICQSubType *t = ICQSubType::ParseICQSubType(b, true);
     if (t != NULL) {
-      m_icqsubtype = dynamic_cast<UINRelatedSubType*>(t);
+      m_icqsubtype = dynamic_cast<UINICQSubType*>(t);
       if (m_icqsubtype != NULL) {
 	m_icqsubtype->setSource(uin);
 	m_icqsubtype->setSeqNum(seqnum);
@@ -433,8 +434,15 @@ namespace ICQ2000 {
 
   }
 
-  void MessageSentOfflineSNAC::ParseBody(Buffer& b) {
-    b.advance(10);
+  void MessageOfflineUserSNAC::ParseBody(Buffer& b) {
+    /**
+     *  The server sends this packet to you if you try sending a
+     *  message to a user who is offline.  If it was an advanced
+     *  message you sent, then it needs to be retried as a
+     *  non-advanced message.
+     */
+    b >> m_cookie
+      >> m_channel;
 
     unsigned char len;
     string sn;

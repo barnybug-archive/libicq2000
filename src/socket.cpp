@@ -24,6 +24,8 @@
 
 #include <libicq2000/socket.h>
 
+#include <libicq2000/buffer.h>
+
 using std::ostringstream;
 using std::istringstream;
 //using std::copy;

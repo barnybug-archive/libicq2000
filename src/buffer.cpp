@@ -24,37 +24,37 @@
 #include <algorithm>
 #include <ctype.h>
 
-Buffer::Buffer(Translator *translator) : endn(BIG), out_pos(0), data(), 
+Buffer::Buffer(Translator *translator) : m_endn(BIG), m_out_pos(0), m_data(), 
   m_translator(translator) { }
 
 Buffer::Buffer(const unsigned char* d, int size, Translator *translator) 
-  : endn(BIG), out_pos(0), data(d, d+size) { }
+  : m_endn(BIG), m_out_pos(0), m_data(d, d+size) { }
 
 Buffer::Buffer(Buffer& b, unsigned int start, unsigned int data_len) 
-  : endn(BIG), out_pos(0), data(b.data.begin()+start, 
-  b.data.begin()+start+data_len), m_translator(b.m_translator) { }
+  : m_endn(BIG), m_out_pos(0), m_data(b.m_data.begin()+start, 
+  b.m_data.begin()+start+data_len), m_translator(b.m_translator) { }
 
 unsigned char& Buffer::operator[](unsigned int p) {
-  return data[p];
+  return m_data[p];
 }
 
 void Buffer::clear() {
-  data.clear();
-  out_pos = 0;
+  m_data.clear();
+  m_out_pos = 0;
 }
 
 bool Buffer::empty() {
-  return data.empty();
+  return m_data.empty();
 }
 
 void Buffer::chopOffBuffer(Buffer& b, unsigned int sz) {
-  copy( data.begin(), data.begin()+sz, back_inserter(b.data) );
-  data.erase( data.begin(), data.begin()+sz );
-  out_pos = 0;
+  copy( m_data.begin(), m_data.begin()+sz, back_inserter(b.m_data) );
+  m_data.erase( m_data.begin(), m_data.begin()+sz );
+  m_out_pos = 0;
 }
 
 void Buffer::Pack(const unsigned char *d, int size) {
-  copy(d, d+size, back_inserter(data));
+  copy(d, d+size, back_inserter(m_data));
 }
 
 void Buffer::PackUint16StringNull(const string& s) {
@@ -69,12 +69,12 @@ void Buffer::PackByteString(const string& s) {
 }
 
 void Buffer::Pack(const string& s) {
-  copy(s.begin(), s.end(), back_inserter(data));
+  copy(s.begin(), s.end(), back_inserter(m_data));
 }
 
 unsigned char Buffer::UnpackChar() {
-  if (out_pos + 1 > data.size()) return 0;
-  else return data[out_pos++];
+  if (m_out_pos + 1 > m_data.size()) return 0;
+  else return m_data[m_out_pos++];
 }
 
 void Buffer::UnpackUint32String(string& s) {
@@ -97,65 +97,116 @@ void Buffer::UnpackByteString(string& s) {
 }
 
 void Buffer::Unpack(string& s, int size) {
-  if (out_pos >= data.size()) return;
+  if (m_out_pos >= m_data.size()) return;
 
-  if (size > data.size()-out_pos) size = data.size()-out_pos;
+  if (size > m_data.size()-m_out_pos) size = m_data.size()-m_out_pos;
 
-  vector<unsigned char>::iterator i = data.begin()+out_pos;
-  vector<unsigned char>::iterator end = data.begin()+out_pos+size;
+  vector<unsigned char>::iterator i = m_data.begin()+m_out_pos;
+  vector<unsigned char>::iterator end = m_data.begin()+m_out_pos+size;
 
   while (i != end) {
     s += *i;
     ++i;
   }
 
-  out_pos += size;
+  m_out_pos += size;
 }
 
 void Buffer::Unpack(unsigned char *const d, int size) {
-  if (size > data.size()-out_pos) size = data.size()-out_pos;
-  copy(data.begin()+out_pos, data.begin()+out_pos+size, d);
-  out_pos += size;
+  if (size > m_data.size()-m_out_pos) size = m_data.size()-m_out_pos;
+  copy(m_data.begin()+m_out_pos, m_data.begin()+m_out_pos+size, d);
+  m_out_pos += size;
+}
+
+Buffer::marker Buffer::getAutoSizeShortMarker() 
+{
+  // reserve a short
+  (*this) << (unsigned short)0;
+
+  marker m;
+  m.position = size();
+  m.endianness = m_endn;
+  m.size = 2;
+  return m;
+}
+
+Buffer::marker Buffer::getAutoSizeIntMarker() 
+{
+  // reserve an int
+  (*this) << (unsigned int)0;
+
+  marker m;
+  m.position = size();
+  m.endianness = m_endn;
+  m.size = 4;
+  return m;
+}
+
+void Buffer::setAutoSizeMarker(const marker& m)
+{
+  unsigned int autosize = size() - m.position;
+
+  if (m.size == 2) {
+    if (m.endianness == BIG) {
+      m_data[ m.position - 2 ] = ((autosize >> 8) & 0xff);
+      m_data[ m.position - 1 ] = ((autosize >> 0) & 0xff);
+    } else {
+      m_data[ m.position - 2 ] = ((autosize >> 0) & 0xff);
+      m_data[ m.position - 1 ] = ((autosize >> 8) & 0xff);
+    }
+  } else if (m.size == 4) {
+    if (m.endianness == BIG) {
+      m_data[ m.position - 4 ] = ((autosize >> 24) & 0xff);
+      m_data[ m.position - 3 ] = ((autosize >> 16) & 0xff);
+      m_data[ m.position - 2 ] = ((autosize >> 8) & 0xff);
+      m_data[ m.position - 1 ] = ((autosize >> 0) & 0xff);
+    } else {
+      m_data[ m.position - 4 ] = ((autosize >> 0) & 0xff);
+      m_data[ m.position - 3 ] = ((autosize >> 8) & 0xff);
+      m_data[ m.position - 2 ] = ((autosize >> 16) & 0xff);
+      m_data[ m.position - 1 ] = ((autosize >> 24) & 0xff);
+    }
+  }
 }
 
 // -- Input stream methods --
 
 Buffer& Buffer::operator<<(unsigned char l) {
-  data.push_back(l);
+  m_data.push_back(l);
   return (*this);
 }
 
 Buffer& Buffer::operator<<(unsigned short l) {
-  if (endn == BIG) {
-    data.push_back((l>>8) & 0xFF);
-    data.push_back(l & 0xFF);
+  if (m_endn == BIG) {
+    m_data.push_back((l>>8) & 0xFF);
+    m_data.push_back(l & 0xFF);
   } else {
-    data.push_back(l & 0xFF);
-    data.push_back((l>>8) & 0xFF);
+    m_data.push_back(l & 0xFF);
+    m_data.push_back((l>>8) & 0xFF);
   }    
   return (*this);
 }
 
 Buffer& Buffer::operator<<(unsigned int l) {
-  if (endn == BIG) {
-    data.push_back((l >> 24) & 0xFF);
-    data.push_back((l >> 16) & 0xFF);
-    data.push_back((l >> 8) & 0xFF);
-    data.push_back(l & 0xFF);
+  if (m_endn == BIG) {
+    m_data.push_back((l >> 24) & 0xFF);
+    m_data.push_back((l >> 16) & 0xFF);
+    m_data.push_back((l >> 8) & 0xFF);
+    m_data.push_back(l & 0xFF);
   } else {
-    data.push_back(l & 0xFF);
-    data.push_back((l >> 8) & 0xFF);
-    data.push_back((l >> 16) & 0xFF);
-    data.push_back((l >> 24) & 0xFF);
+    m_data.push_back(l & 0xFF);
+    m_data.push_back((l >> 8) & 0xFF);
+    m_data.push_back((l >> 16) & 0xFF);
+    m_data.push_back((l >> 24) & 0xFF);
   }
   return (*this);
 }
 
-// strings stored as length (2 bytes), string data, _not_ null-terminated
+// strings stored as length (2 bytes), string m_data, _not_ null-terminated
 Buffer& Buffer::operator<<(const string& s) {
   unsigned short sz = s.size();
-  data.push_back((sz>>8) & 0xFF);
-  data.push_back(sz & 0xFF);
+  m_data.push_back((sz>>8) & 0xFF);
+  m_data.push_back(sz & 0xFF);
   Pack(s);
   return (*this);
 }
@@ -163,42 +214,42 @@ Buffer& Buffer::operator<<(const string& s) {
 // -- Output stream methods --
 
 Buffer& Buffer::operator>>(unsigned char& l) {
-  if (out_pos + 1 > data.size()) l = 0;
-  else l = data[out_pos++];
+  if (m_out_pos + 1 > m_data.size()) l = 0;
+  else l = m_data[m_out_pos++];
   return (*this);
 }
 
 Buffer& Buffer::operator>>(unsigned short& l) {
-  if (out_pos + 2 > data.size()) {
+  if (m_out_pos + 2 > m_data.size()) {
     l = 0;
-    out_pos += 2;
+    m_out_pos += 2;
   } else {
-    if (endn == BIG) {
-      l = ((unsigned short)data[out_pos++] << 8)
-	+ ((unsigned short)data[out_pos++]);
+    if (m_endn == BIG) {
+      l = ((unsigned short)m_data[m_out_pos++] << 8)
+	+ ((unsigned short)m_data[m_out_pos++]);
     } else {
-      l = ((unsigned short)data[out_pos++])
-	+ ((unsigned short)data[out_pos++] << 8);
+      l = ((unsigned short)m_data[m_out_pos++])
+	+ ((unsigned short)m_data[m_out_pos++] << 8);
     }
   }
   return (*this);
 }
 
 Buffer& Buffer::operator>>(unsigned int& l) {
-  if (out_pos + 4 > data.size()) {
+  if (m_out_pos + 4 > m_data.size()) {
     l = 0;
-    out_pos += 4;
+    m_out_pos += 4;
   } else {
-    if (endn == BIG) {
-      l = ((unsigned int)data[out_pos++] << 24)
-	+ ((unsigned int)data[out_pos++] << 16)
-	+ ((unsigned int)data[out_pos++] << 8)
-	+ ((unsigned int)data[out_pos++]);
+    if (m_endn == BIG) {
+      l = ((unsigned int)m_data[m_out_pos++] << 24)
+	+ ((unsigned int)m_data[m_out_pos++] << 16)
+	+ ((unsigned int)m_data[m_out_pos++] << 8)
+	+ ((unsigned int)m_data[m_out_pos++]);
     } else {
-      l = ((unsigned int)data[out_pos++])
-	+ ((unsigned int)data[out_pos++] << 8)
-	+ ((unsigned int)data[out_pos++] << 16)
-	+ ((unsigned int)data[out_pos++] << 24);
+      l = ((unsigned int)m_data[m_out_pos++])
+	+ ((unsigned int)m_data[m_out_pos++] << 8)
+	+ ((unsigned int)m_data[m_out_pos++] << 16)
+	+ ((unsigned int)m_data[m_out_pos++] << 24);
     }
   }
   return (*this);
@@ -206,9 +257,9 @@ Buffer& Buffer::operator>>(unsigned int& l) {
 
 // strings stored as length (2 bytes), string data, _not_ null-terminated
 Buffer& Buffer::operator>>(string& s) {
-  if (out_pos + 2 > data.size()) {
+  if (m_out_pos + 2 > m_data.size()) {
     s = ""; // clear() method doesn't seem to exist!
-    out_pos += 2;
+    m_out_pos += 2;
   } else {
     unsigned short sz;
     (*this) >> sz;
@@ -218,18 +269,28 @@ Buffer& Buffer::operator>>(string& s) {
 }
 
 void Buffer::setEndianness(endian e) {
-  endn = e;
+  m_endn = e;
+}
+
+void Buffer::setBigEndian() 
+{
+  m_endn = BIG;
+}
+
+void Buffer::setLittleEndian()
+{
+  m_endn = LITTLE;
 }
 
 void Buffer::dump(ostream& out) {
   char d[] = "123456789abcdef0";
   out << hex << setfill('0');
-  int m = ((data.size()+15)/16)*16;
+  int m = ((m_data.size()+15)/16)*16;
   for (int a = 0; a < m; a++) {
     if (a % 16 == 0) out << setw(4) << a << "  ";
-    if (a < data.size()) {
-      out << setw(2) << (int)data[a] << " ";
-      d[a%16] = isprint(data[a]) ? data[a] : '.';
+    if (a < m_data.size()) {
+      out << setw(2) << (int)m_data[a] << " ";
+      d[a%16] = isprint(m_data[a]) ? m_data[a] : '.';
     } else {
       out << "   ";
       d[a%16] = ' ';

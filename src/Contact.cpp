@@ -25,6 +25,7 @@
 #include <time.h>
 
 #include <libicq2000/userinfoconstants.h>
+#include <libicq2000/events.h>
 
 using std::ostringstream;
 using std::istringstream;
@@ -109,6 +110,8 @@ namespace ICQ2000 {
 
   bool Contact::isInvisible() const { return m_invisible; }
 
+  bool Contact::getAuthReq() const { return m_authreq; }
+
   void Contact::setMobileNo(const string& mn) {
     m_main_home_info.cellular = mn;
     if (!mn.empty()) m_mobilecontact = true;
@@ -126,6 +129,8 @@ namespace ICQ2000 {
   void Contact::setStatus(Status st) { m_status = st; }
 
   void Contact::setInvisible(bool inv) { m_invisible = inv; }
+
+  void Contact::setAuthReq(bool b) { m_authreq = b; }
 
   bool Contact::isICQContact() const { return m_icqcontact; }
 

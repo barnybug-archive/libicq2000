@@ -32,6 +32,8 @@
 
 #include <libicq2000/constants.h>
 
+#include <libicq2000/ContactList.h>
+
 using std::string;
 
 namespace ICQ2000 {
@@ -198,7 +200,6 @@ namespace ICQ2000 {
       UserAdded,
       UserRemoved,
       MessageQueueChanged,
-      SearchResult,
       ServerBasedContact
     };
     
@@ -230,18 +231,6 @@ namespace ICQ2000 {
    public:
     UserInfoChangeEvent(Contact* c);
     EventType getType() const;
-  };
-
-  /**
-   *  The event signalled when a user-search result is received.
-   */
-  class SearchResultEvent : public ContactListEvent {
-   private:
-    bool m_is_last;
-   public:
-    SearchResultEvent(Contact* c, bool is_last);
-    EventType getType() const;
-    bool isLast() const { return m_is_last; }
   };
 
   /**
@@ -456,19 +445,19 @@ namespace ICQ2000 {
   class AuthReqEvent : public MessageEvent {
    private:
     string m_nick;
-    string m_first_name;
-    string m_last_name;
+    string m_firstname;
+    string m_lastname;
     string m_email;
     string m_message;
     bool m_offline;
 
    public:
     AuthReqEvent(Contact* c, const string& msg);
-    AuthReqEvent(Contact* c, const string& nick, const string& first_name, 
-                 const string& last_name, const string& email,
+    AuthReqEvent(Contact* c, const string& nick, const string& firstname, 
+                 const string& lastname, const string& email,
                  const string& msg);
-    AuthReqEvent(Contact* c, const string& nick, const string& first_name, 
-                 const string& last_name, const string& email,
+    AuthReqEvent(Contact* c, const string& nick, const string& firstname, 
+                 const string& lastname, const string& email,
                  const string& msg,time_t time);
 
     string getMessage() const;
@@ -518,6 +507,42 @@ namespace ICQ2000 {
 
     Status getStatus() const;
     bool getInvisible() const;
+  };
+
+  // --------------------- Search Events ----------------------------
+
+  /**
+   *  The event signalled when a user-search result is received.
+   */
+  class SearchResultEvent : public Event {
+   public:
+    enum SearchType {
+      ShortWhitepage,
+      FullWhitepage,
+      UIN
+    };
+	
+   private:
+    bool m_finished, m_expired;
+    SearchType m_searchtype;
+    ContactList m_clist;
+    Contact *m_last_contact;
+    unsigned int m_more_results;
+    
+   public:
+    SearchResultEvent(SearchType t);
+
+    SearchType getSearchType() const;
+    ContactList& getContactList();
+    Contact* getLastContactAdded() const;
+    void setLastContactAdded(Contact *c);
+    unsigned int getNumberMoreResults() const;
+
+    bool isFinished() const;
+    void setFinished(bool b);
+    bool isExpired() const;
+    void setExpired(bool b);
+    void setNumberMoreResults(unsigned int m);
   };
 
   // --------------------- NewUIN Event -----------------------------

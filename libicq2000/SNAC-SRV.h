@@ -101,27 +101,40 @@ namespace ICQ2000 {
     unsigned short Subtype() const { return SNAC_SRV_Send; }
   };
 
-  class SrvRequestShortwp : public SrvFamilySNAC, public OutSNAC {
-
+  class SrvRequestShortWP : public SrvFamilySNAC, public OutSNAC {
    protected:
     unsigned int m_my_uin;
-    string m_requested_nickname, m_requested_first_name, m_requested_last_name;
+    string m_nickname, m_firstname, m_lastname;
     void OutputBody(Buffer& b) const;
 
    public:
-    SrvRequestShortwp(unsigned int my_uin, const string& requested_nickname, const string& requested_first_name, const string& requested_last_name);
+    SrvRequestShortWP(unsigned int my_uin, const string& nickname, 
+		      const string& firstname, const string& lastname);
+
     unsigned short Subtype() const { return SNAC_SRV_Send; }
   };
 
-  class SrvRequestFullwp : public SrvRequestShortwp {
+  class SrvRequestFullWP : public SrvFamilySNAC, public OutSNAC {
    private:
-    string m_requested_email;
+    unsigned int m_my_uin;
+    string m_nickname, m_firstname, m_lastname, m_email;
+    unsigned short m_min_age, m_max_age;
+    unsigned char m_sex;
+    unsigned char m_language;
+    string m_city, m_state, m_company_name, m_department, m_position;
+    unsigned short m_country;
+    bool m_only_online;
 
    protected:
     void OutputBody(Buffer& b) const;
 
    public:
-    SrvRequestFullwp(unsigned int my_uin, const string& requested_email);
+    SrvRequestFullWP(unsigned int my_uin, const string& nickname, const string& firstname,
+		     const string& lastname, const string& email, unsigned short min_age, unsigned short max_age,
+		     unsigned char sex, unsigned char language, const string& city, const string& state,
+		     unsigned short country, const string& company_name, const string& department,
+		     const string& position, bool only_online);
+
     unsigned short Subtype() const { return SNAC_SRV_Send; }
   };
 
@@ -187,8 +200,9 @@ namespace ICQ2000 {
     ICQSubType *m_icqsubtype;
 
     // SimpleUserInfo fields
+    bool m_empty_contact;
     unsigned int m_uin;
-    string m_alias, m_first_name, m_last_name, m_email;
+    string m_alias, m_firstname, m_lastname, m_email;
     bool m_last_in_search;
 
     // DetailedUserInfo fields
@@ -201,7 +215,8 @@ namespace ICQ2000 {
     string m_about;
 
     bool m_authreq;
-    unsigned char m_status;
+    Status m_status;
+    unsigned int m_more_results;
 
     void ParseBody(Buffer& b);
     void ParseICQResponse(Buffer& b);
@@ -228,12 +243,18 @@ namespace ICQ2000 {
     unsigned int getSenderUIN() const { return m_sender_UIN; }
     time_t getTime() const { return m_time; }
 
+    bool isEmptyContact() const { return m_empty_contact; }
     unsigned int getUIN() const { return m_uin; }
     string getAlias() const { return m_alias; }
-    string getFirstName() const { return m_first_name; }
-    string getLastName() const { return m_last_name; }
+    string getFirstName() const { return m_firstname; }
+    string getLastName() const { return m_lastname; }
     string getEmail() const { return m_email; }
+    bool getAuthReq() const { return m_authreq; }
+    Status getStatus() const { return m_status; }
+    
     bool isLastInSearch() const { return m_last_in_search; }
+    unsigned int getNumberMoreResults() const { return m_more_results; }
+    
 
     unsigned short Subtype() const { return SNAC_SRV_Response; }
 

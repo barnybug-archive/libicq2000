@@ -33,7 +33,6 @@
 #include <libicq2000/buffer.h>
 #include <libicq2000/events.h>
 #include <libicq2000/exceptions.h>
-#include <libicq2000/ICQ.h>
 #include <libicq2000/Contact.h>
 #include <libicq2000/ContactList.h>
 #include <libicq2000/SeqNumCache.h>
@@ -47,6 +46,8 @@ using SigC::Signal1;
 
 namespace ICQ2000 {
 
+  class UINICQSubType;
+  
   class DirectClient : public SigC::Object {
    private:
     enum State { NOT_CONNECTED,
@@ -84,7 +85,7 @@ namespace ICQ2000 {
     void SendInitPacket();
     void SendInit2();
     void SendPacketEvent(MessageEvent *ev);
-    void SendPacketAck(UINRelatedSubType *i);
+    void SendPacketAck(UINICQSubType *i);
     void Send(Buffer &b);
     
     bool Decrypt(Buffer& in, Buffer& out);
@@ -131,6 +132,7 @@ namespace ICQ2000 {
     unsigned short getPort() const;
     int getfd() const;
     TCPSocket* getSocket() const;
+    void clearoutMessagesPoll();
 
     void setContact(Contact* c);
     Contact* getContact() const;

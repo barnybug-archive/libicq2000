@@ -21,6 +21,8 @@
 
 #include <libicq2000/DirectClient.h>
 
+#include <libicq2000/ICQ.h>
+
 #include "sstream_fix.h"
 
 #include <stdlib.h>
@@ -114,6 +116,11 @@ namespace ICQ2000 {
     SendInitPacket();
   }
 
+  void DirectClient::clearoutMessagesPoll() 
+  {
+    m_msgcache.clearoutPoll();
+  }
+  
   void DirectClient::expired_cb(MessageEvent *ev) {
     if ( m_contact != NULL ) {
       ev->setFinished(false);
@@ -163,7 +170,7 @@ namespace ICQ2000 {
     while (!m_recv.empty()) {
       m_recv.setPos(0);
 
-      m_recv.setEndianness(Buffer::LITTLE);
+      m_recv.setLittleEndian();
       m_recv >> length;
       if (m_recv.remains() < length) return; // waiting for more of the packet
 
@@ -266,7 +273,7 @@ namespace ICQ2000 {
 
   void DirectClient::SendInitPacket() {
     Buffer b(m_translator);
-    b.setEndianness(Buffer::LITTLE);
+    b.setLittleEndian();
     b << (unsigned short)( m_eff_tcp_version == 7 ? 0x0030 : 0x002c ); // length
 
     b << (unsigned char)0xff;    // start byte
@@ -278,11 +285,11 @@ namespace ICQ2000 {
     b << (unsigned int)m_local_server_port;
 
     b << m_local_uin;
-    b.setEndianness(Buffer::BIG);
+    b.setBigEndian();
     b << m_local_ext_ip;
     b << m_socket->getLocalIP();
     b << (unsigned char)0x04;    // mode
-    b.setEndianness(Buffer::LITTLE);
+    b.setLittleEndian();
     b << (unsigned int)m_local_server_port;
     b << m_session_id;
 
@@ -295,7 +302,7 @@ namespace ICQ2000 {
   }
 
   void DirectClient::ParseInitPacket(Buffer &b) {
-    b.setEndianness(Buffer::LITTLE);
+    b.setLittleEndian();
     unsigned short length;
     b >> length;
 
@@ -363,7 +370,7 @@ namespace ICQ2000 {
   }
 
   void DirectClient::ParseInitAck(Buffer &b) {
-    b.setEndianness(Buffer::LITTLE);
+    b.setLittleEndian();
     unsigned short length;
     b >> length;
     if (length != 4) throw ParseException("Init Ack not as expected");
@@ -373,7 +380,7 @@ namespace ICQ2000 {
   }
 
   void DirectClient::ParseInit2(Buffer &b) {
-    b.setEndianness(Buffer::LITTLE);
+    b.setLittleEndian();
     unsigned short length;
     b >> length;
     if (length != 0x0021) throw ParseException("V7 final handshake packet incorrect length");
@@ -391,7 +398,7 @@ namespace ICQ2000 {
 
   void DirectClient::SendInit2() {
     Buffer b(m_translator);
-    b.setEndianness(Buffer::LITTLE);
+    b.setLittleEndian();
     b << (unsigned short)0x0021;
     b << (unsigned char) 0x03       // start byte
       << (unsigned int)  0x0000000a // unknown
@@ -418,7 +425,7 @@ namespace ICQ2000 {
   }
 
   void DirectClient::ParsePacketInt(Buffer& b) {
-    b.setEndianness(Buffer::LITTLE);
+    b.setLittleEndian();
     unsigned short length;
     b >> length;
 
@@ -444,8 +451,8 @@ namespace ICQ2000 {
     b.advance(12); // unknown 3 ints
 
     ICQSubType *i = ICQSubType::ParseICQSubType(b, true);
-    if (dynamic_cast<UINRelatedSubType*>(i) == NULL) throw ParseException("Unknown ICQ subtype");
-    UINRelatedSubType *icqsubtype = dynamic_cast<UINRelatedSubType*>(i);
+    if (dynamic_cast<UINICQSubType*>(i) == NULL) throw ParseException("Unknown ICQ subtype");
+    UINICQSubType *icqsubtype = dynamic_cast<UINICQSubType*>(i);
 
     icqsubtype->setSeqNum(seqnum);
 
@@ -550,8 +557,8 @@ namespace ICQ2000 {
 
       unsigned int size = in.size()-correction;
       
-      in.setEndianness(Buffer::LITTLE);
-      out.setEndianness(Buffer::LITTLE);
+      in.setLittleEndian();
+      out.setLittleEndian();
 
       unsigned short length;
       in >> length;
@@ -625,8 +632,8 @@ namespace ICQ2000 {
       unsigned char X1, X2, X3;
       unsigned int size = in.size();
 
-      in.setEndianness(Buffer::LITTLE);
-      out.setEndianness(Buffer::LITTLE);
+      in.setLittleEndian();
+      out.setLittleEndian();
 
       if (m_eff_tcp_version == 7) {
 	// correction for next byte
@@ -676,16 +683,16 @@ namespace ICQ2000 {
 
   void DirectClient::SendInitAck() {
     Buffer b(m_translator);
-    b.setEndianness(Buffer::LITTLE);
+    b.setLittleEndian();
     b << (unsigned short)0x0004;
     b << (unsigned int)0x00000001;
     Send(b);
   }
 
-  void DirectClient::SendPacketAck(UINRelatedSubType *icqsubtype) {
+  void DirectClient::SendPacketAck(UINICQSubType *icqsubtype) {
     Buffer b(m_translator);
 
-    b.setEndianness(Buffer::LITTLE);
+    b.setLittleEndian();
     b << (unsigned int)0x00000000 // checksum (filled in by Encrypt)
       << V6_TCP_ACK
       << (unsigned short)0x000e
@@ -707,19 +714,21 @@ namespace ICQ2000 {
 
     Contact *co = ev->getContact();
 
-    ICQSubType *ist = NULL;
+    UINICQSubType *ist = NULL;
     if (ev->getType() == MessageEvent::Normal) {
       NormalMessageEvent *nv = static_cast<NormalMessageEvent*>(ev);
-      ist = new NormalICQSubType(nv->getMessage(), co->getUIN(), true);
+      ist = new NormalICQSubType(nv->getMessage(), co->getUIN());
     } else if (ev->getType() == MessageEvent::URL) {
       URLMessageEvent *uv = static_cast<URLMessageEvent*>(ev);
-      ist = new URLICQSubType(uv->getMessage(), uv->getURL(), m_local_uin, co->getUIN(), true);
+      ist = new URLICQSubType(uv->getMessage(), uv->getURL(), m_local_uin, co->getUIN());
     } else if (ev->getType() == MessageEvent::AwayMessage) {
       ist = new AwayMsgSubType( co->getStatus(), co->getUIN() );
     }
     if (ist == NULL) return;
 
-    b.setEndianness(Buffer::LITTLE);
+    ist->setAdvanced(true);
+
+    b.setLittleEndian();
     b << (unsigned int)0x00000000 // checksum (filled in by Encrypt)
       << V6_TCP_START
       << (unsigned short)0x000e

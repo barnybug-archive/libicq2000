@@ -90,14 +90,14 @@ namespace ICQ2000 {
     void setSeqNum(unsigned short s)  { m_seqnum = s; }
   };
 
-  class UINRelatedSubType : public ICQSubType {
+  class UINICQSubType : public ICQSubType {
    protected:
     unsigned int m_source, m_destination;
     bool m_advanced, m_ack;
 
    public:
-    UINRelatedSubType(bool adv);
-    UINRelatedSubType(unsigned int s, unsigned int d, bool adv);
+    UINICQSubType();
+    UINICQSubType(unsigned int s, unsigned int d);
 
     void setDestination(unsigned int uin);
     void setSource(unsigned int uin);
@@ -110,15 +110,15 @@ namespace ICQ2000 {
     bool isACK() const;
   };
 
-  class NormalICQSubType : public UINRelatedSubType {
+  class NormalICQSubType : public UINICQSubType {
    private:
     string m_message;
     bool m_multi;
     unsigned int m_foreground, m_background;
     
    public:
-    NormalICQSubType(bool multi, bool adv);
-    NormalICQSubType(const string& msg, unsigned int destination, bool adv);
+    NormalICQSubType(bool multi);
+    NormalICQSubType(const string& msg, unsigned int destination);
 
     string getMessage() const;
     bool isMultiParty() const;
@@ -135,15 +135,15 @@ namespace ICQ2000 {
     unsigned char getType() const;
   };
 
-  class URLICQSubType : public UINRelatedSubType {
+  class URLICQSubType : public UINICQSubType {
    private:
     string m_message;
     string m_url;
     bool m_advanced;
     
    public:
-    URLICQSubType(bool adv);
-    URLICQSubType(const string& msg, const string& url, unsigned int source, unsigned int destination, bool adv);
+    URLICQSubType();
+    URLICQSubType(const string& msg, const string& url, unsigned int source, unsigned int destination);
 
     string getMessage() const;
     void setMessage(const string& msg);
@@ -156,7 +156,7 @@ namespace ICQ2000 {
     unsigned char getType() const;
   };
 
-  class AwayMsgSubType : public UINRelatedSubType {
+  class AwayMsgSubType : public UINICQSubType {
    private:
     unsigned char m_type;
     string m_message;
@@ -220,18 +220,18 @@ namespace ICQ2000 {
 
   };
 
-  class AuthReqICQSubType : public UINRelatedSubType {
+  class AuthReqICQSubType : public UINICQSubType {
    private:
     string m_nick;
-    string m_first_name;
-    string m_last_name;
+    string m_firstname;
+    string m_lastname;
     string m_email;
     string m_message;
 
    public:
-    AuthReqICQSubType(bool adv);
+    AuthReqICQSubType();
     AuthReqICQSubType(const string& msg, unsigned int source, 
-                      unsigned int destination, bool adv);
+                      unsigned int destination);
 
     string getMessage() const;
     string getNick() const;
@@ -246,10 +246,10 @@ namespace ICQ2000 {
 
   };
   
-  class AuthAccICQSubType : public UINRelatedSubType {
+  class AuthAccICQSubType : public UINICQSubType {
    public:
-    AuthAccICQSubType(bool adv);
-    AuthAccICQSubType(unsigned int source, unsigned int destination, bool adv);
+    AuthAccICQSubType();
+    AuthAccICQSubType(unsigned int source, unsigned int destination);
 
     void Parse(Buffer& b);
     void OutputBody(Buffer& b) const;
@@ -258,14 +258,14 @@ namespace ICQ2000 {
 
   };
   
-  class AuthRejICQSubType : public UINRelatedSubType {
+  class AuthRejICQSubType : public UINICQSubType {
    private:
     string m_message;
 
    public:
-    AuthRejICQSubType(bool adv);
+    AuthRejICQSubType();
     AuthRejICQSubType(const string& msg, unsigned int source, 
-                      unsigned int destination, bool adv);
+                      unsigned int destination);
 
     string getMessage() const;
     void setMessage(const string& msg);

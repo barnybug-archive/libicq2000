@@ -29,4 +29,5 @@
 unsigned int libicq2000_major_version = LIBICQ2000_MAJOR_VERSION;
 unsigned int libicq2000_minor_version = LIBICQ2000_MINOR_VERSION;
 unsigned int libicq2000_micro_version = LIBICQ2000_MICRO_VERSION;
+const char* libicq2000_version = LIBICQ2000_VERSION;
 

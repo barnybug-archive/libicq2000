@@ -126,6 +126,18 @@
 /* Define if you have the socket library (-lsocket).  */
 #undef HAVE_LIBSOCKET
 
+/* Major version of libicq2000 */
+#undef LIBICQ2000_MAJOR_VERSION
+
+/* Minor version of libicq2000 */
+#undef LIBICQ2000_MINOR_VERSION
+
+/* Micro version of libicq2000 */
+#undef LIBICQ2000_MICRO_VERSION
+
+/* Full version of libicq2000 */
+#undef LIBICQ2000_VERSION
+
 /* Name of package */
 #undef PACKAGE
 

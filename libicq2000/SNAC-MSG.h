@@ -35,7 +35,7 @@ namespace ICQ2000 {
   const unsigned short SNAC_MSG_Send = 0x0006;
   const unsigned short SNAC_MSG_Message = 0x0007;
   const unsigned short SNAC_MSG_MessageACK = 0x000b;
-  const unsigned short SNAC_MSG_SentOffline = 0x000c;
+  const unsigned short SNAC_MSG_OfflineUser = 0x000c;
 
   // ----------------- Message (Family 0x0004) SNACs --------------
   
@@ -97,31 +97,36 @@ namespace ICQ2000 {
   class MessageACKSNAC : public MsgFamilySNAC, public InSNAC, public OutSNAC {
    protected:
     ICBMCookie m_cookie;
-    UINRelatedSubType *m_icqsubtype;
+    UINICQSubType *m_icqsubtype;
 
     void ParseBody(Buffer& b);
     void OutputBody(Buffer& b) const;
 
    public:
     MessageACKSNAC();
-    MessageACKSNAC(ICBMCookie c, UINRelatedSubType *icqsubtype);
+    MessageACKSNAC(ICBMCookie c, UINICQSubType *icqsubtype);
     ~MessageACKSNAC();
 
-    UINRelatedSubType* getICQSubType() const { return m_icqsubtype; }  
+    UINICQSubType* getICQSubType() const { return m_icqsubtype; }  
     ICBMCookie getICBMCookie() const { return m_cookie; }
 
     unsigned short Subtype() const { return SNAC_MSG_MessageACK; }
   };
 
-  class MessageSentOfflineSNAC : public MsgFamilySNAC, public InSNAC {
+  class MessageOfflineUserSNAC : public MsgFamilySNAC, public InSNAC {
    protected:
+    ICBMCookie m_cookie;
+    unsigned short m_channel;
     unsigned int m_uin;
 
     void ParseBody(Buffer& b);
 
    public:
 
-    unsigned short Subtype() const { return SNAC_MSG_SentOffline; }
+    ICBMCookie getICBMCookie() const { return m_cookie; }
+    unsigned short getChannel() const { return m_channel; }
+
+    unsigned short Subtype() const { return SNAC_MSG_OfflineUser; }
     unsigned int getUIN() const { return m_uin; }  
   };
 

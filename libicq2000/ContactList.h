@@ -90,7 +90,8 @@ namespace ICQ2000 {
     Contact& add(const Contact& ct);
     void remove(unsigned int uin);
 
-    bool empty();
+    unsigned int size() const;
+    bool empty() const;
 
     bool exists(unsigned int uin);
     bool exists(const string& m);

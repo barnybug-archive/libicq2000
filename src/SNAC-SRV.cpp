@@ -72,7 +72,7 @@ namespace ICQ2000 {
     b << (unsigned short)0x0001;
     b << (unsigned short)(xmlstr.size()+37);
 
-    b.setEndianness(Buffer::LITTLE);
+    b.setLittleEndian();
     b << (unsigned short)(xmlstr.size()+35);
     b << m_senders_UIN;
 
@@ -82,7 +82,7 @@ namespace ICQ2000 {
     // think this is a request id of sorts
     b << (unsigned short)0x0001;
 
-    b.setEndianness(Buffer::BIG);
+    b.setBigEndian();
 
     // SMS send subtype
     b << (unsigned short)0x8214;
@@ -93,11 +93,8 @@ namespace ICQ2000 {
     for(int a = 0; a < 16; a++)
       b << (unsigned char)0x00;
 
-    // not sure whether this is really an int
-    b << (unsigned int)(xmlstr.size()+1);
-
-    b.Pack(xmlstr);
-    b << (unsigned char)0x00; // NULL terminated
+    b << (unsigned short)0x0000;
+    b.PackUint16StringNull(xmlstr);
   }
 
   SrvRequestOfflineSNAC::SrvRequestOfflineSNAC(unsigned int uin)
@@ -108,7 +105,7 @@ namespace ICQ2000 {
     b << (unsigned short)0x0001
       << (unsigned short)0x000a;
 
-    b.setEndianness(Buffer::LITTLE);
+    b.setLittleEndian();
     b << (unsigned short)0x0008;
     b << m_uin;
 
@@ -127,7 +124,7 @@ namespace ICQ2000 {
     b << (unsigned short)0x0001
       << (unsigned short)0x000a;
 
-    b.setEndianness(Buffer::LITTLE);
+    b.setLittleEndian();
     b << (unsigned short)0x0008;
     b << m_uin;
 
@@ -145,7 +142,7 @@ namespace ICQ2000 {
     b << (unsigned short)0x0001
       << (unsigned short)0x0010;
 
-    b.setEndianness(Buffer::LITTLE);
+    b.setLittleEndian();
     b << (unsigned short)0x000e;
     b << m_my_uin;
 
@@ -156,76 +153,94 @@ namespace ICQ2000 {
     
   }
 
-  SrvRequestShortwp::SrvRequestShortwp(unsigned int my_uin, const string& requested_nickname, const string& requested_first_name, const string& requested_last_name)
-    : m_my_uin(my_uin), m_requested_nickname(requested_nickname), m_requested_first_name(requested_first_name), m_requested_last_name(requested_last_name) { }
+  SrvRequestShortWP::SrvRequestShortWP
+  (unsigned int my_uin, const string& nickname,
+   const string& firstname, const string& lastname)
 
-  void SrvRequestShortwp::OutputBody(Buffer& b) const {
-    b << (unsigned short)0x0001
-      << (unsigned short)(0x000c+9+m_requested_first_name.size()
-                                 +m_requested_last_name.size()
-                                 +m_requested_nickname.size());
+    : m_my_uin(my_uin), m_nickname(nickname),
+      m_firstname(firstname), m_lastname(lastname)
+  { }
 
-    b.setEndianness(Buffer::LITTLE);
-    b << (unsigned short)(0x000a+9+m_requested_first_name.size()
-                                 +m_requested_last_name.size()
-                                 +m_requested_nickname.size()); // 9=3*(2+1) size and null terminators
+
+  void SrvRequestShortWP::OutputBody(Buffer& b) const {
+    b << (unsigned short)0x0001;
+
+    Buffer::marker m1 = b.getAutoSizeShortMarker();
+
+    b.setLittleEndian();
+    Buffer::marker m2 = b.getAutoSizeShortMarker();
+
     b << m_my_uin;
 
     b << (unsigned short)2000	/* type 9808 */
       << (unsigned short)0x0000
       << (unsigned short)0x0515;	/* subtype wp-short-request */
-    b.PackUint16StringNull(m_requested_first_name);
-    b.PackUint16StringNull(m_requested_last_name);
-    b.PackUint16StringNull(m_requested_nickname);
-   
+    b.PackUint16StringNull(m_firstname);
+    b.PackUint16StringNull(m_lastname);
+    b.PackUint16StringNull(m_nickname);
+
+    b.setAutoSizeMarker(m1);
+    b.setAutoSizeMarker(m2);
   }
 
-  SrvRequestFullwp::SrvRequestFullwp(unsigned int my_uin, const string& requested_email)
-    : SrvRequestShortwp(my_uin, "", "", ""), m_requested_email(requested_email) { }
 
-  void SrvRequestFullwp::OutputBody(Buffer& b) const {
-    b << (unsigned short)0x0001
-      << (unsigned short)(0x000c+3+m_requested_first_name.size()
-                                +3+m_requested_last_name.size()
-                                +3+m_requested_nickname.size()
-                                +3+m_requested_email.size()
-                                +45 );
+  SrvRequestFullWP::SrvRequestFullWP
+  (unsigned int my_uin, const string& nickname,
+   const string& firstname,  const string& lastname,
+   const string& email, unsigned short min_age, unsigned short max_age,
+   unsigned char sex, unsigned char language, const string& city, const string& state,
+   unsigned short country, const string& company_name, const string& department,
+   const string& position, bool only_online)
+  
+    : m_my_uin(my_uin), m_nickname(nickname),
+      m_firstname(firstname), m_lastname(lastname),
+      m_email(email), m_min_age(min_age), m_max_age(max_age),
+      m_sex(sex), m_language(language), m_city(city), m_state(state),
+      m_country(country), m_company_name(company_name), m_department(department),
+      m_position(position), m_only_online(only_online)
 
-    b.setEndianness(Buffer::LITTLE);
-    b << (unsigned short)(0x000a+3+m_requested_first_name.size()
-                                +3+m_requested_last_name.size()
-                                +3+m_requested_nickname.size()
-                                +3+m_requested_email.size()
-                                +45 );
+  { }
+
+  void SrvRequestFullWP::OutputBody(Buffer& b) const {
+    b << (unsigned short)0x0001;
+
+    Buffer::marker m1 = b.getAutoSizeShortMarker();
+
+    b.setLittleEndian();
+    Buffer::marker m2 = b.getAutoSizeShortMarker();
+
     b << m_my_uin;
 
     b << (unsigned short)2000	/* type 9808 */
       << (unsigned short)0x0000
       << (unsigned short)0x0533;	/* subtype wp-full-request */
-    b.PackUint16StringNull(m_requested_first_name);
-    b.PackUint16StringNull(m_requested_last_name);
-    b.PackUint16StringNull(m_requested_nickname);
-    b.PackUint16StringNull(m_requested_email);
-    b << (unsigned short)0x0000;		// minimum age
-    b << (unsigned short)0x0000;		// maximum age
-    b << (unsigned char)0x00;			// sex
-    b << (unsigned char)0x00;			// language
-    b.PackUint16StringNull("");			// city
-    b.PackUint16StringNull("");			// state
-    b << (unsigned short)0x0000;		// country
-    b.PackUint16StringNull("");			// company name
-    b.PackUint16StringNull("");			// department
-    b.PackUint16StringNull("");			// position
+    b.PackUint16StringNull(m_firstname);
+    b.PackUint16StringNull(m_lastname);
+    b.PackUint16StringNull(m_nickname);
+    b.PackUint16StringNull(m_email);
+    b << (unsigned short)m_min_age;		// minimum age
+    b << (unsigned short)m_max_age;		// maximum age
+    b << (unsigned char)m_sex;			// sex
+    b << (unsigned char)m_language;             // language
+    b.PackUint16StringNull(m_city);             // city
+    b.PackUint16StringNull(m_state);            // state
+    b << (unsigned short)m_country;             // country
+    b.PackUint16StringNull(m_company_name);	// company name
+    b.PackUint16StringNull(m_department);	// department
+    b.PackUint16StringNull(m_position);		// position
     b << (unsigned char)0x00;			// occupation
     b << (unsigned short)0x0000;		// past info category
     b.PackUint16StringNull("");			//           description
     b << (unsigned short)0x0000;		// interests category
     b.PackUint16StringNull("");			//           description
     b << (unsigned short)0x0000;		// affiliation/organization
-    b.PackUint16StringNull("");			//           		    description
+    b.PackUint16StringNull("");			//           description
     b << (unsigned short)0x0000;		// homepage category
     b.PackUint16StringNull("");			//           description
-    b << (unsigned char)0x00;			// only-online flag
+    b << (unsigned char)(m_only_online ? 0x01 : 0x00);
+                                                // only-online flag
+    b.setAutoSizeMarker(m1);
+    b.setAutoSizeMarker(m2);
   }
 
   SrvRequestDetailUserInfo::SrvRequestDetailUserInfo(unsigned int my_uin, unsigned int user_uin)
@@ -235,7 +250,7 @@ namespace ICQ2000 {
     b << (unsigned short)0x0001
       << (unsigned short)0x0010;
 
-    b.setEndianness(Buffer::LITTLE);
+    b.setLittleEndian();
     b << (unsigned short)0x000e;
     b << m_my_uin;
 
@@ -267,7 +282,7 @@ namespace ICQ2000 {
     b >> type;
     b >> length;
     
-    b.setEndianness(Buffer::LITTLE);
+    b.setLittleEndian();
     // the length again in little endian
     b >> length;
 
@@ -277,7 +292,7 @@ namespace ICQ2000 {
     /* Command type:
      * 65 (dec) = An Offline message
      * 66 (dec) = Offline Messages Finish
-     * 2010 (dec) = SMS delivery response
+     * 2010 (dec) = ICQ Extended response
      * others.. ??
      */
     unsigned short command_type;
@@ -381,7 +396,7 @@ namespace ICQ2000 {
     for (int a = 0; a < 7; a++)
       b >> waste_char;
 
-    b.setEndianness(Buffer::BIG);
+    b.setBigEndian();
     string tag;
     b >> tag;
 
@@ -607,7 +622,18 @@ namespace ICQ2000 {
     else m_last_in_search = false;
 
     unsigned char wb;
-    b >> wb; // status code ?
+    b >> wb;
+    /*
+     * status code
+     * = 0a usually
+     * = 32 on returning no contacts
+     */
+    if (wb == 0x32 || wb == 0x14) {
+      m_empty_contact = true;
+      return;
+    }
+    
+    m_empty_contact = false;
 
     unsigned short ws;
     b >> ws; // unknown
@@ -616,10 +642,10 @@ namespace ICQ2000 {
 
     b.UnpackUint16StringNull(m_alias);
     b.ServerToClient(m_alias);
-    b.UnpackUint16StringNull(m_first_name);
-    b.ServerToClient(m_first_name);
-    b.UnpackUint16StringNull(m_last_name);
-    b.ServerToClient(m_last_name);
+    b.UnpackUint16StringNull(m_firstname);
+    b.ServerToClient(m_firstname);
+    b.UnpackUint16StringNull(m_lastname);
+    b.ServerToClient(m_lastname);
     b.UnpackUint16StringNull(m_email);
     b.ServerToClient(m_email);
 
@@ -629,12 +655,27 @@ namespace ICQ2000 {
     else m_authreq = false;
 
     // Status
-    b >> m_status;
+    unsigned char st;
+    b >> st;
+    switch(st) {
+    case 0:
+      m_status = STATUS_OFFLINE;
+      break;
+    case 1:
+      m_status = STATUS_ONLINE;
+      break;
+    case 2:
+      m_status = STATUS_NA;
+      break;
+    default:
+      m_status = STATUS_OFFLINE;
+    }
 
     b >> wb; // unknown
 
-    unsigned int wi;
-    b >> wi; // end marker ?
+    if (subtype == SrvResponse_SimpleUI_Done || subtype == SrvResponse_SearchUI_Done) {
+      b >> m_more_results;
+    }
 
   }
 

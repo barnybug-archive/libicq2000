@@ -36,14 +36,14 @@
 #include <stdio.h>
 #include <fcntl.h>
 
-#include <libicq2000/buffer.h>
-
 using std::string;
 using std::exception;
 
 unsigned int StringtoIP(const string& ip);
 
 string IPtoString(unsigned int ip);
+
+class Buffer;
 
 class TCPSocket {
  public:

@@ -26,13 +26,14 @@
 #include <list>
 #include <string>
 
-#include <libicq2000/events.h>
 #include <libicq2000/constants.h>
 
 using std::list;
 using std::string;
 
 namespace ICQ2000 {
+
+  class MessageEvent;
 
   // DetailedUserInfo classes
 
@@ -114,6 +115,7 @@ namespace ICQ2000 {
     unsigned char m_tcp_version;
     Status m_status;
     bool m_invisible;
+    bool m_authreq;
     bool m_direct;
     unsigned int m_ext_ip, m_lan_ip;
     unsigned short m_ext_port, m_lan_port;
@@ -151,6 +153,8 @@ namespace ICQ2000 {
     Status getStatus() const;
     string getStatusStr() const;
     bool isInvisible() const;
+    bool getAuthReq() const;
+
     unsigned int getExtIP() const;
     unsigned int getLanIP() const;
     unsigned short getExtPort() const;
@@ -163,6 +167,7 @@ namespace ICQ2000 {
     void setFirstName(const string& fn);
     void setLastName(const string& ln);
     void setEmail(const string& em);
+    void setAuthReq(bool b);
 
     bool getDirect() const;
     void setDirect(bool b);

@@ -21,6 +21,8 @@
 
 #include <libicq2000/SNAC-UIN.h>
 
+#include <libicq2000/buffer.h>
+
 namespace ICQ2000 {
 
   // -------------- New UIN (0x0017) Family -----------------------
@@ -40,9 +42,9 @@ namespace ICQ2000 {
     b<<(unsigned int)0x0;
     b<<(unsigned int)0x0;
     b<<(unsigned int)0x0;
-    b.setEndianness(Buffer::LITTLE);
+    b.setLittleEndian();
     b.PackUint16StringNull(m_password);
-    b.setEndianness(Buffer::BIG);
+    b.setBigEndian();
     b<<(unsigned int)0x624e0000;
     b<<(unsigned int)0x0000d601;
   }
@@ -51,7 +53,7 @@ namespace ICQ2000 {
 
   void UINResponseSNAC::ParseBody(Buffer& b){
     b.advance(46);
-    b.setEndianness(Buffer::LITTLE);
+    b.setLittleEndian();
     b >> m_uin;
     b.advance(10);
   }

@@ -51,8 +51,12 @@ namespace ICQ2000 {
     m_cmap.erase(uin);
   }
 
-  bool ContactList::empty() {
+  bool ContactList::empty() const {
     return m_cmap.empty();
+  }
+
+  unsigned int ContactList::size() const {
+    return m_cmap.size();
   }
 
   bool ContactList::exists(unsigned int uin) {

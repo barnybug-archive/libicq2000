@@ -59,6 +59,16 @@ namespace ICQ2000 {
       }
     }
 
+    void clearoutMessagesPoll() {
+      literator curr = m_list.begin();
+      literator next = curr;
+      while ( curr != m_list.end() ) {
+	DirectClient *dc = (*curr).getValue();
+	dc->clearoutMessagesPoll();
+	++curr;
+      }
+    }
+
     Signal1<void,DirectClient*> expired;
   };
   

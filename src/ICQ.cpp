@@ -50,22 +50,22 @@ namespace ICQ2000 {
     ICQSubType *ist;
     switch(type) {
     case MSG_Type_Normal:
-      ist = new NormalICQSubType(multi, adv);
+      ist = new NormalICQSubType(multi);
       break;
     case MSG_Type_URL:
-      ist = new URLICQSubType(adv);
+      ist = new URLICQSubType();
       break;
     case MSG_Type_SMS:
       ist = new SMSICQSubType();
       break;
     case MSG_Type_AuthReq:
-      ist = new AuthReqICQSubType(adv);
+      ist = new AuthReqICQSubType();
       break;
     case MSG_Type_AuthRej:
-      ist = new AuthRejICQSubType(adv);
+      ist = new AuthRejICQSubType();
       break;
     case MSG_Type_AuthAcc:
-      ist = new AuthAccICQSubType(adv);
+      ist = new AuthAccICQSubType();
       break;
     case MSG_Type_AutoReq_Away:
     case MSG_Type_AutoReq_Occ:
@@ -78,6 +78,10 @@ namespace ICQ2000 {
       throw ParseException("Unknown ICQ Subtype");
     }
 
+    if (dynamic_cast<UINICQSubType*>(ist) != NULL) {
+      UINICQSubType *ust = dynamic_cast<UINICQSubType*>(ist);
+      ust->setAdvanced(adv);
+    }
     ist->setFlags(flags);
     ist->Parse(b);
 
@@ -91,34 +95,34 @@ namespace ICQ2000 {
     OutputBody(b);
   }
 
-  UINRelatedSubType::UINRelatedSubType(bool adv)
-    : m_source(0), m_destination(0), m_advanced(adv), m_ack(false) { }
+  UINICQSubType::UINICQSubType()
+    : m_source(0), m_destination(0), m_ack(false), m_advanced(false) { }
 
-  UINRelatedSubType::UINRelatedSubType(unsigned int s, unsigned int d, bool adv)
-    : m_source(s), m_destination(d), m_advanced(adv), m_ack(false)  { }
+  UINICQSubType::UINICQSubType(unsigned int s, unsigned int d)
+    : m_source(s), m_destination(d), m_ack(false), m_advanced(false) { }
 
-  unsigned int UINRelatedSubType::getSource() const { return m_source; }
+  unsigned int UINICQSubType::getSource() const { return m_source; }
 
-  unsigned int UINRelatedSubType::getDestination() const { return m_destination; }
+  unsigned int UINICQSubType::getDestination() const { return m_destination; }
 
-  void UINRelatedSubType::setDestination(unsigned int d) { m_destination = d; }
+  void UINICQSubType::setDestination(unsigned int d) { m_destination = d; }
 
-  void UINRelatedSubType::setSource(unsigned int s) { m_source = s; }
+  void UINICQSubType::setSource(unsigned int s) { m_source = s; }
 
-  bool UINRelatedSubType::isAdvanced() const { return m_advanced; }
+  bool UINICQSubType::isAdvanced() const { return m_advanced; }
 
-  void UINRelatedSubType::setAdvanced(bool b) { m_advanced = b; }
+  void UINICQSubType::setAdvanced(bool b) { m_advanced = b; }
 
-  bool UINRelatedSubType::isACK() const { return m_ack; }
+  bool UINICQSubType::isACK() const { return m_ack; }
 
-  void UINRelatedSubType::setACK(bool b) { m_ack = b; }
+  void UINICQSubType::setACK(bool b) { m_ack = b; }
 
-  NormalICQSubType::NormalICQSubType(bool multi, bool adv)
-    : UINRelatedSubType(adv), m_multi(multi), m_foreground(0x00000000),
+  NormalICQSubType::NormalICQSubType(bool multi)
+    : m_multi(multi), m_foreground(0x00000000),
       m_background(0x00ffffff) { }
 
-  NormalICQSubType::NormalICQSubType(const string& msg, unsigned int uin, bool adv)
-    : UINRelatedSubType(0, uin, adv), m_message(msg), m_foreground(0x00000000),
+  NormalICQSubType::NormalICQSubType(const string& msg, unsigned int uin)
+    : UINICQSubType(0, uin), m_message(msg), m_foreground(0x00000000),
       m_background(0x00ffffff) { }
 
   string NormalICQSubType::getMessage() const { return m_message; }
@@ -182,11 +186,11 @@ namespace ICQ2000 {
 
   unsigned int NormalICQSubType::getBackground() const { return m_background; }
 
-  URLICQSubType::URLICQSubType(bool adv)
-    : UINRelatedSubType(adv) { }
+  URLICQSubType::URLICQSubType()
+    { }
 
-  URLICQSubType::URLICQSubType(const string& msg, const string& url, unsigned int source, unsigned int destination, bool adv)
-    : m_message(msg), m_url(url), UINRelatedSubType(source, destination, adv) { }
+  URLICQSubType::URLICQSubType(const string& msg, const string& url, unsigned int source, unsigned int destination)
+    : m_message(msg), m_url(url), UINICQSubType(source, destination) { }
 
   string URLICQSubType::getMessage() const { return m_message; }
 
@@ -244,10 +248,10 @@ namespace ICQ2000 {
   unsigned char URLICQSubType::getType() const { return MSG_Type_URL; }
 
   AwayMsgSubType::AwayMsgSubType(unsigned char type)
-   : UINRelatedSubType(true), m_type(type) { }
+   : m_type(type) { }
 
   AwayMsgSubType::AwayMsgSubType(Status s, unsigned int uin)
-    : UINRelatedSubType(0, uin, true) {
+    : UINICQSubType(0, uin) {
 
     switch(s) {
     case STATUS_AWAY:
@@ -441,17 +445,17 @@ namespace ICQ2000 {
 
   unsigned char SMSICQSubType::getType() const { return MSG_Type_SMS; }
 
-  AuthReqICQSubType::AuthReqICQSubType(bool adv)
-    : UINRelatedSubType(adv) { }
+  AuthReqICQSubType::AuthReqICQSubType()
+    { }
 
   AuthReqICQSubType::AuthReqICQSubType(const string& msg, unsigned int source, 
-                                       unsigned int destination, bool adv)
-    : UINRelatedSubType(source, destination, adv), m_message(msg)  { }
+                                       unsigned int destination)
+    : UINICQSubType(source, destination), m_message(msg)  { }
 
   string AuthReqICQSubType::getMessage() const { return m_message; }
   string AuthReqICQSubType::getNick() const { return m_nick; }
-  string AuthReqICQSubType::getFirstName() const { return m_first_name; }
-  string AuthReqICQSubType::getLastName() const { return m_last_name; }
+  string AuthReqICQSubType::getFirstName() const { return m_firstname; }
+  string AuthReqICQSubType::getLastName() const { return m_lastname; }
   string AuthReqICQSubType::getEmail() const { return m_email; }
   
   void AuthReqICQSubType::Parse(Buffer& b) {
@@ -459,11 +463,11 @@ namespace ICQ2000 {
     b.UnpackUint16StringNull(m_nick);
     b.ServerToClient(m_nick);
     b>>skip;
-    b.UnpackUint16StringNull(m_first_name);
-    b.ServerToClient(m_first_name);
+    b.UnpackUint16StringNull(m_firstname);
+    b.ServerToClient(m_firstname);
     b>>skip;
-    b.UnpackUint16StringNull(m_last_name);
-    b.ServerToClient(m_last_name);
+    b.UnpackUint16StringNull(m_lastname);
+    b.ServerToClient(m_lastname);
     b>>skip;
     b.UnpackUint16StringNull(m_email);
     b.ServerToClient(m_email);
@@ -486,12 +490,12 @@ namespace ICQ2000 {
 
   unsigned char AuthReqICQSubType::getType() const { return MSG_Type_AuthReq; }
   
-  AuthRejICQSubType::AuthRejICQSubType(bool adv)
-    : UINRelatedSubType(adv) { }
+  AuthRejICQSubType::AuthRejICQSubType()
+    { }
 
   AuthRejICQSubType::AuthRejICQSubType(const string& msg, unsigned int source, 
-                                       unsigned int destination, bool adv)
-    : UINRelatedSubType(source, destination, adv), m_message(msg)  { }
+                                       unsigned int destination)
+    : UINICQSubType(source, destination), m_message(msg)  { }
 
   string AuthRejICQSubType::getMessage() const { return m_message; }
   
@@ -514,11 +518,12 @@ namespace ICQ2000 {
 
   unsigned char AuthRejICQSubType::getType() const { return MSG_Type_AuthRej; }
 
-  AuthAccICQSubType::AuthAccICQSubType(bool adv)
-    : UINRelatedSubType(adv) { }
+  AuthAccICQSubType::AuthAccICQSubType()
+  { }
+
   AuthAccICQSubType::AuthAccICQSubType(unsigned int source, 
-                                       unsigned int destination, bool adv)    
-    : UINRelatedSubType(source,destination,adv) { }
+                                       unsigned int destination)
+    : UINICQSubType(source,destination) { }
 
   void AuthAccICQSubType::Parse(Buffer& b) {
   }

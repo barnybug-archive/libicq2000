@@ -74,8 +74,8 @@ namespace ICQ2000 {
       case SNAC_MSG_MessageACK:
 	snac = new MessageACKSNAC();
 	break;
-      case SNAC_MSG_SentOffline:
-	snac = new MessageSentOfflineSNAC();
+      case SNAC_MSG_OfflineUser:
+	snac = new MessageOfflineUserSNAC();
 	break;
       }
       break;

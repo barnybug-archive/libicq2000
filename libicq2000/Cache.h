@@ -140,7 +140,6 @@ namespace ICQ2000 {
       time_t exp_time = t.getExpiryTime();
 
       literator l = m_list.end();
-      literator p;
       while (l != m_list.begin()) {
 	--l;
 	if ( (*l).getExpiryTime() < exp_time ) {

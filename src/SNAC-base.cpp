@@ -21,6 +21,8 @@
 
 #include <libicq2000/SNAC-base.h>
 
+#include <libicq2000/buffer.h>
+
 namespace ICQ2000 {
 
   // ------------------ Abstract SNACs ---------------

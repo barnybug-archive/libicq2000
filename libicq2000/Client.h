@@ -33,7 +33,6 @@
 
 #include <libicq2000/buffer.h>
 #include <libicq2000/socket.h>
-#include <libicq2000/SNAC.h>
 #include <libicq2000/events.h>
 #include <libicq2000/constants.h>
 #include <libicq2000/Contact.h>
@@ -44,11 +43,23 @@
 #include <libicq2000/ICBMCookieCache.h>
 #include <libicq2000/DirectClient.h>
 #include <libicq2000/DCCache.h>
+#include <libicq2000/userinfoconstants.h>
 
 using std::string;
 using SigC::Signal1;
 
 namespace ICQ2000 {
+  
+  // declare some SNAC classes - vastly decreases header dependancies
+  class MessageSNAC;
+  class MessageACKSNAC;
+  class MessageOfflineUserSNAC;
+  class SrvResponseSNAC;
+  class UINResponseSNAC;
+  class RateInfoChangeSNAC;
+  class BuddyOnlineSNAC;
+  class BuddyOfflineSNAC;
+  class UserInfoSNAC;
 
   // -- Status Codes Flags --
   const unsigned short STATUS_FLAG_ONLINE = 0x0000;
@@ -85,6 +96,8 @@ namespace ICQ2000 {
     string m_bosHostname;
     unsigned short m_bosPort;
     bool m_bosOverridePort;
+
+    bool m_in_dc, m_out_dc;
 
     unsigned short m_client_seq_num;
     unsigned int m_requestid;
@@ -134,6 +147,7 @@ namespace ICQ2000 {
     void SignalDisconnect(DisconnectedEvent::Reason r);
     void SignalMessage(MessageSNAC *snac);
     void SignalMessageACK(MessageACKSNAC *snac);
+    void SignalMessageOfflineUser(MessageOfflineUserSNAC *snac);
     void SignalSrvResponse(SrvResponseSNAC *snac);
     void SignalUINResponse(UINResponseSNAC *snac);
     void SignalUINRequestError();
@@ -200,6 +214,7 @@ namespace ICQ2000 {
 
     void ICBMCookieCache_expired_cb(MessageEvent *ev);
     void dccache_expired_cb(DirectClient *dc);
+    void reqidcache_expired_cb(	RequestIDCacheValue *v );
     void dc_connected_cb(DirectClient *dc);
     void dc_log_cb(LogEvent *ev);
     void dc_socket_cb(SocketEvent *ev);
@@ -207,7 +222,11 @@ namespace ICQ2000 {
     void dc_messageack_cb(MessageEvent *ev);
 
     bool SendDirect(MessageEvent *ev);
+
     void SendViaServer(MessageEvent *ev);
+    void SendViaServerAdvanced(MessageEvent *ev);
+    void SendViaServerNormal(MessageEvent *ev);
+    UINICQSubType* EventToUINICQSubType(MessageEvent *ev);
     
     void Connect();
     void Disconnect(DisconnectedEvent::Reason r = DisconnectedEvent::REQUESTED);
@@ -347,6 +366,14 @@ namespace ICQ2000 {
      *  people.
      */
     Signal1<void,AwayMessageEvent*> want_auto_resp;
+
+    /**
+     *  Signal when a Search Result has been updated.  The last signal
+     *  on a search result will be with
+     *  SearchResultEvent::isFinished() set to true. After this the
+     *  event is finished and deleted from memory by the library.
+     */
+    Signal1<void,SearchResultEvent*> search_result;
     // -------------
 
     // -- Signal Dispatchers --
@@ -370,8 +397,20 @@ namespace ICQ2000 {
     void fetchDetailContactInfo(Contact* c);
     void fetchBasicInfoForUin(const unsigned int uin);
     void fetchServerBasedContactList();
-    void lookupContacts(const string& nickname, const string& firstname, const string& lastname);
-    void lookupContacts(const string& email);
+
+    // -- Whitepage searches --
+    SearchResultEvent* searchForContacts(const string& nickname, const string& firstname,
+					 const string& lastname);
+
+    SearchResultEvent* searchForContacts(const string& nickname, const string& firstname,
+					 const string& lastname, const string& email,
+					 unsigned short min_age, unsigned short max_age,
+					 Sex sex, unsigned char language, const string& city,
+					 const string& state, unsigned short country,
+					 const string& company_name, const string& department,
+					 const string& position, bool only_online);
+
+    SearchResultEvent* searchForContacts(unsigned int uin);
 
     /*
      *  Poll must be called regularly (at least every 60 seconds)
@@ -384,6 +423,7 @@ namespace ICQ2000 {
      *  to do all this.
      */
 
+    // -- Network settings --
     void setLoginServerHost(const string& host);
     string getLoginServerHost() const;
 
@@ -395,6 +435,12 @@ namespace ICQ2000 {
 
     void setBOSServerPort(const unsigned short& port);
     unsigned short getBOSServerPort() const;
+
+    void setAcceptInDC(bool d);
+    bool getAcceptInDC() const;
+
+    void setUseOutDC(bool d);
+    bool getUseOutDC() const;
 
     void Poll();
     void socket_cb(int fd, SocketEvent::Mode m);

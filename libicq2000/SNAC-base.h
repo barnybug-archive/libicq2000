@@ -22,7 +22,7 @@
 #ifndef SNAC_BASE_H
 #define SNAC_BASE_H
 
-#include <libicq2000/buffer.h>
+class Buffer;
 
 namespace ICQ2000 {
  

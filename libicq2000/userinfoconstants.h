@@ -23,6 +23,15 @@
 #ifndef USERINFOCONSTANTS_H
 #define USERINFOCONSTANTS_H
 
+namespace ICQ2000
+{
+
+enum Sex {
+  SEX_UNSPECIFIED = 0,
+  SEX_FEMALE      = 1,
+  SEX_MALE        = 2
+};
+
 static const unsigned char Language_table_size = 60;
 
 static const char* Language_table[Language_table_size] = {
@@ -343,5 +352,7 @@ static const struct Country Country_table[Country_table_size] =
   { "Zambia", 260 },
   { "Zimbabwe", 263 }
 };
+ 
+}
 
 #endif

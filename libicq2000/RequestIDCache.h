@@ -24,16 +24,18 @@
 
 #include <libicq2000/Cache.h>
 
+#include <sigc++/signal_system.h>
+
 namespace ICQ2000 {
 
   class RequestIDCacheValue {
    public:
     enum Type {
       UserInfo,
-      SMSMessage
+      SMSMessage,
+      Search
     };
 
-    virtual Contact* getContact() const = 0;
     virtual Type getType() const = 0;
   };
 
@@ -62,9 +64,26 @@ namespace ICQ2000 {
     Type getType() const { return SMSMessage; }
   };
 
+  class SearchCacheValue : public RequestIDCacheValue {
+   private:
+    SearchResultEvent *m_ev;
+
+   public:
+    SearchCacheValue( SearchResultEvent *ev ) : m_ev(ev) { }
+    SearchResultEvent* getEvent() const { return m_ev; }
+    Type getType() const { return Search; }
+  };
+
   class RequestIDCache : public Cache<unsigned int, RequestIDCacheValue*> {
    public:
     RequestIDCache() { }
+
+    SigC::Signal1<void,RequestIDCacheValue*> expired;
+    
+    void expireItem(const RequestIDCache::literator& l) {
+      expired.emit( (*l).getValue() );
+      Cache<unsigned int, RequestIDCacheValue*>::expireItem(l);
+    }
 
     void removeItem(const RequestIDCache::literator& l) {
       delete ((*l).getValue());
@@ -77,7 +96,14 @@ namespace ICQ2000 {
       while ( curr != m_list.end() ) {
 	++next;
 	RequestIDCacheValue *cv = (*curr).getValue();
-	if ( cv->getContact() == c ) removeItem(curr);
+	if ( cv->getType() == RequestIDCacheValue::UserInfo ) {
+	  UserInfoCacheValue *ccv = static_cast<UserInfoCacheValue*>(cv);
+	  if (ccv->getContact() == c) removeItem(curr);
+	} else if (cv->getType() == RequestIDCacheValue::SMSMessage ) {
+	  SMSEventCacheValue *ccv = static_cast<SMSEventCacheValue*>(cv);
+	  if (ccv->getContact() == c) removeItem(curr);
+	}
+	
 	curr = next;
       }
     }

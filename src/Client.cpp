@@ -23,6 +23,7 @@
 #include <libicq2000/UserInfoBlock.h>
 
 #include <libicq2000/Client.h>
+#include <libicq2000/SNAC.h>
 
 #include "sstream_fix.h"
 
@@ -70,6 +71,9 @@ namespace ICQ2000 {
     m_authorizerPort = 5190;
     m_bosOverridePort = false;
 
+    m_in_dc = true;
+    m_out_dc = true;
+    
     m_state = NOT_CONNECTED;
     
     m_cookie_data = NULL;
@@ -88,6 +92,9 @@ namespace ICQ2000 {
     // set timeout on direct connections to 30 seconds
     // this will be increased once they are established
     m_dccache.expired.connect( slot(this,&Client::dccache_expired_cb) );
+
+    m_reqidcache.expired.connect( slot(this, &Client::reqidcache_expired_cb) );
+    
   }
 
   unsigned short Client::NextSeqNum() {
@@ -165,8 +172,8 @@ namespace ICQ2000 {
     if (m_listenServer.isStarted()) {
       SignalRemoveSocket( m_listenServer.getSocketHandle() );
       m_listenServer.Disconnect();
-      DisconnectDirectConns();
     }
+    DisconnectDirectConns();
   }
 
   void Client::DisconnectDirectConns() {
@@ -194,15 +201,14 @@ namespace ICQ2000 {
     DisconnectedEvent ev(r);
     disconnected.emit(&ev);
 
-    // ensure all contacts return to Offline
-    ContactList::iterator curr = m_contact_list.begin();
-
     if (m_status != STATUS_OFFLINE) {
       m_status = STATUS_OFFLINE;
       MyStatusChangeEvent ev(m_status);
       statuschanged.emit( &ev );
     }
 
+    // ensure all contacts return to Offline
+    ContactList::iterator curr = m_contact_list.begin();
     while(curr != m_contact_list.end()) {
       Status old_st = (*curr).getStatus();
       if ( old_st != STATUS_OFFLINE ) {
@@ -331,7 +337,7 @@ namespace ICQ2000 {
 
 
   void Client::SignalMessageACK(MessageACKSNAC *snac) {
-    UINRelatedSubType *st = snac->getICQSubType();
+    UINICQSubType *st = snac->getICQSubType();
     if (st == NULL) return;
     Contact *contact = lookupICQ( st->getSource() );
 
@@ -376,6 +382,27 @@ namespace ICQ2000 {
       
     }
 
+  }
+
+  void Client::SignalMessageOfflineUser(MessageOfflineUserSNAC *snac) {
+    /**
+     *  Mmm.. it'd be nice to use this as an ack for messages but it's
+     *  not consistently sent for all messages through the server
+     *  doesn't seem to be sent for normal (non-advanced) messages to
+     *  online users.
+     */
+    ICBMCookie c = snac->getICBMCookie();
+
+    if ( m_cookiecache.exists( c ) ) {
+      MessageEvent *ev = m_cookiecache[c];
+      ev->setFinished(false);
+      ev->setDelivered(false);
+      ev->setDirect(false);
+      messageack.emit(ev);
+
+    } else {
+      SignalLog(LogEvent::WARN, "Received Offline ACK for unknown message");
+    }
   }
 
   void Client::dc_messaged_cb(MessageEvent *ev) {
@@ -484,17 +511,101 @@ namespace ICQ2000 {
       }
       
     } else if (snac->getType() == SrvResponseSNAC::SimpleUserInfo) {
-      // update Contact
-      if ( m_contact_list.exists( snac->getUIN() ) ) {
-	Contact& c = m_contact_list[ snac->getUIN() ];
-	c.setAlias( snac->getAlias() );
-	c.setEmail( snac->getEmail() );
-	c.setFirstName( snac->getFirstName() );
-	c.setLastName( snac->getLastName() );
-	UserInfoChangeEvent ev(&c);
+
+      if ( m_reqidcache.exists( snac->RequestID() ) ) {
+	RequestIDCacheValue *v = m_reqidcache[ snac->RequestID() ];
+
+	if ( v->getType() == RequestIDCacheValue::Search ) {
+	  SearchCacheValue *sv = static_cast<SearchCacheValue*>(v);
+
+	  SearchResultEvent *ev = sv->getEvent();
+	  if (snac->isEmptyContact()) {
+	    ev->setLastContactAdded( NULL );
+	  } else {
+	    Contact c( snac->getUIN() );
+	    c.setAlias(snac->getAlias());
+	    c.setFirstName(snac->getFirstName());
+	    c.setLastName(snac->getLastName());
+	    c.setEmail(snac->getEmail());
+	    c.setStatus(snac->getStatus());
+	    c.setAuthReq(snac->getAuthReq());
+	    ContactList& cl = ev->getContactList();
+	    ev->setLastContactAdded( &(cl.add(c)) );
+
+	    if (snac->isLastInSearch())
+	      ev->setNumberMoreResults( snac->getNumberMoreResults() );
+	      
+	  }
+
+	  if (snac->isLastInSearch()) ev->setFinished(true);
+
+	  search_result.emit(ev);
+
+	  if (ev->isFinished()) {
+	    delete ev;
+	    m_reqidcache.remove( snac->RequestID() );
+	  }
+	  
+	} else {
+	  SignalLog(LogEvent::WARN, "Request ID cached value is not for a Search request");
+	}
+	
+      } else {
+	if ( m_contact_list.exists( snac->getUIN() ) ) {
+	  // update Contact
+	  Contact& c = m_contact_list[ snac->getUIN() ];
+	  c.setAlias( snac->getAlias() );
+	  c.setEmail( snac->getEmail() );
+	  c.setFirstName( snac->getFirstName() );
+	  c.setLastName( snac->getLastName() );
+	  UserInfoChangeEvent ev(&c);
+	}
       }
+      
     } else if (snac->getType() == SrvResponseSNAC::SearchSimpleUserInfo) {
-      // todo
+
+      if ( m_reqidcache.exists( snac->RequestID() ) ) {
+	RequestIDCacheValue *v = m_reqidcache[ snac->RequestID() ];
+
+	if ( v->getType() == RequestIDCacheValue::Search ) {
+	  SearchCacheValue *sv = static_cast<SearchCacheValue*>(v);
+
+	  SearchResultEvent *ev = sv->getEvent();
+	  if (snac->isEmptyContact()) {
+	    ev->setLastContactAdded( NULL );
+	  } else {
+	    Contact c( snac->getUIN() );
+	    c.setAlias(snac->getAlias());
+	    c.setFirstName(snac->getFirstName());
+	    c.setLastName(snac->getLastName());
+	    c.setEmail(snac->getEmail());
+	    c.setStatus(snac->getStatus());
+	    c.setAuthReq(snac->getAuthReq());
+	    ContactList& cl = ev->getContactList();
+	    ev->setLastContactAdded( &(cl.add(c)) );
+
+	    if (snac->isLastInSearch())
+	      ev->setNumberMoreResults( snac->getNumberMoreResults() );
+	      
+	  }
+
+	  if (snac->isLastInSearch()) ev->setFinished(true);
+
+	  search_result.emit(ev);
+
+	  if (ev->isFinished()) {
+	    delete ev;
+	    m_reqidcache.remove( snac->RequestID() );
+	  }
+	  
+	} else {
+	  SignalLog(LogEvent::WARN, "Request ID cached value is not for a Search request");
+	}
+	
+      } else {
+	SignalLog(LogEvent::WARN, "Received a Search Result for unknown request id");
+      }
+
     } else if (snac->getType() == SrvResponseSNAC::RMainHomeInfo) {
 
       try {
@@ -580,7 +691,10 @@ namespace ICQ2000 {
     if ( m_reqidcache.exists( reqid ) ) {
       RequestIDCacheValue *v = m_reqidcache[ reqid ];
 
-      if ( v->getType() == RequestIDCacheValue::UserInfo ) return v->getContact();
+      if ( v->getType() == RequestIDCacheValue::UserInfo ) {
+	UserInfoCacheValue *uv = static_cast<UserInfoCacheValue*>(v);
+	return uv->getContact();
+      }
       else throw ParseException("Request ID cached value is not for a User Info request");
 
     } else {
@@ -615,12 +729,25 @@ namespace ICQ2000 {
   }
   
   void Client::ICBMCookieCache_expired_cb(MessageEvent *ev) {
-    SignalLog(LogEvent::WARN, "Message timeout without receiving ACK");
-    ev->setFinished(true);
-    ev->setDelivered(false);
-    ev->setDirect(false);
-    messageack.emit(ev);
+    SignalLog(LogEvent::WARN, "Message timeout without receiving ACK, sending offline");
+    SendViaServerNormal(ev);
   }
+
+  void Client::reqidcache_expired_cb(RequestIDCacheValue* v) 
+  {
+    if ( v->getType() == RequestIDCacheValue::Search ) {
+      SearchCacheValue *sv = static_cast<SearchCacheValue*>(v);
+
+      SearchResultEvent *ev = sv->getEvent();
+      ev->setLastContactAdded( NULL );
+      ev->setExpired(true);
+      ev->setFinished(true);
+      search_result.emit(ev);
+      delete ev;
+	  
+    }
+  }
+  
 
   void Client::dccache_expired_cb(DirectClient *dc) {
     SignalLog(LogEvent::WARN, "Direct connection timeout reached");
@@ -828,11 +955,15 @@ namespace ICQ2000 {
 
     // startup listening server at this point, so we
     // know the listening port and ip
-    m_listenServer.StartServer();
-    SignalAddSocket( m_listenServer.getSocketHandle(), SocketEvent::READ );
-    ostringstream ostr;
-    ostr << "Server listening on " << IPtoString( m_serverSocket.getLocalIP() ) << ":" << m_listenServer.getPort();
-    SignalLog(LogEvent::INFO, ostr.str());
+    if (m_in_dc) {
+      m_listenServer.StartServer();
+      SignalAddSocket( m_listenServer.getSocketHandle(), SocketEvent::READ );
+      ostringstream ostr;
+      ostr << "Server listening on " << IPtoString( m_serverSocket.getLocalIP() ) << ":" << m_listenServer.getPort();
+      SignalLog(LogEvent::INFO, ostr.str());
+    } else {
+      SignalLog(LogEvent::INFO, "Not starting listening server, incoming Direct connections disabled");
+    }
 
     if (!m_contact_list.empty()) {
       d = FLAPHeader(b,0x02);
@@ -860,7 +991,7 @@ namespace ICQ2000 {
 
     sss.setSendExtra(true);
     sss.setIP( m_serverSocket.getLocalIP() );
-    sss.setPort( m_listenServer.getPort() );
+    sss.setPort( (m_in_dc ? m_listenServer.getPort() : 0) );
     b << sss;
     FLAPFooter(b,d);
 
@@ -915,8 +1046,8 @@ namespace ICQ2000 {
 
   void Client::SendAdvancedACK(MessageSNAC *snac) {
     ICQSubType *st = snac->getICQSubType();
-    if (st == NULL || dynamic_cast<UINRelatedSubType*>(st) == NULL ) return;
-    UINRelatedSubType *ust = dynamic_cast<UINRelatedSubType*>(snac->grabICQSubType());
+    if (st == NULL || dynamic_cast<UINICQSubType*>(st) == NULL ) return;
+    UINICQSubType *ust = dynamic_cast<UINICQSubType*>(snac->grabICQSubType());
 
     Buffer b(&m_translator);
     unsigned int d;
@@ -1116,12 +1247,6 @@ namespace ICQ2000 {
 	break;
       case SNAC_GEN_MOTD:
 	SignalLog(LogEvent::INFO, "Received MOTD from server");
-	//	SignalConnect();
-	/* take the MOTD as the sign we
-	 * are online proper
-	 * - unfortunately they seemed to have stopped sending that
-	 *   so this isn't the sign anymore.
-	 */
 	break;
       case SNAC_GEN_RateInfoChange:
 	SignalLog(LogEvent::INFO, "Received Rate Info Change from server");
@@ -1150,6 +1275,10 @@ namespace ICQ2000 {
       case SNAC_MSG_MessageACK:
 	SignalLog(LogEvent::INFO, "Received Message ACK from server");
 	SignalMessageACK(static_cast<MessageACKSNAC*>(snac));
+	break;
+      case SNAC_MSG_OfflineUser:
+	SignalLog(LogEvent::INFO, "Received Message to Offline User from server");
+	SignalMessageOfflineUser(static_cast<MessageOfflineUserSNAC*>(snac));
 	break;
       }
       break;
@@ -1330,6 +1459,7 @@ namespace ICQ2000 {
     m_reqidcache.clearoutPoll();
     m_cookiecache.clearoutPoll();
     m_dccache.clearoutPoll();
+    m_dccache.clearoutMessagesPoll();
   }
 
   /**
@@ -1389,7 +1519,7 @@ namespace ICQ2000 {
 	Disconnect(DisconnectedEvent::FAILED_LOWLEVEL);
       }
       
-    } else if ( fd == m_listenServer.getSocketHandle() ) {
+    } else if ( m_in_dc && fd == m_listenServer.getSocketHandle() ) {
       /*
        * File descriptor is the listening socket - someone is connected in
        */
@@ -1505,151 +1635,40 @@ namespace ICQ2000 {
     }
   }
 
-  void Client::SendViaServer(MessageEvent *ev) {
+  /**
+   *  Used for sending a message event from the client.  The Client
+   *  should create the specific MessageEvent by dynamically
+   *  allocating it with new. The library will take care of deleting
+   *  it when appropriate. The MessageEvent will persist whilst the
+   *  message has not be confirmed as delivered or failed yet. Exactly
+   *  the same MessageEvent is signalled back in the messageack signal
+   *  callback, so a client could use pointer equality comparison to
+   *  match messages it has sent up to their acks.
+   */
+  void Client::SendEvent(MessageEvent *ev) {
     Contact *c = ev->getContact();
-
-    if (m_status == STATUS_OFFLINE) {
-      ev->setFinished(true);
-      ev->setDelivered(false);
-      ev->setDirect(false);
-      messageack.emit(ev);
-      delete ev;
-      return;
-    }
-
     if (ev->getType() == MessageEvent::Normal
-	|| ev->getType() == MessageEvent::URL) {
-
-      /*
-       * Normal messages and URL messages sent via the server
-       * can be sent as advanced for ICQ2000 users online, in which
-       * case they can be ACKed, otherwise there is no way of
-       * knowing if it's received
-       */
-
-
-      ICQSubType *ist;
-      if (ev->getType() == MessageEvent::Normal) {
-	NormalMessageEvent *nv = static_cast<NormalMessageEvent*>(ev);
-	ist = new NormalICQSubType(nv->getMessage(), c->getUIN(), c->acceptAdvancedMsgs());
-      } else if (ev->getType() == MessageEvent::URL) {
-	URLMessageEvent *uv = static_cast<URLMessageEvent*>(ev);
-	ist = new URLICQSubType(uv->getMessage(), uv->getURL(), m_uin, c->getUIN(), c->acceptAdvancedMsgs());
-      }
-
-      MsgSendSNAC msnac(ist);
-
-      if (c->acceptAdvancedMsgs()) {
-	msnac.setAdvanced(true);
-	msnac.setSeqNum( c->nextSeqNum() );
-	ICBMCookie ck = m_cookiecache.generateUnique();
-	msnac.setICBMCookie( ck );
-	m_cookiecache.insert( ck, ev );
-      } else { 
-	ev->setFinished(true);
-	ev->setDelivered(true);
-	ev->setDirect(false);
-	messageack.emit(ev);
-	
-	delete ev;
-      }
-      
-      Buffer b(&m_translator);
-      unsigned int d;
-      d = FLAPHeader(b,0x02);
-      b << msnac;
-      FLAPFooter(b,d);
-      Send(b);
-      delete ist;
-
-    } else if (ev->getType() == MessageEvent::AwayMessage) {
-
-      /*
-       * Away message requests send via the server only
-       * work for ICQ2000 clients online, otherwise there
-       * is no way of getting the away message, so we signal the ack
-       * to the client as non-delivered
-       */
-
-      if (c->acceptAdvancedMsgs()) {
-	ICQSubType *ist = new AwayMsgSubType( c->getStatus(), c->getUIN() );
-	MsgSendSNAC msnac(ist, true);
-	msnac.setSeqNum( c->nextSeqNum() );
-	ICBMCookie ck = m_cookiecache.generateUnique();
-	msnac.setICBMCookie( ck );
-	m_cookiecache.insert( ck, ev );
-	Buffer b(&m_translator);
-	unsigned int d;
-	d = FLAPHeader(b,0x02);
-	b << msnac;
-	FLAPFooter(b,d);
-	Send(b);
-
-	delete ist;
-
-      } else {
-	ev->setFinished(true);
-	ev->setDelivered(false);
-	messageack.emit(ev);
-
-	delete ev;
-	return;
-      }
-
-    } else if (ev->getType() == MessageEvent::AuthReq) {
-      AuthReqEvent *uv = static_cast<AuthReqEvent*>(ev);
-      AuthReqICQSubType uist(uv->getMessage(), m_uin, c->getUIN(),
-                             c->acceptAdvancedMsgs());
-
-      Buffer b(&m_translator);
-      unsigned int d;
-      d = FLAPHeader(b,0x02);
-      MsgSendSNAC msnac(&uist);
-      b << msnac;
-      FLAPFooter(b,d);
-      Send(b);
-
-    } else if (ev->getType() == MessageEvent::AuthAck) {
-      AuthAckEvent *uv = static_cast<AuthAckEvent*>(ev);
-      ICQSubType *uist;
-      if(uv->isGranted())
-        uist=new AuthAccICQSubType(m_uin, c->getUIN(), 
-                                        c->acceptAdvancedMsgs());
-      else
-        uist=new AuthRejICQSubType(uv->getMessage(), m_uin, c->getUIN(), 
-                                        c->acceptAdvancedMsgs());
-      
-      Buffer b(&m_translator);
-      unsigned int d;
-      d = FLAPHeader(b,0x02);
-      MsgSendSNAC msnac(uist);
-      b << msnac;
-      FLAPFooter(b,d);
-      Send(b);
-
-      delete ev;
-
-    } else if (ev->getType() == MessageEvent::SMS) {
-      SMSMessageEvent *sv = static_cast<SMSMessageEvent*>(ev);
-      SrvSendSNAC ssnac(sv->getMessage(), c->getMobileNo(), m_uin, "", sv->getRcpt());
-
-      unsigned int reqid = NextRequestID();
-      m_reqidcache.insert( reqid, new SMSEventCacheValue( sv ) );
-      ssnac.setRequestID( reqid );
-
-      Buffer b(&m_translator);
-      unsigned int d;
-      d = FLAPHeader(b,0x02);
-      b << ssnac;
-      FLAPFooter(b,d);
-      Send(b);
+	|| ev->getType() == MessageEvent::URL
+	|| ev->getType() == MessageEvent::AwayMessage) {
+      if (!SendDirect(ev)) SendViaServer(ev);
+    } else {
+      SendViaServer(ev);
     }
-
+  }
+  
+  bool Client::SendDirect(MessageEvent *ev) {
+    Contact *c = ev->getContact();
+    if (!c->getDirect()) return false;
+    DirectClient *dc = ConnectDirect(c);
+    if (dc == NULL) return false;
+    dc->SendEvent(ev);
+    return true;
   }
 
   DirectClient* Client::ConnectDirect(Contact *c) {
     DirectClient *dc;
     if (m_uinmap.count(c->getUIN()) == 0) {
+      if (!m_out_dc) return NULL;
       /*
        * If their external IP != internal IP then it's
        * only worth trying if their external IP == my external IP
@@ -1658,7 +1677,7 @@ namespace ICQ2000 {
       if ( c->getExtIP() != c->getLanIP() && m_ext_ip != c->getExtIP() ) return NULL;
       if ( c->getLanIP() == 0 ) return NULL;
       SignalLog(LogEvent::INFO, "Establishing direct connection");
-      dc = new DirectClient(c, m_uin, m_ext_ip, m_listenServer.getPort(), &m_translator);
+      dc = new DirectClient(c, m_uin, m_ext_ip, (m_in_dc ? m_listenServer.getPort() : 0), &m_translator);
       dc->logger.connect( slot(this, &Client::dc_log_cb) );
       dc->messaged.connect( slot(this, &Client::dc_messaged_cb) );
       dc->messageack.connect( slot(this, &Client::dc_messageack_cb) );
@@ -1690,36 +1709,161 @@ namespace ICQ2000 {
     return dc;
   }
 
-  bool Client::SendDirect(MessageEvent *ev) {
+  void Client::SendViaServer(MessageEvent *ev) {
     Contact *c = ev->getContact();
-    if (!c->getDirect()) return false;
-    DirectClient *dc = ConnectDirect(c);
-    if (dc == NULL) return false;
-    dc->SendEvent(ev);
-    return true;
-  }
 
-  /**
-   *  Used for sending a message event from the client.  The Client
-   *  should create the specific MessageEvent by dynamically
-   *  allocating it with new. The library will take care of deleting
-   *  it when appropriate. The MessageEvent will persist whilst the
-   *  message has not be confirmed as delivered or failed yet. Exactly
-   *  the same MessageEvent is signalled back in the messageack signal
-   *  callback, so a client could use pointer equality comparison to
-   *  match messages it has sent up to their acks.
-   */
-  void Client::SendEvent(MessageEvent *ev) {
-    Contact *c = ev->getContact();
+    if (m_status == STATUS_OFFLINE) {
+      ev->setFinished(true);
+      ev->setDelivered(false);
+      ev->setDirect(false);
+      messageack.emit(ev);
+      delete ev;
+      return;
+    }
+
     if (ev->getType() == MessageEvent::Normal
 	|| ev->getType() == MessageEvent::URL
-	|| ev->getType() == MessageEvent::AwayMessage) {
-      if (!SendDirect(ev)) SendViaServer(ev);
-    } else {
-      SendViaServer(ev);
+	|| ev->getType() == MessageEvent::AuthReq
+	|| ev->getType() == MessageEvent::AuthAck) {
+      
+      /*
+       * Normal messages and URL messages sent via the server
+       * can be sent as advanced for ICQ2000 users online, in which
+       * case they can be ACKed, otherwise there is no way of
+       * knowing if it's received
+       */
+      
+      if (c->acceptAdvancedMsgs())
+	SendViaServerAdvanced(ev);
+      else {
+	SendViaServerNormal(ev);
+	delete ev;
+      }
+      
+    } else if (ev->getType() == MessageEvent::AwayMessage) {
+
+      /*
+       * Away message requests sent via the server only
+       * work for ICQ2000 clients online, otherwise there
+       * is no way of getting the away message, so we signal the ack
+       * to the client as non-delivered
+       */
+
+      if (c->acceptAdvancedMsgs())
+	SendViaServerAdvanced(ev);
+      else {
+	ev->setFinished(true);
+	ev->setDelivered(false);
+	ev->setDirect(false);
+	messageack.emit(ev);
+	delete ev;
+      }
+
+    } else if (ev->getType() == MessageEvent::SMS) {
+
+      /*
+       * SMS Messages are sent via a completely different mechanism.
+       *
+       */
+      SMSMessageEvent *sv = static_cast<SMSMessageEvent*>(ev);
+      SrvSendSNAC ssnac(sv->getMessage(), c->getMobileNo(), m_uin, "", sv->getRcpt());
+
+      unsigned int reqid = NextRequestID();
+      m_reqidcache.insert( reqid, new SMSEventCacheValue( sv ) );
+      ssnac.setRequestID( reqid );
+
+      Buffer b(&m_translator);
+      unsigned int d;
+      d = FLAPHeader(b,0x02);
+      b << ssnac;
+      FLAPFooter(b,d);
+      Send(b);
+
     }
+
+  }
+
+  void Client::SendViaServerAdvanced(MessageEvent *ev) 
+  {
+    Contact *c = ev->getContact();
+    UINICQSubType *ist = EventToUINICQSubType(ev);
+    ist->setAdvanced(true);
+    
+    MsgSendSNAC msnac(ist);
+    msnac.setAdvanced(true);
+    msnac.setSeqNum( c->nextSeqNum() );
+    ICBMCookie ck = m_cookiecache.generateUnique();
+    msnac.setICBMCookie( ck );
+    m_cookiecache.insert( ck, ev );
+    
+    Buffer b(&m_translator);
+    unsigned int d;
+    d = FLAPHeader(b,0x02);
+    b << msnac;
+    FLAPFooter(b,d);
+    Send(b);
+    
+    delete ist;
   }
   
+  void Client::SendViaServerNormal(MessageEvent *ev)
+  {
+    Contact *c = ev->getContact();
+    UINICQSubType *ist = EventToUINICQSubType(ev);
+    ist->setAdvanced(false);
+    
+    MsgSendSNAC msnac(ist);
+    msnac.setAdvanced(false);
+
+    Buffer b(&m_translator);
+    unsigned int d;
+    d = FLAPHeader(b,0x02);
+    b << msnac;
+    FLAPFooter(b,d);
+    Send(b);
+    
+    ev->setFinished(true);
+    ev->setDelivered(true);
+    ev->setDirect(false);
+    messageack.emit(ev);
+  }
+  
+  UINICQSubType* Client::EventToUINICQSubType(MessageEvent *ev)
+  {
+    Contact *c = ev->getContact();
+    UINICQSubType *ist = NULL;
+
+    if (ev->getType() == MessageEvent::Normal) {
+
+      NormalMessageEvent *nv = static_cast<NormalMessageEvent*>(ev);
+      ist = new NormalICQSubType(nv->getMessage(), c->getUIN());
+
+    } else if (ev->getType() == MessageEvent::URL) {
+
+      URLMessageEvent *uv = static_cast<URLMessageEvent*>(ev);
+      ist = new URLICQSubType(uv->getMessage(), uv->getURL(), m_uin, c->getUIN());
+
+    } else if (ev->getType() == MessageEvent::AwayMessage) {
+
+      ist = new AwayMsgSubType( c->getStatus(), c->getUIN() );
+
+    } else if (ev->getType() == MessageEvent::AuthReq) {
+
+      AuthReqEvent *uv = static_cast<AuthReqEvent*>(ev);
+      ist = new AuthReqICQSubType(uv->getMessage(), m_uin, c->getUIN());
+
+    } else if (ev->getType() == MessageEvent::AuthAck) {
+
+      AuthAckEvent *uv = static_cast<AuthAckEvent*>(ev);
+      if(uv->isGranted())
+        ist = new AuthAccICQSubType(m_uin, c->getUIN());
+      else
+        ist = new AuthRejICQSubType(uv->getMessage(), m_uin, c->getUIN());
+
+    }
+    return ist;
+  }
+
   void Client::PingServer() {
     Buffer b(&m_translator);
     unsigned int d;
@@ -2019,28 +2163,80 @@ namespace ICQ2000 {
     Send(b);
   }
 
-  void Client::lookupContacts(const string& nickname, const string& firstname, const string& lastname)  {
+  SearchResultEvent* Client::searchForContacts
+    (const string& nickname, const string& firstname,
+     const string& lastname)
+  {
     Buffer b(&m_translator);
     unsigned int d;
 
+    SearchResultEvent *ev = new SearchResultEvent( SearchResultEvent::ShortWhitepage );
+
+    unsigned int reqid = NextRequestID();
+    m_reqidcache.insert( reqid, new SearchCacheValue( ev ) );
+
     d = FLAPHeader(b,0x02);
-    SrvRequestShortwp ssnac( m_uin, nickname, firstname, lastname );
+    SrvRequestShortWP ssnac( m_uin, nickname, firstname, lastname );
+    ssnac.setRequestID( reqid );
     b << ssnac;
     FLAPFooter(b,d);
 
     Send(b);
+
+    return ev;
   }
 
-  void Client::lookupContacts(const string& email)  {
+  SearchResultEvent* Client::searchForContacts
+    (const string& nickname, const string& firstname,
+     const string& lastname, const string& email,
+     unsigned short min_age, unsigned short max_age,
+     Sex sex, unsigned char language, const string& city,
+     const string& state, unsigned short country,
+     const string& company_name, const string& department,
+     const string& position, bool only_online)
+  {
     Buffer b(&m_translator);
     unsigned int d;
 
+    SearchResultEvent *ev = new SearchResultEvent( SearchResultEvent::FullWhitepage );
+
+    unsigned int reqid = NextRequestID();
+    m_reqidcache.insert( reqid, new SearchCacheValue( ev ) );
+
     d = FLAPHeader(b,0x02);
-    SrvRequestFullwp ssnac( m_uin, email );
+    SrvRequestFullWP ssnac( m_uin, nickname, firstname, lastname, email,
+			    min_age, max_age, (unsigned char)sex, language, city, state,
+			    country, company_name, department, position,
+			    only_online);
+    
+    ssnac.setRequestID( reqid );
     b << ssnac;
     FLAPFooter(b,d);
 
     Send(b);
+
+    return ev;
+  }
+
+  SearchResultEvent* Client::searchForContacts(unsigned int uin)
+  {
+    Buffer b(&m_translator);
+    unsigned int d;
+
+    SearchResultEvent *ev = new SearchResultEvent( SearchResultEvent::UIN );
+
+    unsigned int reqid = NextRequestID();
+    m_reqidcache.insert( reqid, new SearchCacheValue( ev ) );
+
+    d = FLAPHeader(b,0x02);
+    SrvRequestSimpleUserInfo ssnac( m_uin, uin );
+    ssnac.setRequestID( reqid );
+    b << ssnac;
+    FLAPFooter(b,d);
+
+    Send(b);
+
+    return ev;
   }
 
   void Client::Disconnect(DisconnectedEvent::Reason r) {
@@ -2226,4 +2422,46 @@ namespace ICQ2000 {
     return m_bosPort;
   }
 
+  /**
+   *  set whether to accept incoming direct connections
+   *
+   * @d whether to accept incoming direct connections
+   */
+  void Client::setAcceptInDC(bool d) {
+    m_in_dc = d;
+    if (m_in_dc && m_listenServer.isStarted()) {
+      SignalRemoveSocket( m_listenServer.getSocketHandle() );
+      m_listenServer.Disconnect();
+    }
+  }
+  
+  /**
+   *  get whether to accept incoming direct connections
+   *
+   * @return whether to accept incoming direct connections
+   */
+  bool Client::getAcceptInDC() const 
+  {
+    return m_in_dc;
+  }
+  
+  /**
+   *  set whether to make outgoing direct connections
+   *
+   * @d whether to make outgoing direct connections
+   */
+  void Client::setUseOutDC(bool d) {
+    m_out_dc = d;
+  }
+  
+  /**
+   *  get whether to make outgoing direct connections
+   *
+   * @return whether to make outgoing direct connections
+   */
+  bool Client::getUseOutDC() const 
+  {
+    return m_out_dc;
+  }
+  
 }

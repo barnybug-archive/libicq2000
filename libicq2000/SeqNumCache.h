@@ -27,8 +27,6 @@
 
 #include <sigc++/signal_system.h>
 
-using SigC::Signal1;
-
 namespace ICQ2000 {
 
   class SeqNumCache : public Cache<unsigned short, MessageEvent*> {
@@ -40,7 +38,7 @@ namespace ICQ2000 {
       Cache<unsigned short, MessageEvent*>::expireItem(l);
     }
 
-    Signal1<void,MessageEvent*> expired;
+    SigC::Signal1<void,MessageEvent*> expired;
   };
   
 }
