@@ -89,6 +89,7 @@ AC_CHECK_FUNC(gethostbyname, ,
   AC_CHECK_LIB(nsl, gethostbyname,, AC_MSG_ERROR([You do not have gethostbyname - check you have libc installed properly])) )
 
 AC_CHECK_FUNCS([dup2 stat fork mktime select socket strerror],,AC_MSG_ERROR([You do not have one of the standard C functions required - check you have libc installed properly]))
+AC_STRUCT_TIMEZONE
 
 AC_OUTPUT([libicq2000-config \
            Makefile \

@@ -134,8 +134,15 @@ namespace ICQ2000
       struct tm *tzone = localtime(&t);
       int nTimezone = 0;
 
-      nTimezone = timezone + (tzone->tm_isdst == 1 ? 3600 : 0);
+#ifdef HAVE_TM_ZONE
+      nTimezone = -(tzone->tm_gmtoff);
+#else
+      nTimezone = timezone;
+#endif
+
+      nTimezone += (tzone->tm_isdst == 1 ? 3600 : 0);
       nTimezone /= 1800;
+
       if(nTimezone > 23) return 23-nTimezone;
 
       return (signed char) nTimezone;
