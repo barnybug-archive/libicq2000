@@ -93,6 +93,7 @@ namespace ICQ2000 {
 
     m_status_wanted = STATUS_OFFLINE;
     m_invisible_wanted = false;
+    m_web_aware = false;
 
     m_ext_ip = 0;
     m_use_portrange = false;
@@ -848,7 +849,7 @@ namespace ICQ2000 {
     if (m_invisible_wanted)
       FLAPwrapSNAC(b, AddVisibleSNAC(m_visible_list) );
         
-    SetStatusSNAC sss(Contact::MapStatusToICQStatus(m_status_wanted, m_invisible_wanted));
+    SetStatusSNAC sss(Contact::MapStatusToICQStatus(m_status_wanted, m_invisible_wanted), m_web_aware);
 
     sss.setSendExtra(true);
     sss.setIP( m_serverSocket.getLocalIP() );
@@ -1715,7 +1716,7 @@ namespace ICQ2000 {
 	FLAPwrapSNAC( b, AddVisibleSNAC(m_visible_list) );
       }
 	
-      FLAPwrapSNAC( b, SetStatusSNAC(Contact::MapStatusToICQStatus(st, inv)) );
+      FLAPwrapSNAC( b, SetStatusSNAC(Contact::MapStatusToICQStatus(st, inv), m_web_aware) );
       
       if (m_self->isInvisible() && !inv) {
 	// invisible -> visible
@@ -1757,6 +1758,16 @@ namespace ICQ2000 {
     setStatus(m_status_wanted, inv);
   }
 
+  void Client::setWebAware(bool wa)
+  {
+    if (m_web_aware!=wa)
+    {
+      m_web_aware = wa;
+      if (m_self->getStatus() != STATUS_OFFLINE)
+      setStatus(m_status_wanted, m_invisible_wanted);
+    }
+  }
+
   /**
    *  Get your current status.
    *
@@ -1774,6 +1785,11 @@ namespace ICQ2000 {
   bool Client::getInvisible() const
   {
     return m_self->isInvisible();
+  }
+
+  bool Client::getWebAware() const
+  {
+    return m_web_aware;
   }
 
   void Client::contactlist_cb(ContactListEvent *ev)

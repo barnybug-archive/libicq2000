@@ -124,13 +124,13 @@ namespace ICQ2000 {
    private:
     unsigned short m_status, m_port;
     unsigned int m_ip;
-    bool m_sendextra;
+    bool m_sendextra, m_web_aware;
 
    protected:
     void OutputBody(Buffer& b) const;
 
    public:
-    SetStatusSNAC(unsigned short status);
+    SetStatusSNAC(unsigned short status, bool web_aware);
     unsigned short Subtype() const { return SNAC_GEN_SetStatus; }
 
     void setSendExtra(bool b);

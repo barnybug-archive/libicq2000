@@ -110,11 +110,11 @@ namespace ICQ2000 {
 
   }
 
-  SetStatusSNAC::SetStatusSNAC(unsigned short status)
-    : m_status(status), m_sendextra(false) { }
+  SetStatusSNAC::SetStatusSNAC(unsigned short status, bool web_aware)
+    : m_status(status), m_sendextra(false), m_web_aware(web_aware) { }
 
   void SetStatusSNAC::OutputBody(Buffer& b) const {
-    StatusTLV stlv(ALLOWDIRECT_EVERYONE, WEBAWARE_NORMAL, m_status);
+    StatusTLV stlv(ALLOWDIRECT_EVERYONE, (m_web_aware ? WEBAWARE_WEBAWARE : WEBAWARE_NORMAL), m_status);
     b << stlv;
     if (m_sendextra) {
       UnknownTLV utlv;

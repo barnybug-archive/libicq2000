@@ -84,6 +84,7 @@ namespace ICQ2000 {
     string m_password;
     Status m_status_wanted;
     bool m_invisible_wanted;
+    bool m_web_aware;
 
     string m_authorizerHostname;
     unsigned short m_authorizerPort;
@@ -377,9 +378,11 @@ namespace ICQ2000 {
     void setStatus(const Status st);
     void setStatus(const Status st, bool inv);
     void setInvisible(bool inv);
+    void setWebAware(bool wa);
     
     Status getStatus() const;
     bool getInvisible() const;
+    bool getWebAware() const;
 
     void uploadSelfDetails();
     
