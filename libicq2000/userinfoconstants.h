@@ -353,6 +353,83 @@ static const struct Country Country_table[Country_table_size] =
   { "Zimbabwe", 263 }
 };
  
+static const unsigned char Interests_table_size = 51;
+static const unsigned char Interests_offset = 100;
+
+static const char* Interests_table[Interests_table_size] = {
+  "Art",
+  "Cars",
+  "Celebrity Fans",
+  "Collections",
+  "Computers",
+  "Culture",
+  "Fitness",
+  "Games",
+  "Hobbies",
+  "ICQ - Help",
+  "Internet",
+  "Lifestyle",
+  "Movies and TV",
+  "Music",
+  "Outdoors",
+  "Parenting",
+  "Pets and Animals",
+  "Religion",
+  "Science",
+  "Skills",
+  "Sports",
+  "Web Design",
+  "Ecology",
+  "News and Media",
+  "Government",
+  "Business",
+  "Mystics",
+  "Travel",
+  "Astronomy",
+  "Space",
+  "Clothing",
+  "Parties",
+  "Women",
+  "Social science",
+  "60's",
+  "70's",
+  "80's",
+  "50's",
+  "Finance and Corporate",
+  "Entertainment",
+  "Consumer Electronics",
+  "Retail Stores",
+  "Health and Beauty",
+  "Media",
+  "Household Products",
+  "Mail Order Catalog",
+  "Business Services",
+  "Audio and Visual",
+  "Sporting and Athletics",
+  "Publishing",
+  "Home Automation"
+};
+
+struct BackgroundRecord
+{
+  char *name;          /* Name */
+  unsigned short code; /* Code */
+};
+
+static const unsigned short Background_table_size = 8;
+
+static const struct BackgroundRecord Background_table[Background_table_size] =
+{
+  { "University", 303 },
+  { "High school", 301 },
+  { "College", 302 },
+  { "Elementary School", 300 },
+  { "Millitary", 304 },
+  { "Other", 399 },
+  { "Past Organization", 306 },
+  { "Past Work Place", 305 }
+};
+
 }
 
 #endif
