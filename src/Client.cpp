@@ -1801,16 +1801,6 @@ namespace ICQ2000 {
   }
 
   /**
-   *  Set your invisible status
-   * @param i Invisible boolean
-   *
-   */
-  void Client::setInvisible(bool b)
-  {
-    setStatus(m_status, b);
-  }
-  
-  /**
    *  Get your invisible status
    * @return Invisible boolean
    *

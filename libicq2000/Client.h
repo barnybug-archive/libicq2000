@@ -361,7 +361,6 @@ namespace ICQ2000 {
     void setStatus(const Status st, bool inv = false);
     Status getStatus() const;
     bool getInvisible() const;
-    void setInvisible(bool i);
 
     // -- Contact List --
     void addContact(Contact& c);
