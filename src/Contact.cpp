@@ -74,7 +74,10 @@ namespace ICQ2000 {
 
   unsigned int Contact::getUIN() const { return m_uin; }
 
-  void Contact::setUIN(unsigned int uin) { m_uin = uin; }
+  void Contact::setUIN(unsigned int uin) {
+    m_uin = uin;
+    m_icqcontact = true;
+  }
 
   string Contact::getStringUIN() const { return UINtoString(m_uin); }
 

@@ -863,6 +863,18 @@ namespace ICQ2000 {
    */
   bool AuthAckEvent::isOfflineMessage() const { return m_offline; }
 
+  // ---------------- Self Event -------------------------
+
+  SelfEvent::SelfEvent(Contact *self)
+    : m_self_contact(self) { }
+
+  SelfEvent::~SelfEvent() { }
+
+  Contact* SelfEvent::getSelfContact() const
+  {
+    return m_self_contact;
+  }
+
   // ---------------- My Status Change -------------------
 
   /**
@@ -870,8 +882,8 @@ namespace ICQ2000 {
    *
    * @param s your status
    */
-  MyStatusChangeEvent::MyStatusChangeEvent(Status s, bool inv)
-    : m_status(s), m_invisible(inv) { }
+  MyStatusChangeEvent::MyStatusChangeEvent(Contact *self, Status s, bool inv)
+    : SelfEvent(self), m_status(s), m_invisible(inv) { }
 
   /**
    *  get your status
@@ -887,13 +899,24 @@ namespace ICQ2000 {
    */
   bool MyStatusChangeEvent::getInvisible() const { return m_invisible; }
 
-  // ---------------- My Details Change -------------------
+  SelfEvent::EventType MyStatusChangeEvent::getType() const 
+  {
+    return SelfEvent::MyStatusChange;
+  }
+
+  // ---------------- My User Info Change -------------------
 
   /**
-   *  Constructor for MyDetailsChangeEvent
+   *  Constructor for MyUserInfoChangeEvent
    *
    */
-  MyDetailsChangeEvent::MyDetailsChangeEvent() : Event() { }
+  MyUserInfoChangeEvent::MyUserInfoChangeEvent(Contact *self)
+    : SelfEvent(self) { }
+
+  SelfEvent::EventType MyUserInfoChangeEvent::getType() const 
+  {
+    return SelfEvent::MyUserInfoChange;
+  }
 
   // ---------------- New UIN ----------------------------
 

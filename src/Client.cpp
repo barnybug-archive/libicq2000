@@ -203,8 +203,8 @@ namespace ICQ2000 {
 
     if (m_status != STATUS_OFFLINE) {
       m_status = STATUS_OFFLINE;
-      MyStatusChangeEvent ev(m_status);
-      statuschanged.emit( &ev );
+      MyStatusChangeEvent ev(&m_self, m_status);
+      self_event.emit( &ev );
     }
 
     // ensure all contacts return to Offline
@@ -616,8 +616,8 @@ namespace ICQ2000 {
 	c->setMainHomeInfo( snac->getMainHomeInfo() );
         if (c == &m_self)
         {
-          MyDetailsChangeEvent ev;
-          detailschanged.emit(&ev);
+          MyUserInfoChangeEvent ev(&m_self);
+          self_event.emit(&ev);
         }
         else
         {
@@ -635,8 +635,8 @@ namespace ICQ2000 {
 	c->setHomepageInfo( snac->getHomepageInfo() );
         if (c == &m_self)
         {
-            MyDetailsChangeEvent ev;
-            detailschanged.emit(&ev);
+            MyUserInfoChangeEvent ev(&m_self);
+            self_event.emit(&ev);
         }
         else
         {
@@ -654,8 +654,8 @@ namespace ICQ2000 {
 	c->setWorkInfo( snac->getWorkInfo() );
         if (c == &m_self)
         {
-            MyDetailsChangeEvent ev;
-            detailschanged.emit(&ev);
+            MyUserInfoChangeEvent ev(&m_self);
+            self_event.emit(&ev);
         }
         else
         {
@@ -673,8 +673,8 @@ namespace ICQ2000 {
 	c->setBackgroundInfo( snac->getBackgroundInfo() );
         if (c == &m_self)
         {
-            MyDetailsChangeEvent ev;
-            detailschanged.emit(&ev);
+            MyUserInfoChangeEvent ev(&m_self);
+            self_event.emit(&ev);
         }
         else
         {
@@ -692,8 +692,8 @@ namespace ICQ2000 {
 	c->setInterestInfo( snac->getPersonalInterestInfo() );
         if (c == &m_self)
         {
-            MyDetailsChangeEvent ev;
-            detailschanged.emit(&ev);
+            MyUserInfoChangeEvent ev(&m_self);
+            self_event.emit(&ev);
         }
         else
         {
@@ -711,8 +711,8 @@ namespace ICQ2000 {
 	c->setEmailInfo( snac->getEmailInfo() );
         if (c == &m_self)
         {
-            MyDetailsChangeEvent ev;
-            detailschanged.emit(&ev);
+            MyUserInfoChangeEvent ev(&m_self);
+            self_event.emit(&ev);
         }
         else
         {
@@ -730,8 +730,8 @@ namespace ICQ2000 {
 	c->setAboutInfo( snac->getAboutInfo() );
         if (c == &m_self)
         {
-            MyDetailsChangeEvent ev;
-            detailschanged.emit(&ev);
+            MyUserInfoChangeEvent ev(&m_self);
+            self_event.emit(&ev);
         }
         else
         {
@@ -1622,8 +1622,8 @@ namespace ICQ2000 {
       if( m_status != newstat  ||  m_invisible != newinvis ) {
         m_status = newstat;
         m_invisible = newinvis;
-        MyStatusChangeEvent ev(m_status, m_invisible);
-        statuschanged.emit( &ev );
+        MyStatusChangeEvent ev(&m_self, m_status, m_invisible);
+        self_event.emit( &ev );
       }
     }
   }
@@ -2100,7 +2100,12 @@ namespace ICQ2000 {
     FLAPwrapSNACandSend( ssnac );
   }
 
-  void Client::fetchSelfDetails()
+  void Client::fetchSelfSimpleContactInfo()
+  {
+    fetchSimpleContactInfo(&m_self);
+  }
+
+  void Client::fetchSelfDetailContactInfo()
   {
     fetchDetailContactInfo(&m_self);
   }

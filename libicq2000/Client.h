@@ -247,8 +247,6 @@ namespace ICQ2000 {
 
     Contact* getSelfContact();
 
-    void fetchSelfDetails();
-    
     bool setTranslationMap(const string& szMapFileName);
     const string& getTranslationMapFileName() const;
     const string& getTranslationMapName() const;
@@ -336,21 +334,18 @@ namespace ICQ2000 {
     Signal1<void,SocketEvent*> socket;
 
     /**
-     *  Signal to listen to for when the server has accepted a status
-     *  change request. Your change in status has been acknowledged by
-     *  the server then, and other clients will see the new status. In
-     *  a User Interface the setting of the status should be done
-     *  separately from the updating the display of it. The updating
-     *  the display of it should only be done once you have received
-     *  this signal.
-     * @see MyStatusChangeEvent
+     *  Signal to listen to for self events. This includes when the
+     *  server has accepted a status change request and successful
+     *  fetching of my user info. Your change in status has been
+     *  acknowledged by the server then, and other clients will see
+     *  the new status. In a User Interface the setting of the status
+     *  should be done separately from the updating the display of
+     *  it. The updating the display of it should only be done once
+     *  you have received this signal.
+     *
+     * @see MyStatusChangeEvent, MyUserInfoChangeEvent
      */
-    Signal1<void,MyStatusChangeEvent*> statuschanged;
-
-    /**
-     * TBD
-     */
-    Signal1<void,MyDetailsChangeEvent*> detailschanged;
+    Signal1<void,SelfEvent*> self_event;
     
     /**
      *  Signal when someone requests your away message. The client
@@ -391,6 +386,8 @@ namespace ICQ2000 {
     void fetchSimpleContactInfo(Contact* c);
     void fetchDetailContactInfo(Contact* c);
     void fetchServerBasedContactList();
+    void fetchSelfSimpleContactInfo();
+    void fetchSelfDetailContactInfo();
 
     // -- Whitepage searches --
     SearchResultEvent* searchForContacts(const string& nickname, const string& firstname,

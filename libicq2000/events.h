@@ -492,31 +492,67 @@ namespace ICQ2000 {
     unsigned int getSenderUIN() const;
   };
 
+  // --------------------- Self Events ----------------------
+
+  /**
+   *  Base class for Self events.
+   */
+  class SelfEvent : public Event {
+   private:
+    Contact *m_self_contact;
+
+   public:
+    /**
+     *  An enum of the different self event types.
+     */
+    enum EventType {
+      MyStatusChange,
+      MyUserInfoChange
+    };
+    
+   public:
+    SelfEvent(Contact *self);
+    virtual ~SelfEvent();
+    
+    /**
+     *  get the type of SelfEvent
+     *
+     * @return type of the SelfEvent
+     */
+    virtual EventType getType() const = 0;
+
+    Contact *getSelfContact() const;
+  };
+
   // --------------------- Status Change Event ----------------------
 
   /**
    *  Your status change
    */
-  class MyStatusChangeEvent : public Event {
+  class MyStatusChangeEvent : public SelfEvent {
    private:
     Status m_status;
     bool m_invisible;
 
    public:
-    MyStatusChangeEvent(Status s, bool inv = false);
+    MyStatusChangeEvent(Contact *self, Status s, bool inv = false);
 
     Status getStatus() const;
     bool getInvisible() const;
+
+    EventType getType() const;
   };
 
-  // --------------------- My Details Change Event ----------------------
+  // --------------------- My UserInfo Change Event ----------------------
 
   /**
    *  Your details fetched from the server
    */
-  class MyDetailsChangeEvent : public Event {
+  class MyUserInfoChangeEvent : public SelfEvent {
    public:
-    MyDetailsChangeEvent();
+    MyUserInfoChangeEvent(Contact *self);
+
+    EventType getType() const;
   };
 
   // --------------------- Search Events ----------------------------
