@@ -5,19 +5,22 @@ AM_INIT_AUTOMAKE(libicq2000,0.3.0)
 AM_CONFIG_HEADER(config.h)
 
 # Checks for programs.
-AC_PROG_CXX
 AC_PROG_CC
+AC_PROG_CXX
 AC_PROG_CPP
-
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
-AC_PROG_RANLIB
 AC_PROG_AWK
+AC_PROG_RANLIB
 
 AC_PROG_LIBTOOL
 
-dnl Switch to C++ mode and check for needed C++ headers
+# Checks for header files
+AC_HEADER_STDC
+AC_CHECK_HEADERS([fcntl.h unistd.h time.h ctype.h errno.h netdb.h sys/types.h sys/socket.h netinet/in.h arpa/inet.h])
+
+# Switch to C++ mode and check for needed C++ headers
 AC_LANG_SAVE
 AC_LANG_CPLUSPLUS
 
@@ -32,9 +35,25 @@ AC_CHECK_HEADERS(sstream,,
 
 AC_LANG_RESTORE
 
+# Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_TYPE_SIZE_T
+AC_STRUCT_TM
+AC_C_INLINE
+AC_HEADER_TIME
+
 # Checks for libraries.
 AM_PATH_SIGC(1.0.0, [], [AC_MSG_ERROR([You need to have the libsigc++ libraries installed - see the README for more information])])
 
-# Checks for typedefs, structures, and compiler characteristics.
-AC_OUTPUT([Makefile src/Makefile])
+# Checks for library functions.
+AC_CHECK_LIB(socket, socket)
+AC_CHECK_FUNC(gethostbyname, ,
+  AC_CHECK_LIB(nsl, gethostbyname,, AC_MSG_ERROR([You do not have gethostbyname - check you have libc installed properly])) )
 
+AC_FUNC_MKTIME
+AC_FUNC_STAT
+AC_FUNC_FORK
+AC_HEADER_SYS_WAIT
+AC_CHECK_FUNCS([dup2 select socket strerror],,AC_MSG_ERROR([You do not have one of the standard C functions required - check you have libc installed properly]))
+
+AC_OUTPUT([Makefile src/Makefile])
