@@ -452,21 +452,12 @@ namespace ICQ2000 {
     switch(command) {
 
     case V6_TCP_START:
-
-      if (type == MSG_Type_Normal
-	  || type == MSG_Type_URL
-	  || type == MSG_Type_AutoReq_Away
-	  || type == MSG_Type_AutoReq_Occ
-	  || type == MSG_Type_AutoReq_NA
-	  || type == MSG_Type_AutoReq_DND
-	  || type == MSG_Type_AutoReq_FFC) {
-
-	UINICQSubType *ist = static_cast<UINICQSubType*>(icqsubtype);
-	bool ack = m_message_handler->handleIncoming( ist );
-	if (ack) SendPacketAck(ist);
-      }
+    {
+      bool ack = m_message_handler->handleIncoming( icqsubtype );
+      if (ack) SendPacketAck(ist);
 
       break;
+    }
 
     case V6_TCP_ACK:
       if ( m_msgcache.exists(seqnum) ) {

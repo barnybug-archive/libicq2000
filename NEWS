@@ -1,3 +1,13 @@
+26th April 2002
+
+Next minor release of libicq2000.
+Fixes include:
+- Fixed handling offline messages whilst in Occupied/DND.
+- Fixes to direct connections
+- Much better capability support
+- Included a TODO
+- Firewall friendly port-range binding
+
 16th April 2002
 
 First release of libicq2000.
