@@ -4,12 +4,8 @@
 
 SUBDIRS = src libicq2000 examples
 
-EXTRA_DIST = TODO THANKS NEWS doc libicq2000.m4 debian/README		\
-debian/changelog debian/control debian/copyright			\
-debian/libicq2000-dev.files debian/libicq2000-dev.links			\
-debian/libicq2000-doc.links debian/libicq2000.docs			\
-debian/libicq2000.files debian/rules debian/libicq2000-dev.manpages	\
-doxyfile.conf libicq2000-config.1
+EXTRA_DIST = TODO THANKS NEWS doc libicq2000.m4 doxyfile.conf	\
+libicq2000-config.1
 
 bin_SCRIPTS = libicq2000-config
 
