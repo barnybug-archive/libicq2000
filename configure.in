@@ -38,8 +38,12 @@ if test $hash_map != yes ; then
   AC_MSG_ERROR([Your libstdc++ installation does not have the extra hash classes])
 fi
 
-AC_CHECK_HEADERS(sstream,,
-  AC_CHECK_HEADERS(strstream,, AC_MSG_ERROR([Your libstdc++ doesn't have the sstream or strstream classes])))
+sstream=no
+AC_CHECK_HEADERS(sstream,sstream=yes)
+AC_CHECK_HEADERS(strstream,sstream=yes)
+if test $sstream != yes ; then
+  AC_MSG_ERROR([Your libstdc++ installation does not have the sstream or strstream classes])
+fi
 
 AC_LANG_RESTORE
 
