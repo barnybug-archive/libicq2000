@@ -1,0 +1,18 @@
+Below is list of contributors to the libicq2000 project, as a word of
+thanks from the main developers.
+
+Konstantin Klyagin - Fixes
+
+Dominik 'Aeneas' Schnitzer - debian pkg stuff
+
+David Hill - fixes
+
+Alexandr Kukushkin - User info translation patch
+
+Tobias Hoffman - invisible status info patch
+
+Michael Smith - fix for non-printable characters in terminals
+
+Tobias Hoffman - socket IP order bug
+
+Serhiy Brytskyy - translation file for wincp1251 - koi8-u (UKRAINIAN_WIN)
