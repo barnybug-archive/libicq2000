@@ -178,9 +178,9 @@ namespace ICQ2000 {
     b << (unsigned short)2000	/* type 9808 */
       << (unsigned short)m_requestID /* low word of the request ID */
       << (unsigned short)0x0515;	/* subtype wp-short-request */
-    b.PackUint16TranslatedNull(m_firstname);
-    b.PackUint16TranslatedNull(m_lastname);
-    b.PackUint16TranslatedNull(m_nickname);
+    b.PackUint16StringNull(m_firstname);
+    b.PackUint16StringNull(m_lastname);
+    b.PackUint16StringNull(m_nickname);
 
     b.setAutoSizeMarker(m1);
     b.setAutoSizeMarker(m2);
@@ -217,29 +217,29 @@ namespace ICQ2000 {
     b << (unsigned short)2000	/* type 9808 */
       << (unsigned short)m_requestID /* low word of the request ID */
       << (unsigned short)0x0533;	/* subtype wp-full-request */
-    b.PackUint16TranslatedNull(m_firstname);
-    b.PackUint16TranslatedNull(m_lastname);
-    b.PackUint16TranslatedNull(m_nickname);
-    b.PackUint16TranslatedNull(m_email);
+    b.PackUint16StringNull(m_firstname);
+    b.PackUint16StringNull(m_lastname);
+    b.PackUint16StringNull(m_nickname);
+    b.PackUint16StringNull(m_email);
     b << (unsigned short)m_min_age;		// minimum age
     b << (unsigned short)m_max_age;		// maximum age
     b << (unsigned char)m_sex;			// sex
     b << (unsigned char)m_language;             // language
-    b.PackUint16TranslatedNull(m_city);             // city
-    b.PackUint16TranslatedNull(m_state);            // state
+    b.PackUint16StringNull(m_city);             // city
+    b.PackUint16StringNull(m_state);            // state
     b << (unsigned short)m_country;             // country
-    b.PackUint16TranslatedNull(m_company_name);	// company name
-    b.PackUint16TranslatedNull(m_department);	// department
-    b.PackUint16TranslatedNull(m_position);		// position
+    b.PackUint16StringNull(m_company_name);	// company name
+    b.PackUint16StringNull(m_department);	// department
+    b.PackUint16StringNull(m_position);		// position
     b << (unsigned char)0x00;			// occupation
     b << (unsigned short)0x0000;		// past info category
-    b.PackUint16TranslatedNull("");			//           description
+    b.PackUint16StringNull("");			//           description
     b << (unsigned short)0x0000;		// interests category
-    b.PackUint16TranslatedNull("");			//           description
+    b.PackUint16StringNull("");			//           description
     b << (unsigned short)0x0000;		// affiliation/organization
-    b.PackUint16TranslatedNull("");			//           description
+    b.PackUint16StringNull("");			//           description
     b << (unsigned short)0x0000;		// homepage category
-    b.PackUint16TranslatedNull("");			//           description
+    b.PackUint16StringNull("");			//           description
     b << (unsigned char)(m_only_online ? 0x01 : 0x00);
                                                 // only-online flag
     b.setAutoSizeMarker(m1);
@@ -267,7 +267,7 @@ namespace ICQ2000 {
       << (unsigned short)0x0226;     /* unknown */
 
     Buffer::marker m3 = b.getAutoSizeShortMarker();
-    b.PackUint16TranslatedNull(m_keyword);
+    b.PackUint16StringNull(m_keyword);
     b.setAutoSizeMarker(m3);
     
     b.setAutoSizeMarker(m1);
@@ -308,17 +308,17 @@ namespace ICQ2000 {
         b << (unsigned short)2000   /* type 9808 */
             << (unsigned short)m_requestID /* low word of the request ID */
             << (unsigned short)0x03ea; /* subtype */
-        b.PackUint16TranslatedNull(m_main_home_info.alias);     // alias
-        b.PackUint16TranslatedNull(m_main_home_info.firstname); // first name
-        b.PackUint16TranslatedNull(m_main_home_info.lastname);  // last name
-        b.PackUint16TranslatedNull(m_main_home_info.email);	    // email
-        b.PackUint16TranslatedNull(m_main_home_info.city);	    // city
-        b.PackUint16TranslatedNull(m_main_home_info.state);     // state
-        b.PackUint16TranslatedNull(m_main_home_info.phone);     // phone
-        b.PackUint16TranslatedNull(m_main_home_info.fax);       // fax
-        b.PackUint16TranslatedNull(m_main_home_info.street);    // street
-        b.PackUint16TranslatedNull(m_main_home_info.getMobileNo());  // cellular
-        b.PackUint16TranslatedNull(m_main_home_info.zip);       // zip
+        b.PackUint16StringNull(m_main_home_info.alias);     // alias
+        b.PackUint16StringNull(m_main_home_info.firstname); // first name
+        b.PackUint16StringNull(m_main_home_info.lastname);  // last name
+        b.PackUint16StringNull(m_main_home_info.email);	    // email
+        b.PackUint16StringNull(m_main_home_info.city);	    // city
+        b.PackUint16StringNull(m_main_home_info.state);     // state
+        b.PackUint16StringNull(m_main_home_info.phone);     // phone
+        b.PackUint16StringNull(m_main_home_info.fax);       // fax
+        b.PackUint16StringNull(m_main_home_info.street);    // street
+        b.PackUint16StringNull(m_main_home_info.getMobileNo());  // cellular
+        b.PackUint16StringNull(m_main_home_info.zip);       // zip
         b << m_main_home_info.country;
         b << m_main_home_info.timezone;
         unsigned char publish_email = 0;
@@ -343,18 +343,18 @@ namespace ICQ2000 {
         b << (unsigned short)2000   /* type 9808 */
             << (unsigned short)m_requestID /* low word of the request ID */
             << (unsigned short)0x03f3; /* subtype */
-        b.PackUint16TranslatedNull(m_work_info.city);     	    // city
-        b.PackUint16TranslatedNull(m_work_info.state);     	    // state
+        b.PackUint16StringNull(m_work_info.city);     	    // city
+        b.PackUint16StringNull(m_work_info.state);     	    // state
         b << (unsigned short)0x0000
           << (unsigned short)0x0000;
-        b.PackUint16TranslatedNull(m_work_info.street);         // street
-        b.PackUint16TranslatedNull(m_work_info.zip);     	    // zip
+        b.PackUint16StringNull(m_work_info.street);         // street
+        b.PackUint16StringNull(m_work_info.zip);     	    // zip
         b << m_work_info.country;			    // country-code
-        b.PackUint16TranslatedNull(m_work_info.company_name);   // company: name
-        b.PackUint16TranslatedNull(m_work_info.company_dept);   // company: department
-        b.PackUint16TranslatedNull(m_work_info.company_position); // company: position
+        b.PackUint16StringNull(m_work_info.company_name);   // company: name
+        b.PackUint16StringNull(m_work_info.company_dept);   // company: department
+        b.PackUint16StringNull(m_work_info.company_position); // company: position
         b << (unsigned short)0x0000;
-        b.PackUint16TranslatedNull(m_work_info.company_web);    // company: homepage
+        b.PackUint16StringNull(m_work_info.company_web);    // company: homepage
         b.setAutoSizeMarker(m1);
         b.setAutoSizeMarker(m2);
     }
@@ -378,7 +378,7 @@ namespace ICQ2000 {
         b << (unsigned char)m_homepage_info.age;	    // age
         b << (unsigned char)0x00;
         b << (unsigned char)m_homepage_info.sex;	    // sex-code
-        b.PackUint16TranslatedNull(m_homepage_info.homepage);
+        b.PackUint16StringNull(m_homepage_info.homepage);
         b << (unsigned short)m_homepage_info.birth_year;
         b << (unsigned char)m_homepage_info.birth_month;
         b << (unsigned char)m_homepage_info.birth_day;
@@ -405,7 +405,7 @@ namespace ICQ2000 {
         b << (unsigned short)2000   /* type 9808 */
             << (unsigned short)m_requestID /* low word of the request ID */
             << (unsigned short)0x0406; /* subtype */
-        b.PackUint16TranslatedNull(m_about_info);
+        b.PackUint16StringNull(m_about_info);
         b.setAutoSizeMarker(m1);
         b.setAutoSizeMarker(m2);
     }
@@ -735,24 +735,28 @@ namespace ICQ2000 {
     b >> wb; // status code ?
 
     switch(subtype) {
-    case SrvResponse_MainHomeInfo: {
+    case SrvResponse_MainHomeInfo:
+    {
       string s;
-      b.UnpackUint16TranslatedNull(m_main_home_info.alias);     // alias
-      b.UnpackUint16TranslatedNull(m_main_home_info.firstname); // first name
-      b.UnpackUint16TranslatedNull(m_main_home_info.lastname);  // last name
-      b.UnpackUint16TranslatedNull(m_main_home_info.email);	    // email
-      b.UnpackUint16TranslatedNull(m_main_home_info.city);	    // city
-      b.UnpackUint16TranslatedNull(m_main_home_info.state);     // state
-      b.UnpackUint16TranslatedNull(m_main_home_info.phone);     // phone
-      b.UnpackUint16TranslatedNull(m_main_home_info.fax);       // fax
-      b.UnpackUint16TranslatedNull(m_main_home_info.street);    // street
-      b.UnpackUint16TranslatedNull(s);  // cellular
+      b.UnpackUint16StringNull(m_main_home_info.alias);     // alias
+      b.UnpackUint16StringNull(m_main_home_info.firstname); // first name
+      b.UnpackUint16StringNull(m_main_home_info.lastname);  // last name
+      b.UnpackUint16StringNull(m_main_home_info.email);	    // email
+      b.UnpackUint16StringNull(m_main_home_info.city);	    // city
+      b.UnpackUint16StringNull(m_main_home_info.state);     // state
+      b.UnpackUint16StringNull(m_main_home_info.phone);     // phone
+      b.UnpackUint16StringNull(m_main_home_info.fax);       // fax
+      b.UnpackUint16StringNull(m_main_home_info.street);    // street
+      b.UnpackUint16StringNull(s);  // cellular
       m_main_home_info.setMobileNo(s);
-      b.UnpackUint16TranslatedNull(m_main_home_info.zip);       // zip
-      b >> m_main_home_info.country;
-      unsigned char unk;
-      b >> m_main_home_info.timezone;
-      b >> unk;
+      b.UnpackUint16StringNull(m_main_home_info.zip);       // zip
+      unsigned short country;
+      b >> country;
+      m_main_home_info.country = Country(country);
+      signed char timezone;
+      b >> timezone;
+      m_main_home_info.timezone = Timezone(timezone);
+      b.advance(1);
 
       // some end marker?
       unsigned short wi;
@@ -761,79 +765,91 @@ namespace ICQ2000 {
       m_type = RMainHomeInfo;
       break;
     }
-    case SrvResponse_HomePageInfo: {
+    case SrvResponse_HomePageInfo:
+    {
       b >> m_homepage_info.age;
       unsigned char unk;
       b >> unk;
-      b >> m_homepage_info.sex;
-      b.UnpackUint16TranslatedNull(m_homepage_info.homepage);
+      unsigned char sex;
+      b >> sex;
+      m_homepage_info.sex = Sex(sex);
+      b.UnpackUint16StringNull(m_homepage_info.homepage);
       b >> m_homepage_info.birth_year;
       b >> m_homepage_info.birth_month;
       b >> m_homepage_info.birth_day;
-      b >> m_homepage_info.lang1;
-      b >> m_homepage_info.lang2;
-      b >> m_homepage_info.lang3;
+      unsigned char lang1, lang2, lang3;
+      b >> lang1;
+      m_homepage_info.lang1 = Language(lang1);
+      b >> lang2;
+      m_homepage_info.lang2 = Language(lang2);
+      b >> lang3;
+      m_homepage_info.lang3 = Language(lang3);
       b >> wb;
       b >> wb;
       m_type = RHomepageInfo;
       break;
     }
-    case SrvResponse_EmailInfo: {
+    case SrvResponse_EmailInfo:
+    {
       unsigned char n;
       b >> n;
       while(n > 0) {
 	string s;
-	b.UnpackUint16TranslatedNull(s);
+	b.UnpackUint16StringNull(s);
 	m_email_info.addEmailAddress(s);
 	--n;
       }
       m_type = REmailInfo;
       break;
     }
-    case SrvResponse_WorkInfo: {
-      b.UnpackUint16TranslatedNull(m_work_info.city);
-      b.UnpackUint16TranslatedNull(m_work_info.state);
+    case SrvResponse_WorkInfo:
+    {
+      b.UnpackUint16StringNull(m_work_info.city);
+      b.UnpackUint16StringNull(m_work_info.state);
       string s;	// these fields are incorrect in the spec
-      b.UnpackUint16TranslatedNull(s);
-      b.UnpackUint16TranslatedNull(s);
-      b.UnpackUint16TranslatedNull(m_work_info.street);
-      b.UnpackUint16TranslatedNull(m_work_info.zip);
+      b.UnpackUint16StringNull(s);
+      b.UnpackUint16StringNull(s);
+      b.UnpackUint16StringNull(m_work_info.street);
+      b.UnpackUint16StringNull(m_work_info.zip);
       b >> m_work_info.country;
-      b.UnpackUint16TranslatedNull(m_work_info.company_name);
-      b.UnpackUint16TranslatedNull(m_work_info.company_dept);
-      b.UnpackUint16TranslatedNull(m_work_info.company_position);
-      unsigned short ws;
-      b >> ws;
-      b.UnpackUint16TranslatedNull(m_work_info.company_web);
+      b.UnpackUint16StringNull(m_work_info.company_name);
+      b.UnpackUint16StringNull(m_work_info.company_dept);
+      b.UnpackUint16StringNull(m_work_info.company_position);
+      b.advance(2);
+      b.UnpackUint16StringNull(m_work_info.company_web);
       m_type = RWorkInfo;
       break;
     }
     case SrvResponse_AboutInfo:
-      b.UnpackUint16TranslatedNull(m_about);
+      b.UnpackUint16StringNull(m_about);
       m_type = RAboutInfo;
       break;
-    case SrvResponse_InterestInfo: {
+    case SrvResponse_InterestInfo:
+    {
       unsigned char n;
       b >> n;
-      while (n > 0) {
+      while (n > 0)
+      {
 	unsigned short cat;
 	string spec;
 	b >> cat;
-	b.UnpackUint16TranslatedNull(spec);
+	b.UnpackUint16StringNull(spec);
 	m_personal_interest_info.addInterest(cat, spec);
 	--n;
       }
       m_type = RInterestInfo;
       break;
     }
-    case SrvResponse_BackgroundInfo: {
+    case SrvResponse_BackgroundInfo:
+    {
       unsigned char n;
       b >> n;
-      while (n > 0) {
+      while (n > 0)
+      {
 	unsigned short cat;
 	string s;
 	b >> cat;
-	b.UnpackUint16TranslatedNull(s);
+	b.UnpackUint16StringNull(s);
 	m_background_info.addSchool(cat, s);
 	--n;
       }
@@ -843,7 +859,8 @@ namespace ICQ2000 {
       m_type = RBackgroundInfo;
       break;
     }
-    case SrvResponse_Unknown: {
+    case SrvResponse_Unknown:
+    {
       unsigned short ws;
       b >> ws;
       m_type = RUnknown;
@@ -880,10 +897,10 @@ namespace ICQ2000 {
 
     b >> m_uin;
 
-    b.UnpackUint16TranslatedNull(m_alias);
-    b.UnpackUint16TranslatedNull(m_firstname);
-    b.UnpackUint16TranslatedNull(m_lastname);
-    b.UnpackUint16TranslatedNull(m_email);
+    b.UnpackUint16StringNull(m_alias);
+    b.UnpackUint16StringNull(m_firstname);
+    b.UnpackUint16StringNull(m_lastname);
+    b.UnpackUint16StringNull(m_email);
 
     // Auth required
     b >> wb;

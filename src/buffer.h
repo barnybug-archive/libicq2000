@@ -28,8 +28,6 @@
 #include <string>
 #include <iterator>
 
-#include "Translator.h"
-
 namespace ICQ2000
 {
   
@@ -52,12 +50,10 @@ namespace ICQ2000
     std::vector<unsigned char> m_data;
     endian m_endn;
     size_type m_out_pos;
-    ICQ2000::Translator *m_translator;
 
   public:
-    Buffer(ICQ2000::Translator *translator);
-    Buffer(const unsigned char *d, unsigned int size, ICQ2000::Translator *translator); 
-    // construct from an array
+    Buffer();
+    Buffer(const unsigned char *d, unsigned int size); // construct from an array
     Buffer(Buffer& b, unsigned int start, unsigned int data_len); // construct by copying from another Buffer
 
     unsigned int size() const { return m_data.size(); }
@@ -101,7 +97,6 @@ namespace ICQ2000
     void Pack(const unsigned char *d, unsigned int size);
     void Pack(const std::string& s);
     void PackUint16StringNull(const std::string& s);
-    void PackUint16TranslatedNull(const std::string& s);
     void PackByteString(const std::string& s);
     void UnpackCRLFString(std::string& s);
 
@@ -110,18 +105,9 @@ namespace ICQ2000
     unsigned char UnpackChar();
     void UnpackUint32String(std::string& s);
     void UnpackUint16StringNull(std::string& s);
-    void UnpackUint16TranslatedNull(std::string& s);
     void UnpackByteString(std::string& s);
 
     unsigned char& operator[](unsigned int p);
-
-    void setTranslator(ICQ2000::Translator *translator);
-    void ServerToClient(std::string& szString);
-    void ClientToServer(std::string& szString);
-    std::string ServerToClientCC(const std::string& szString);
-    std::string ClientToServerCC(const std::string& szString);
-    void ServerToClient(char &_cChar);
-    void ClientToServer(char &_cChar);
 
     void dump(std::ostream& out);
   };

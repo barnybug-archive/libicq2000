@@ -57,7 +57,6 @@ namespace ICQ2000 {
     void Parse();
     void Send(Buffer &b);
 
-    Translator *m_translator;
     ContactRef m_self_contact;
 
     void SayHello();
@@ -71,8 +70,7 @@ namespace ICQ2000 {
     void Disconnect();
 
    public:
-    SMTPClient(ContactRef self, const std::string& server_name, unsigned short server_port,
-	       Translator* translator);
+    SMTPClient(ContactRef self, const std::string& server_name, unsigned short server_port);
 
     ~SMTPClient();
 

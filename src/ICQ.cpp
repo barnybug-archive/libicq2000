@@ -21,6 +21,8 @@
 
 #include "ICQ.h"
 
+#include "Translator.h"
+
 #include "sstream_fix.h"
 #include <memory>
 
@@ -218,14 +220,14 @@ namespace ICQ2000 {
 
   void UINICQSubType::OutputBodyUINACK(Buffer& b) const
   {
-    b.PackUint16TranslatedNull(m_away_message);
+    b.PackUint16StringNull(m_away_message);
   }
 
   void UINICQSubType::ParseBodyUINACK(Buffer& b)
   {
     /* whatever the message type, ACKs are always the same
        - the current away message */
-    b.UnpackUint16TranslatedNull(m_away_message);
+    b.UnpackUint16StringNull(m_away_message);
   }
 
   NormalICQSubType::NormalICQSubType(bool multi)
@@ -244,7 +246,6 @@ namespace ICQ2000 {
 
   void NormalICQSubType::ParseBodyUIN(Buffer& b) {
     b.UnpackUint16StringNull(m_message);
-    b.ServerToClient(m_message);
 
     if (m_advanced) {
       b >> m_foreground
@@ -256,7 +257,7 @@ namespace ICQ2000 {
   }
 
   void NormalICQSubType::OutputBodyUIN(Buffer& b) const {
-    b.PackUint16TranslatedNull(m_message);
+    b.PackUint16StringNull(m_message);
 
     if (m_advanced) {
       b << (unsigned int)m_foreground
@@ -266,7 +267,7 @@ namespace ICQ2000 {
 
   void NormalICQSubType::ParseBodyUINACK(Buffer& b)
   {
-    b.UnpackUint16TranslatedNull(m_away_message);
+    b.UnpackUint16StringNull(m_away_message);
     b.advance(8);
   }
 
@@ -274,7 +275,7 @@ namespace ICQ2000 {
   {
     /* hmmff.. Normal messages differ from all the other ACKs by
        having these two pointless ints. */
-    b.PackUint16TranslatedNull(m_away_message);
+    b.PackUint16StringNull(m_away_message);
     if (m_advanced) {
       b << (unsigned int)0x00000000
 	<< (unsigned int)0xffffffff;
@@ -327,8 +328,7 @@ namespace ICQ2000 {
       m_message = text;
       m_url = "";
     }
-    b.ServerToClient(m_message);
-    b.ServerToClient(m_url);
+
 
   }
 
@@ -340,8 +340,6 @@ namespace ICQ2000 {
 
       string message = m_message;
       string url = m_url;
-      b.ClientToServer(message);
-      b.ClientToServer(url);     // I think url should be translated too ??
       ostr << message << (unsigned char)0xfe << url;
 
       b.PackUint16StringNull( ostr.str() );
@@ -578,22 +576,22 @@ namespace ICQ2000 {
     string_split( text, string("\xfe"), 6, fields);
 
     list<string>::iterator iter = fields.begin();
-    m_alias = b.ServerToClientCC(*(iter++));
-    m_firstname = b.ServerToClientCC(*(iter++));
-    m_lastname = b.ServerToClientCC(*(iter++));
-    m_email = b.ServerToClientCC(*(iter++));
-    m_auth = ((*(iter++)) == "1");
-    m_message = b.ServerToClientCC(*(iter++));
+    m_alias     = *(iter++);
+    m_firstname = *(iter++);
+    m_lastname  = *(iter++);
+    m_email     = *(iter++);
+    m_auth      = ((*(iter++)) == "1");
+    m_message   = *(iter++);
   }
 
   void AuthReqICQSubType::OutputBodyUIN(Buffer& b) const {
     ostringstream ostr;
-    ostr << b.ClientToServerCC(m_alias) << (unsigned char)0xfe
-	 << b.ClientToServerCC(m_firstname) << (unsigned char)0xfe
-	 << b.ClientToServerCC(m_lastname) << (unsigned char)0xfe
-	 << b.ClientToServerCC(m_email) << (unsigned char)0xfe
+    ostr << m_alias              << (unsigned char)0xfe
+	 << m_firstname          << (unsigned char)0xfe
+	 << m_lastname           << (unsigned char)0xfe
+	 << m_email              << (unsigned char)0xfe
 	 << (m_auth ? "1" : "0") << (unsigned char)0xfe
-	 << b.ClientToServerCC(m_message);
+	 << m_message;
     
     b.PackUint16StringNull( ostr.str() );
   }
@@ -616,11 +614,10 @@ namespace ICQ2000 {
 
   void AuthRejICQSubType::ParseBodyUIN(Buffer& b) {
     b.UnpackUint16StringNull(m_message);
-    b.ServerToClient(m_message);
   }
 
   void AuthRejICQSubType::OutputBodyUIN(Buffer& b) const {
-    b.PackUint16TranslatedNull(m_message);
+    b.PackUint16StringNull(m_message);
   }
 
   unsigned short AuthRejICQSubType::Length() const {
@@ -662,12 +659,12 @@ namespace ICQ2000 {
     string_split( text, string("\xfe"), 6, fields);
 
     list<string>::iterator iter = fields.begin();
-    m_sender = b.ServerToClientCC(*(iter++));
+    m_sender  = *(iter++);
     ++iter; // ???
     ++iter; // ???
-    m_email = b.ServerToClientCC(*(iter++));
+    m_email   = *(iter++);
     ++iter; // ???
-    m_message = b.ServerToClientCC(*(iter++));
+    m_message = *(iter++);
   }
 
   void EmailExICQSubType::OutputBody(Buffer& b) const {
@@ -701,12 +698,12 @@ namespace ICQ2000 {
     string_split( text, string("\xfe"), 6, fields);
 
     list<string>::iterator iter = fields.begin();
-    m_sender = b.ServerToClientCC(*(iter++));
+    m_sender  = *(iter++);
     ++iter; // ???
     ++iter; // ???
-    m_email = b.ServerToClientCC(*(iter++));
+    m_email   = *(iter++);
     ++iter; // ???
-    m_message = b.ServerToClientCC(*(iter++));
+    m_message = *(iter++);
   }
 
   void WebPagerICQSubType::OutputBody(Buffer& b) const {
@@ -755,19 +752,19 @@ namespace ICQ2000 {
     string_split( text, string("\xfe"), 5, fields);
 
     list<string>::iterator iter = fields.begin();
-    m_alias = b.ServerToClientCC(*(iter++));
-    m_firstname = b.ServerToClientCC(*(iter++));
-    m_lastname = b.ServerToClientCC(*(iter++));
-    m_email = b.ServerToClientCC(*(iter++));
-    m_auth = ((*(iter++)) == "1");
+    m_alias     = *(iter++);
+    m_firstname = *(iter++);
+    m_lastname  = *(iter++);
+    m_email     = *(iter++);
+    m_auth      = ((*(iter++)) == "1");
   }
 
   void UserAddICQSubType::OutputBodyUIN(Buffer& b) const {
     ostringstream ostr;
-    ostr << b.ClientToServerCC(m_alias) << (unsigned char)0xfe
-	 << b.ClientToServerCC(m_firstname) << (unsigned char)0xfe
-	 << b.ClientToServerCC(m_lastname) << (unsigned char)0xfe
-	 << b.ClientToServerCC(m_email) << (unsigned char)0xfe
+    ostr << m_alias              << (unsigned char)0xfe
+	 << m_firstname          << (unsigned char)0xfe
+	 << m_lastname           << (unsigned char)0xfe
+	 << m_email              << (unsigned char)0xfe
 	 << (m_auth ? "1" : "0") << (unsigned char)0xfe;
     
     b.PackUint16StringNull( ostr.str() );
@@ -798,7 +795,7 @@ namespace ICQ2000 {
       list<string>::iterator iter = fields.begin();
       while(iter != fields.end()) {
 	ContactRef ct(new Contact(atoi((iter++)->c_str())));
-	ct->setAlias(b.ServerToClientCC(*(iter++)));
+	ct->setAlias(*(iter++));
 	m_content.push_back(ct);
       }
     }

@@ -477,13 +477,11 @@ namespace ICQ2000 {
   // Extra Detailed info class implementations;
 
   Contact::MainHomeInfo::MainHomeInfo()
-    : country(0), timezone(Timezone_unknown) { }
+    : country(COUNTRY_UNKNOWN), timezone(TIMEZONE_UNKNOWN) { }
 
-  string Contact::MainHomeInfo::getCountry() const {
-    for(unsigned short a = 0; a < Country_table_size; a++) {
-      if (Country_table[a].code == country) return Country_table[a].name;
-    }
-    return Country_table[0].name;
+  Country Contact::MainHomeInfo::getCountry() const
+  {
+    return country;
   }
 
   string Contact::MainHomeInfo::getMobileNo() const
@@ -513,10 +511,12 @@ namespace ICQ2000 {
   }
   
   Contact::HomepageInfo::HomepageInfo()
-    : age(0), sex(0), birth_year(0), birth_month(0), birth_day(0),
-      lang1(0), lang2(0), lang3(0) { }
+    : age(0), sex(SEX_UNKNOWN), birth_year(0), birth_month(0), birth_day(0),
+      lang1(LANGUAGE_UNKNOWN), lang2(LANGUAGE_UNKNOWN), lang3(LANGUAGE_UNKNOWN)
+  { }
 
-  string Contact::HomepageInfo::getBirthDate() const {
+  string Contact::HomepageInfo::getBirthDate() const
+  {
     if (birth_day == 0 || birth_year == 0) return "Unspecified";
 
     struct tm birthdate;
@@ -533,14 +533,24 @@ namespace ICQ2000 {
     return string(bday);
   }
 
-  string Contact::HomepageInfo::getLanguage(int l) const {
-    if (l < 1 || l > 3) return Language_table[0];
-    unsigned char lang = 0;
-    if (l == 1) lang = lang1;
-    if (l == 2) lang = lang2;
-    if (l == 3) lang = lang3;
-    if (lang >= Language_table_size) return Language_table[0];
-    return Language_table[lang];
+  Language Contact::HomepageInfo::getLanguage(int l) const
+  {
+    Language ret = LANGUAGE_UNKNOWN;
+
+    switch(l)
+    {
+    case 1:
+      ret = lang1;
+      break;
+    case 2:
+      ret = lang2;
+      break;
+    case 3:
+      ret = lang3;
+      break;
+    }
+    
+    return ret;
   }
 
   Contact::EmailInfo::EmailInfo() { }

@@ -29,6 +29,8 @@
 #include <libicq2000/sigslot.h>
 
 #include <libicq2000/constants.h>
+#include <libicq2000/userinfoconstants.h>
+
 #include <libicq2000/ref_ptr.h>
 
 namespace ICQ2000
@@ -68,10 +70,10 @@ namespace ICQ2000
       MainHomeInfo();
 
       std::string alias, firstname, lastname, email, city, state, phone, fax, street, zip;
-      unsigned short country;
-      signed char timezone;
+      Country  country;
+      Timezone timezone;
 
-      std::string getCountry() const;
+      Country getCountry() const;
       std::string getMobileNo() const;
       void setMobileNo(const std::string& s);
 
@@ -83,13 +85,16 @@ namespace ICQ2000
     public:
       HomepageInfo();
 
-      unsigned char age, sex;
+      unsigned char age;
+      Sex sex;
+      Language lang1, lang2, lang3;
+
       std::string homepage;
       unsigned short birth_year;
-      unsigned char birth_month, birth_day, lang1, lang2, lang3;
+      unsigned char birth_month, birth_day;
 
       std::string getBirthDate() const;
-      std::string getLanguage(int l) const;
+      Language getLanguage(int l) const;
     };
 
     class EmailInfo

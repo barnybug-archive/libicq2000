@@ -17,7 +17,6 @@ libicq2000_la_SOURCES = \
  DCCache.h          SMTPClient.h        SNAC-SBL.cpp  UserInfoBlock.cpp \
  DirectClient.cpp   SNAC-base.cpp       SNAC-SBL.h    UserInfoBlock.h \
  DirectClient.h     SNAC-base.h         SNAC-SRV.cpp   \
- userinfohelpers.cpp \
  events.cpp         SNAC-BOS.cpp        SNAC-SRV.h    version.cpp \
  exceptions.cpp     SNAC-BOS.h          SNAC-UIN.cpp  Xml.cpp \
  ICBMCookieCache.h  SNAC-BUD.cpp        SNAC-UIN.h    Xml.h

@@ -35,7 +35,6 @@
 #include "Contact.h"
 #include "ContactTree.h"
 #include "SeqNumCache.h"
-#include "Translator.h"
 #include "SocketClient.h"
 #include "MessageHandler.h"
 
@@ -87,7 +86,6 @@ namespace ICQ2000 {
     bool Decrypt(Buffer& in, Buffer& out);
     void Encrypt(Buffer& in, Buffer& out);
     static unsigned char client_check_data[];
-    Translator *m_translator;
     SeqNumCache m_msgcache;
     std::list<MessageEvent*> m_msgqueue;
     unsigned short m_seqnum;
@@ -102,9 +100,9 @@ namespace ICQ2000 {
 
    public:
     DirectClient(ContactRef self, TCPSocket *sock, MessageHandler *mh, ContactTree *cl, unsigned int ext_ip,
-		 unsigned short server_port, Translator* translator);
+		 unsigned short server_port);
     DirectClient(ContactRef self, ContactRef c, MessageHandler *mh, unsigned int ext_ip,
-		 unsigned short server_port, Translator *translator);
+		 unsigned short server_port);
     ~DirectClient();
 
     void Connect();

@@ -48,12 +48,11 @@ namespace ICQ2000 {
    * Constructor when receiving an incoming connection
    */
   DirectClient::DirectClient(ContactRef self, TCPSocket *sock, MessageHandler *mh,
-			     ContactTree *cl, unsigned int ext_ip, unsigned short server_port,
-			     Translator* translator)
-    : m_state(WAITING_FOR_INIT), m_recv(translator),
+			     ContactTree *cl, unsigned int ext_ip, unsigned short server_port)
+    : m_state(WAITING_FOR_INIT), m_recv(),
       m_self_contact(self), m_contact(NULL), m_contact_list(cl), 
       m_message_handler(mh), m_incoming(true), m_local_ext_ip(ext_ip),
-      m_local_server_port(server_port), m_translator(translator)
+      m_local_server_port(server_port)
   {
     m_socket = sock;
     Init();
@@ -63,10 +62,10 @@ namespace ICQ2000 {
    * Constructor for making an outgoing connection
    */
   DirectClient::DirectClient(ContactRef self, ContactRef c, MessageHandler *mh, unsigned int ext_ip,
-			     unsigned short server_port, Translator *translator)
-    : m_state(NOT_CONNECTED), m_recv(translator), m_self_contact(self), 
+			     unsigned short server_port)
+    : m_state(NOT_CONNECTED), m_recv(), m_self_contact(self), 
       m_contact(c), m_message_handler(mh), m_incoming(false), m_local_ext_ip(ext_ip),
-      m_local_server_port(server_port), m_translator(translator)
+      m_local_server_port(server_port)
       
   {
     Init();
@@ -156,7 +155,7 @@ namespace ICQ2000 {
       if (m_recv.remains() < length) return; // waiting for more of the packet
 
 
-      Buffer sb(m_translator);
+      Buffer sb;
       m_recv.chopOffBuffer( sb, length+2 );
 
       ostringstream ostr;
@@ -258,7 +257,7 @@ namespace ICQ2000 {
   }
 
   void DirectClient::SendInitPacket() {
-    Buffer b(m_translator);
+    Buffer b;
     b.setLittleEndian();
     Buffer::marker m1 = b.getAutoSizeShortMarker();
 
@@ -385,7 +384,7 @@ namespace ICQ2000 {
   }
 
   void DirectClient::SendInit2() {
-    Buffer b(m_translator);
+    Buffer b;
     b.setLittleEndian();
     Buffer::marker m1 = b.getAutoSizeShortMarker();
     b << (unsigned char) 0x03       // start byte
@@ -408,7 +407,7 @@ namespace ICQ2000 {
   }
 
   void DirectClient::ParsePacket(Buffer& b) {
-    Buffer c(m_translator);
+    Buffer c;
     if (!Decrypt(b, c)) throw ParseException("Decrypting failed");
     ParsePacketInt(c);
   }
@@ -621,7 +620,7 @@ namespace ICQ2000 {
   }
 
   void DirectClient::SendInitAck() {
-    Buffer b(m_translator);
+    Buffer b;
     b.setLittleEndian();
     Buffer::marker m1 = b.getAutoSizeShortMarker();
     b << (unsigned int)0x00000001;
@@ -630,7 +629,7 @@ namespace ICQ2000 {
   }
 
   void DirectClient::SendPacketAck(ICQSubType *icqsubtype) {
-    Buffer b(m_translator);
+    Buffer b;
 
     b.setLittleEndian();
     b << (unsigned int)0x00000000 // checksum (filled in by Encrypt)
@@ -642,13 +641,13 @@ namespace ICQ2000 {
       << (unsigned int)0x00000000;
     
     icqsubtype->Output(b);
-    Buffer c(m_translator);
+    Buffer c;
     Encrypt(b,c);
     Send(c);
   }
 
   void DirectClient::SendPacketEvent(MessageEvent *ev) {
-    Buffer b(m_translator);
+    Buffer b;
 
     unsigned short seqnum = NextSeqNum();
 
@@ -667,7 +666,7 @@ namespace ICQ2000 {
       << (unsigned int)0x00000000;
     ist->Output(b);
 
-    Buffer c(m_translator);
+    Buffer c;
     Encrypt(b,c);
     Send(c);
 

@@ -31,108 +31,123 @@ using std::ostream;
 namespace ICQ2000
 {
 
-  Buffer::Buffer(Translator *translator) : m_data(), m_endn(BIG), m_out_pos(0), 
-					   m_translator(translator) { }
+  Buffer::Buffer()
+    : m_data(), m_endn(BIG), m_out_pos(0)
+  { }
 
-  Buffer::Buffer(const unsigned char* d, unsigned int size, Translator *translator) 
-    : m_data(d, d+size), m_endn(BIG), m_out_pos(0) { }
+  Buffer::Buffer(const unsigned char* d, unsigned int size)
+    : m_data(d, d+size), m_endn(BIG), m_out_pos(0)
+  { }
 
   Buffer::Buffer(Buffer& b, unsigned int start, unsigned int data_len) 
     : m_data(b.m_data.begin()+start, b.m_data.begin()+start+data_len), 
-      m_endn(BIG), m_out_pos(0), m_translator(b.m_translator) { }
+      m_endn(BIG), m_out_pos(0)
+  { }
 
-  unsigned char& Buffer::operator[](unsigned int p) {
+  unsigned char& Buffer::operator[](unsigned int p)
+  {
     return m_data[p];
   }
 
-  void Buffer::clear() {
+  void Buffer::clear()
+  {
     m_data.clear();
     m_out_pos = 0;
   }
 
-  bool Buffer::empty() {
+  bool Buffer::empty()
+  {
     return m_data.empty();
   }
 
-  void Buffer::chopOffBuffer(Buffer& b, unsigned int sz) {
+  void Buffer::chopOffBuffer(Buffer& b, unsigned int sz)
+  {
     copy( m_data.begin(), m_data.begin()+sz, back_inserter(b.m_data) );
     m_data.erase( m_data.begin(), m_data.begin()+sz );
     m_out_pos = 0;
   }
 
-  void Buffer::Pack(const unsigned char *d, unsigned int size) {
+  void Buffer::Pack(const unsigned char *d, unsigned int size)
+  {
     copy(d, d+size, back_inserter(m_data));
   }
 
-  void Buffer::PackUint16StringNull(const string& s) {
+  void Buffer::PackUint16StringNull(const string& s)
+  {
     (*this) << (unsigned short)(s.size()+1);
     Pack(s);
     (*this) << (unsigned char)0x00;
   }
 
-  void Buffer::PackUint16TranslatedNull(const string& s) {
-    PackUint16StringNull( m_translator->ClientToServerCC( s ) );
-  }
-
-  void Buffer::PackByteString(const string& s) {
+  void Buffer::PackByteString(const string& s)
+  {
     (*this) << (unsigned char)(s.size());
     Pack(s);
   }
 
-  void Buffer::UnpackCRLFString(string& s) {
+  void Buffer::UnpackCRLFString(string& s)
+  {
     iterator i;
 
     i = find(m_data.begin()+m_out_pos, m_data.end(), '\n');
 
-    if (i != m_data.end() ) {
+    if (i != m_data.end() )
+    {
       Unpack(s, i-m_data.begin()-m_out_pos+1);
     }
   }
 
-  void Buffer::Pack(const string& s) {
+  void Buffer::Pack(const string& s)
+  {
     copy(s.begin(), s.end(), back_inserter(m_data));
   }
 
-  unsigned char Buffer::UnpackChar() {
-    if (m_out_pos + 1 > m_data.size()) return 0;
-    else return m_data[m_out_pos++];
+  unsigned char Buffer::UnpackChar()
+  {
+    if (m_out_pos + 1 > m_data.size())
+      return 0;
+    else
+      return m_data[m_out_pos++];
   }
 
-  void Buffer::UnpackUint32String(string& s) {
+  void Buffer::UnpackUint32String(string& s)
+  {
     unsigned int l;
     (*this) >> l;
     Unpack(s, l);
   }
 
-  void Buffer::UnpackUint16StringNull(string& s) {
+  void Buffer::UnpackUint16StringNull(string& s)
+  {
     unsigned short sh;
     (*this) >> sh;
-    if (sh > 0) {
+    if (sh > 0)
+    {
       Unpack(s, sh-1);
       (*this).advance(1);
     }
   }
 
-  void Buffer::UnpackUint16TranslatedNull(string& s) {
-    UnpackUint16StringNull( s );
-    ServerToClient(s);
-  }
-
-  void Buffer::UnpackByteString(string& s) {
+  void Buffer::UnpackByteString(string& s)
+  {
     unsigned char c;
     (*this) >> c;
     Unpack(s, c);
   }
 
-  void Buffer::Unpack(string& s, unsigned int size) {
-    if (m_out_pos >= m_data.size()) return;
+  void Buffer::Unpack(string& s, unsigned int size)
+  {
+    if (m_out_pos >= m_data.size())
+      return;
 
-    if (m_out_pos+size > m_data.size()) size = m_data.size()-m_out_pos;
+    if (m_out_pos+size > m_data.size())
+      size = m_data.size()-m_out_pos;
 
     iterator i = m_data.begin()+m_out_pos;
     iterator end = m_data.begin()+m_out_pos+size;
 
-    while (i != end) {
+    while (i != end)
+    {
       s += *i;
       ++i;
     }
@@ -174,21 +189,30 @@ namespace ICQ2000
   {
     unsigned int autosize = size() - m.position;
 
-    if (m.size == 2) {
-      if (m.endianness == BIG) {
+    if (m.size == 2)
+    {
+      if (m.endianness == BIG)
+      {
 	m_data[ m.position - 2 ] = ((autosize >> 8) & 0xff);
 	m_data[ m.position - 1 ] = ((autosize >> 0) & 0xff);
-      } else {
+      }
+      else
+      {
 	m_data[ m.position - 2 ] = ((autosize >> 0) & 0xff);
 	m_data[ m.position - 1 ] = ((autosize >> 8) & 0xff);
       }
-    } else if (m.size == 4) {
-      if (m.endianness == BIG) {
+    }
+    else if (m.size == 4)
+    {
+      if (m.endianness == BIG)
+      {
 	m_data[ m.position - 4 ] = ((autosize >> 24) & 0xff);
 	m_data[ m.position - 3 ] = ((autosize >> 16) & 0xff);
 	m_data[ m.position - 2 ] = ((autosize >> 8) & 0xff);
 	m_data[ m.position - 1 ] = ((autosize >> 0) & 0xff);
-      } else {
+      }
+      else
+      {
 	m_data[ m.position - 4 ] = ((autosize >> 0) & 0xff);
 	m_data[ m.position - 3 ] = ((autosize >> 8) & 0xff);
 	m_data[ m.position - 2 ] = ((autosize >> 16) & 0xff);
@@ -199,29 +223,38 @@ namespace ICQ2000
 
   // -- Input stream methods --
 
-  Buffer& Buffer::operator<<(unsigned char l) {
+  Buffer& Buffer::operator<<(unsigned char l)
+  {
     m_data.push_back(l);
     return (*this);
   }
 
-  Buffer& Buffer::operator<<(unsigned short l) {
-    if (m_endn == BIG) {
+  Buffer& Buffer::operator<<(unsigned short l)
+  {
+    if (m_endn == BIG)
+    {
       m_data.push_back((l>>8) & 0xFF);
       m_data.push_back(l & 0xFF);
-    } else {
+    }
+    else
+    {
       m_data.push_back(l & 0xFF);
       m_data.push_back((l>>8) & 0xFF);
     }    
     return (*this);
   }
 
-  Buffer& Buffer::operator<<(unsigned int l) {
-    if (m_endn == BIG) {
+  Buffer& Buffer::operator<<(unsigned int l)
+  {
+    if (m_endn == BIG)
+    {
       m_data.push_back((l >> 24) & 0xFF);
       m_data.push_back((l >> 16) & 0xFF);
       m_data.push_back((l >> 8) & 0xFF);
       m_data.push_back(l & 0xFF);
-    } else {
+    }
+    else
+    {
       m_data.push_back(l & 0xFF);
       m_data.push_back((l >> 8) & 0xFF);
       m_data.push_back((l >> 16) & 0xFF);
@@ -231,7 +264,8 @@ namespace ICQ2000
   }
 
   // strings stored as length (2 bytes), string m_data, _not_ null-terminated
-  Buffer& Buffer::operator<<(const string& s) {
+  Buffer& Buffer::operator<<(const string& s)
+  {
     (*this) << (unsigned short)s.size();
     Pack(s);
     return (*this);
@@ -239,14 +273,17 @@ namespace ICQ2000
 
   // -- Output stream methods --
 
-  Buffer& Buffer::operator>>(unsigned char& l) {
+  Buffer& Buffer::operator>>(unsigned char& l)
+  {
     if (m_out_pos + 1 > m_data.size()) l = 0;
     else l = m_data[m_out_pos++];
     return (*this);
   }
 
-  Buffer& Buffer::operator>>(unsigned short& l) {
-    if (m_out_pos + 2 > m_data.size()) {
+  Buffer& Buffer::operator>>(unsigned short& l)
+  {
+    if (m_out_pos + 2 > m_data.size())
+    {
       l = 0;
       m_out_pos += 2;
     } else {
@@ -261,17 +298,24 @@ namespace ICQ2000
     return (*this);
   }
 
-  Buffer& Buffer::operator>>(unsigned int& l) {
-    if (m_out_pos + 4 > m_data.size()) {
+  Buffer& Buffer::operator>>(unsigned int& l)
+  {
+    if (m_out_pos + 4 > m_data.size())
+    {
       l = 0;
       m_out_pos += 4;
-    } else {
-      if (m_endn == BIG) {
+    }
+    else
+    {
+      if (m_endn == BIG)
+      {
 	l = ((unsigned int)m_data[m_out_pos++] << 24)
 	+ ((unsigned int)m_data[m_out_pos++] << 16)
 	+ ((unsigned int)m_data[m_out_pos++] << 8)
 	+ ((unsigned int)m_data[m_out_pos++]);
-      } else {
+      }
+      else
+      {
 	l = ((unsigned int)m_data[m_out_pos++])
 	+ ((unsigned int)m_data[m_out_pos++] << 8)
 	+ ((unsigned int)m_data[m_out_pos++] << 16)
@@ -282,11 +326,15 @@ namespace ICQ2000
   }
 
   // strings stored as length (2 bytes), string data, _not_ null-terminated
-  Buffer& Buffer::operator>>(string& s) {
-    if (m_out_pos + 2 > m_data.size()) {
+  Buffer& Buffer::operator>>(string& s)
+  {
+    if (m_out_pos + 2 > m_data.size())
+    {
       s = ""; // clear() method doesn't seem to exist!
       m_out_pos += 2;
-    } else {
+    }
+    else
+    {
       unsigned short sz;
       (*this) >> sz;
       Unpack(s, sz);
@@ -294,7 +342,8 @@ namespace ICQ2000
     return (*this);
   }
 
-  void Buffer::setEndianness(endian e) {
+  void Buffer::setEndianness(endian e)
+  {
     m_endn = e;
   }
 
@@ -308,21 +357,30 @@ namespace ICQ2000
     m_endn = LITTLE;
   }
 
-  void Buffer::dump(ostream& out) {
+  void Buffer::dump(ostream& out)
+  {
     char d[] = "123456789abcdef0";
     out << std::hex << std::setfill('0');
     unsigned int m = ((m_data.size()+15)/16)*16;
-    for (unsigned int a = 0; a < m; a++) {
+
+    for (unsigned int a = 0; a < m; a++)
+    {
       if (a % 16 == 0) out << std::setw(4) << a << "  ";
-      if (a < m_data.size()) {
+
+      if (a < m_data.size())
+      {
 	out << std::setw(2) << (int)m_data[a] << " ";
 	d[a%16] = isprint(m_data[a]) ? (m_data[a] < 0x80 ? m_data[a] : '.') : '.';
 	// restrict output to a definitely non UTF-8 character set
-      } else {
+      }
+      else
+      {
 	out << "   ";
 	d[a%16] = ' ';
       }
-      if (a % 16 == 15) out << " " << d << endl;
+
+      if (a % 16 == 15)
+	out << " " << d << endl;
     }
   }
 
@@ -332,26 +390,4 @@ namespace ICQ2000
     return out;
   }
 
-  void Buffer::setTranslator(Translator *translator){
-    m_translator=translator;
-  } 
-  void Buffer::ServerToClient(string& szString){
-    m_translator->ServerToClient(szString);
-  }
-  void Buffer::ClientToServer(string& szString){
-    m_translator->ClientToServer(szString);
-  }
-  string Buffer::ServerToClientCC(const string& szString){
-    return m_translator->ServerToClientCC(szString);
-  }
-  string Buffer::ClientToServerCC(const string& szString){
-    return m_translator->ClientToServerCC(szString);
-  }
-  void Buffer::ServerToClient(char &_cChar){
-    m_translator->ServerToClient(_cChar);
-  }
-  void Buffer::ClientToServer(char &_cChar){
-    m_translator->ClientToServer(_cChar);
-  }
-  
 }

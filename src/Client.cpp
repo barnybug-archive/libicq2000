@@ -53,10 +53,10 @@ namespace ICQ2000
     : m_self( new Contact(0) ),
       m_message_handler( new MessageHandler(m_self, &m_contact_tree) ),
       m_serverSocket( new TCPSocket() ), m_listenServer( new TCPServer() ),
-      m_smtp( new SMTPClient( m_self, "localhost", 25, &m_translator ) ),
+      m_smtp( new SMTPClient( m_self, "localhost", 25 ) ),
       m_dccache( new DCCache() ), m_reqidcache( new RequestIDCache() ),
       m_cookiecache( new ICBMCookieCache() ),
-      m_recv( new Buffer( &m_translator ) )
+      m_recv( new Buffer() )
   {
     Init();
   }
@@ -73,10 +73,10 @@ namespace ICQ2000
     : m_self( new Contact(uin) ), m_password(password),
       m_message_handler( new MessageHandler( m_self, &m_contact_tree ) ),
       m_serverSocket( new TCPSocket() ), m_listenServer( new TCPServer() ),
-      m_smtp( new SMTPClient( m_self, "localhost", 25, &m_translator ) ),
+      m_smtp( new SMTPClient( m_self, "localhost", 25 ) ),
       m_dccache( new DCCache() ), m_reqidcache( new RequestIDCache() ),
       m_cookiecache( new ICBMCookieCache() ),
-      m_recv( new Buffer( &m_translator ) )
+      m_recv( new Buffer() )
   {
     Init();
   }
@@ -821,13 +821,13 @@ namespace ICQ2000
 
   void Client::FLAPwrapSNACandSend(const OutSNAC& snac)
   {
-    Buffer b(&m_translator);
+    Buffer b;
     FLAPwrapSNAC(b, snac);
     Send(b);
   }
   
   void Client::SendAuthReq() {
-    Buffer b(&m_translator);
+    Buffer b;
     Buffer::marker mk = FLAPHeader(b, 0x01, NextSeqNum());
 
     b << (unsigned int)0x00000001;
@@ -851,7 +851,7 @@ namespace ICQ2000
 
   void Client::SendNewUINReq()
   {
-    Buffer b(&m_translator);
+    Buffer b;
     Buffer::marker mk;
 
     mk = FLAPHeader(b, 0x01, NextSeqNum());
@@ -864,7 +864,7 @@ namespace ICQ2000
   }
     
   void Client::SendCookie() {
-    Buffer b(&m_translator);
+    Buffer b;
     Buffer::marker mk = FLAPHeader(b,0x01,NextSeqNum());
 
     b << (unsigned int)0x00000001;
@@ -907,7 +907,7 @@ namespace ICQ2000
   }
 
   void Client::SendLogin() {
-    Buffer b(&m_translator);
+    Buffer b;
 
     // startup listening server at this point, so we
     // know the listening port and ip
@@ -957,7 +957,7 @@ namespace ICQ2000
 
   void Client::SendRequestSBL()
   {
-    Buffer b(&m_translator);
+    Buffer b;
 
     FLAPwrapSNAC( b, SBLRequestRightsSNAC() );
     FLAPwrapSNAC( b, SBLRequestListSNAC() );
@@ -1054,7 +1054,7 @@ namespace ICQ2000
        * onto the separate parse code that way
        * multiple FLAPs in one packet are split up
        */
-      Buffer sb(&m_translator);
+      Buffer sb;
       m_recv->chopOffBuffer( sb, data_len+6 );
 
       {
@@ -1538,7 +1538,7 @@ namespace ICQ2000
 
       TCPSocket *sock = m_listenServer->Accept();
       DirectClient *dc = new DirectClient(m_self, sock, m_message_handler, &m_contact_tree,
-					  m_ext_ip, m_listenServer->getPort(), &m_translator);
+					  m_ext_ip, m_listenServer->getPort() );
       (*m_dccache)[ sock->getSocketHandle() ] = dc;
       dc->logger.connect( this, &Client::dc_log_cb );
       dc->messageack.connect( this, &Client::dc_messageack_cb );
@@ -1693,7 +1693,7 @@ namespace ICQ2000
       if ( c->getLanIP() == 0 ) return NULL;
       SignalLog(LogEvent::INFO, "Establishing direct connection");
       dc = new DirectClient(m_self, c, m_message_handler,
-			    m_ext_ip, (m_in_dc ? m_listenServer->getPort() : 0), &m_translator);
+			    m_ext_ip, (m_in_dc ? m_listenServer->getPort() : 0) );
       dc->logger.connect( this, &Client::dc_log_cb) ;
       dc->messageack.connect( this, &Client::dc_messageack_cb) ;
       dc->connected.connect( this, &Client::dc_connected_cb ) ;
@@ -1857,7 +1857,7 @@ namespace ICQ2000
   
   void Client::PingServer()
   {
-    Buffer b(&m_translator);
+    Buffer b;
     Buffer::marker mk = FLAPHeader(b,0x05,NextSeqNum());
     FLAPFooter(b,mk);
     Send(b);
@@ -1865,7 +1865,7 @@ namespace ICQ2000
 
   void Client::uploadSelfDetails()
   {
-    Buffer b(&m_translator);
+    Buffer b;
     
     FLAPwrapSNAC( b, SrvUpdateMainHomeInfo(m_self->getUIN(), m_self->getMainHomeInfo()) );
     FLAPwrapSNAC( b, SrvUpdateWorkInfo(m_self->getUIN(), m_self->getWorkInfo()) );
@@ -1888,7 +1888,7 @@ namespace ICQ2000
 
   void Client::uploadServerBasedContact(const ContactRef& c)
   {
-    Buffer b(&m_translator);
+    Buffer b;
     FLAPwrapSNAC( b, SBLBeginEditSNAC() );
     
     // TODO ContactTree!
@@ -1903,7 +1903,7 @@ namespace ICQ2000
   
   void Client::uploadServerBasedContactList()
   {
-    Buffer b(&m_translator);
+    Buffer b;
 
     FLAPwrapSNAC( b, SBLBeginEditSNAC() );
 
@@ -1926,7 +1926,7 @@ namespace ICQ2000
 
   void Client::removeServerBasedContactList()
   {
-    Buffer b(&m_translator);
+    Buffer b;
 
     FLAPwrapSNAC( b, SBLBeginEditSNAC() );
 
@@ -1979,7 +1979,7 @@ namespace ICQ2000
        *   - send the Add to Invisible list (or better named Set in this case)
        */
 
-      Buffer b(&m_translator);
+      Buffer b;
 
       if (!m_self->isInvisible() && inv) {
 	// visible -> invisible
@@ -2271,7 +2271,7 @@ namespace ICQ2000
    * @see ContactListEvent
    */
   void Client::fetchSimpleContactInfo(ContactRef c) {
-    Buffer b(&m_translator);
+    Buffer b;
 
     if ( !c->isICQContact() ) return;
 
@@ -2343,27 +2343,27 @@ namespace ICQ2000
     unsigned short min_age, max_age;
 
     switch(age) {
-	case range_18_22:
+	case RANGE_18_22:
 	    min_age = 18;
 	    max_age = 22;
 	    break;
-	case range_23_29:
+	case RANGE_23_29:
 	    min_age = 23;
 	    max_age = 29;
 	    break;
-	case range_30_39:
+	case RANGE_30_39:
 	    min_age = 30;
 	    max_age = 39;
 	    break;
-	case range_40_49:
+	case RANGE_40_49:
 	    min_age = 40;
 	    max_age = 49;
 	    break;
-	case range_50_59:
+	case RANGE_50_59:
 	    min_age = 50;
 	    max_age = 59;
 	    break;
-	case range_60_above:
+	case RANGE_60_ABOVE:
 	    min_age = 60;
 	    max_age = 0x2710;
 	    break;

@@ -157,7 +157,6 @@ namespace ICQ2000 {
       b.PackByteString( Contact::UINtoString(nst->getDestination()) );
       
       string text = nst->getMessage();
-      b.ClientToServer(text);
 
       /*
        * Message Block TLV

@@ -31,9 +31,9 @@ using std::endl;
 namespace ICQ2000 {
 
   SMTPClient::SMTPClient(ContactRef self, const string& server_name,
-			 unsigned short server_port, Translator* translator)
-    : m_state(NOT_CONNECTED), m_recv(translator), m_server_name(server_name),
-      m_server_port(server_port), m_timeout(30), m_translator(translator),
+			 unsigned short server_port)
+    : m_state(NOT_CONNECTED), m_recv(), m_server_name(server_name),
+      m_server_port(server_port), m_timeout(30),
       m_self_contact(self)
   {
     m_socket = new TCPSocket();
@@ -208,14 +208,14 @@ namespace ICQ2000 {
   }
 
   void SMTPClient::SayHello() {
-    Buffer b(m_translator);
+    Buffer b;
     b.Pack("HELO localhost\n");
     Send(b);
     m_state = WAITING_FOR_HELO_ACK;
   }
 
   void SMTPClient::SayFrom() {
-    Buffer b(m_translator);
+    Buffer b;
 
     MessageEvent *ev = *m_msgqueue.begin();
     b.Pack("MAIL FROM:");
@@ -235,7 +235,7 @@ namespace ICQ2000 {
   }
 
   void SMTPClient::SayTo() {
-    Buffer b(m_translator);
+    Buffer b;
 
     MessageEvent *ev = *m_msgqueue.begin();
     b.Pack("RCPT TO:");
@@ -255,7 +255,7 @@ namespace ICQ2000 {
   }
 
   void SMTPClient::SayData() {
-    Buffer b(m_translator);
+    Buffer b;
 
     b.Pack("DATA\n");
     Send(b);
@@ -264,7 +264,7 @@ namespace ICQ2000 {
   }
 
   void SMTPClient::SendText() {
-    Buffer b(m_translator);
+    Buffer b;
 
     MessageEvent *ev = *m_msgqueue.begin();
 
@@ -291,7 +291,7 @@ namespace ICQ2000 {
   }
 
   void SMTPClient::SayQuit() {
-    Buffer b(m_translator);
+    Buffer b;
     b.Pack("QUIT\n");
     Send(b);
 

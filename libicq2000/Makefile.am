@@ -13,7 +13,7 @@
 headersincludedir = $(pkgincludedir)/libicq2000
 
 headersinclude_HEADERS = \
- Client.h       ContactTree.h  sigslot.h            userinfohelpers.h \
+ Client.h       ContactTree.h  sigslot.h \
  constants.h    events.h       time_extra.h         version.h \
  Contact.h      exceptions.h   Translator.h \
  ContactList.h  ref_ptr.h      userinfoconstants.h

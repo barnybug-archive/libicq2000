@@ -466,7 +466,6 @@ namespace ICQ2000 {
     b >> m_flag2;
 
     b.Unpack(m_message, length-4);
-    b.ServerToClient(m_message);
   }
 
   AdvMsgDataTLV::AdvMsgDataTLV() : m_icqsubtype(NULL) { }
