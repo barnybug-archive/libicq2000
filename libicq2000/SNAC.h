@@ -31,6 +31,7 @@
 #include <libicq2000/SNAC-UIN.h>
 #include <libicq2000/SNAC-MSG.h>
 #include <libicq2000/SNAC-SRV.h>
+#include <libicq2000/SNAC-BOS.h>
 #include <libicq2000/SNAC-SBL.h>
 
 namespace ICQ2000 {

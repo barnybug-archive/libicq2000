@@ -1724,7 +1724,7 @@ namespace ICQ2000 {
 	// visible -> invisible
 	d = FLAPHeader(b,0x02);
 	AddVisibleSNAC avs;
-	b << sss;
+	b << avs;
 	FLAPFooter(b,d);
       }
 	
@@ -1734,11 +1734,11 @@ namespace ICQ2000 {
       FLAPFooter(b,d);
       
       
-      if (m_visible && !inv) {
+      if (m_invisible && !inv) {
 	// invisible -> visible
 	d = FLAPHeader(b,0x02);
 	AddInvisibleSNAC ais;
-	b << sss;
+	b << ais;
 	FLAPFooter(b,d);
       }
       
