@@ -213,7 +213,7 @@ namespace ICQ2000 {
       Status old_st = (*curr).getStatus();
       if ( old_st != STATUS_OFFLINE ) {
 	(*curr).setStatus(STATUS_OFFLINE);
-	(*curr).setInvisible(true);
+	(*curr).setInvisible(false);
 	StatusChangeEvent ev(&(*curr), (*curr).getStatus(), old_st);
 	contactlist.emit(&ev);
       }
