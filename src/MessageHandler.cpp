@@ -169,7 +169,7 @@ namespace ICQ2000 {
   {
     ICQMessageEvent *aev = dynamic_cast<ICQMessageEvent*>(ev);
     if (aev == NULL) return;
-    
+
     aev->setAwayMessage( icq->getAwayMessage() );
     aev->setFinished(true);
 
@@ -209,6 +209,11 @@ namespace ICQ2000 {
 	ostr << "Unknown accept-status in ACK: " << icq->getStatus() << endl;
 	SignalLog( LogEvent::WARN, ostr.str() );
       }
+    }
+
+    if (aev->getType() == MessageEvent::AwayMessage) {
+      // count any ack to an away message request as always delivered
+      aev->setDelivered(true);
     }
     
     messageack.emit(ev);
