@@ -88,7 +88,6 @@ namespace ICQ2000 {
 		 UIN_AWAITING_UIN_REPLY
     } m_state;
 
-    unsigned int m_uin;
     Contact m_self;
     string m_password;
 
@@ -241,30 +240,10 @@ namespace ICQ2000 {
     Client(const unsigned int uin, const string& password);
     ~Client();
    
-    /**
-     *  Set your uin.
-     *  Use to set what the uin you would like to log in as, before connecting.
-     * @param uin your UIN
-     */
-    void setUIN(unsigned int uin) { m_uin = uin; }
-
-    /**
-     *  Get your uin.
-     * @return your UIN
-     */
-    unsigned int getUIN() const { return m_uin; }
-
-    /** 
-     *  Set the password to use at login.
-     * @param password your password
-     */
-    void setPassword(const string& password) { m_password = password; }
-
-    /**
-     *  Get the password you set for login
-     * @return your password
-     */
-    string getPassword() const { return m_password; }
+    void setUIN(unsigned int uin);
+    unsigned int getUIN() const;
+    void setPassword(const string& password);
+    string getPassword() const;
 
     Contact* getSelfContact();
 

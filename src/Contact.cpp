@@ -33,7 +33,7 @@ using std::istringstream;
 namespace ICQ2000 {
 
   Contact::Contact()
-    : m_status(STATUS_OFFLINE), m_invisible(false), m_seqnum(0xffff),
+    : m_uin(0), m_status(STATUS_OFFLINE), m_invisible(false), m_seqnum(0xffff),
       m_icqcontact(false), m_mobilecontact(false) {
     Init();
   }
@@ -73,6 +73,8 @@ namespace ICQ2000 {
   }
 
   unsigned int Contact::getUIN() const { return m_uin; }
+
+  void Contact::setUIN(unsigned int uin) { m_uin = uin; }
 
   string Contact::getStringUIN() const { return UINtoString(m_uin); }
 

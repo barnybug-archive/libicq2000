@@ -39,7 +39,7 @@ namespace ICQ2000 {
    *  uin/password are unavailable at time of creation, they can
    *  always be set later.
    */
-  Client::Client() : m_recv(&m_translator){
+  Client::Client() : m_recv(&m_translator) {
     Init();
   }
 
@@ -51,7 +51,7 @@ namespace ICQ2000 {
    *  @param uin the owner's uin
    *  @param password the owner's password
    */
-  Client::Client(const unsigned int uin, const string& password) : m_uin(uin), m_password(password), m_recv(&m_translator), m_self(uin) {
+  Client::Client(const unsigned int uin, const string& password) : m_password(password), m_recv(&m_translator), m_self(uin) {
     Init();
   }
 
@@ -917,7 +917,7 @@ namespace ICQ2000 {
 
     b << (unsigned int)0x00000001;
 
-    b << ScreenNameTLV(Contact::UINtoString(m_uin))
+    b << ScreenNameTLV(m_self.getStringUIN())
       << PasswordTLV(m_password)
       << ClientProfileTLV("ICQ Inc. - Product of ICQ (TM).2000b.4.63.1.3279.85")
       << ClientTypeTLV(266)
@@ -1026,7 +1026,7 @@ namespace ICQ2000 {
 
     FLAPwrapSNAC( b, ClientReadySNAC() );
 
-    FLAPwrapSNAC( b, SrvRequestOfflineSNAC(m_uin) );
+    FLAPwrapSNAC( b, SrvRequestOfflineSNAC(m_self.getUIN()) );
 
     SignalLog(LogEvent::INFO, "Sending Contact List, Status, Client Ready and Offline Messages Request");
     Send(b);
@@ -1037,13 +1037,13 @@ namespace ICQ2000 {
 
   void Client::SendOfflineMessagesRequest() {
     SignalLog(LogEvent::INFO, "Sending Offline Messages Request");
-    FLAPwrapSNACandSend( SrvRequestOfflineSNAC(m_uin) );
+    FLAPwrapSNACandSend( SrvRequestOfflineSNAC(m_self.getUIN()) );
   }
 
 
   void Client::SendOfflineMessagesACK() {
     SignalLog(LogEvent::INFO, "Sending Offline Messages ACK");
-    FLAPwrapSNACandSend( SrvAckOfflineSNAC(m_uin) );
+    FLAPwrapSNACandSend( SrvAckOfflineSNAC(m_self.getUIN()) );
   }
 
   void Client::SendAdvancedACK(MessageSNAC *snac) {
@@ -1518,7 +1518,7 @@ namespace ICQ2000 {
        */
 
       TCPSocket *sock = m_listenServer.Accept();
-      DirectClient *dc = new DirectClient(sock, &m_contact_list, m_uin, m_ext_ip, m_listenServer.getPort(), &m_translator);
+      DirectClient *dc = new DirectClient(sock, &m_contact_list, m_self.getUIN(), m_ext_ip, m_listenServer.getPort(), &m_translator);
       m_dccache[ sock->getSocketHandle() ] = dc;
       dc->logger.connect( slot(this, &Client::dc_log_cb) );
       dc->messaged.connect( slot(this, &Client::dc_messaged_cb) );
@@ -1611,7 +1611,7 @@ namespace ICQ2000 {
   void Client::HandleUserInfoSNAC(UserInfoSNAC *snac) {
     // this should only be personal info
     const UserInfoBlock &ub = snac->getUserInfo();
-    if (ub.getUIN() == m_uin) {
+    if (ub.getUIN() == m_self.getUIN()) {
       // currently only interested in our external IP
       // - we might be behind NAT
       if (ub.getExtIP() != 0) m_ext_ip = ub.getExtIP();
@@ -1670,7 +1670,7 @@ namespace ICQ2000 {
       if ( c->getExtIP() != c->getLanIP() && m_ext_ip != c->getExtIP() ) return NULL;
       if ( c->getLanIP() == 0 ) return NULL;
       SignalLog(LogEvent::INFO, "Establishing direct connection");
-      dc = new DirectClient(c, m_uin, m_ext_ip, (m_in_dc ? m_listenServer.getPort() : 0), &m_translator);
+      dc = new DirectClient(c, m_self.getUIN(), m_ext_ip, (m_in_dc ? m_listenServer.getPort() : 0), &m_translator);
       dc->logger.connect( slot(this, &Client::dc_log_cb) );
       dc->messaged.connect( slot(this, &Client::dc_messaged_cb) );
       dc->messageack.connect( slot(this, &Client::dc_messageack_cb) );
@@ -1759,7 +1759,7 @@ namespace ICQ2000 {
        *
        */
       SMSMessageEvent *sv = static_cast<SMSMessageEvent*>(ev);
-      SrvSendSNAC ssnac(sv->getMessage(), c->getMobileNo(), m_uin, "", sv->getRcpt());
+      SrvSendSNAC ssnac(sv->getMessage(), c->getMobileNo(), m_self.getUIN(), "", sv->getRcpt());
 
       unsigned int reqid = NextRequestID();
       m_reqidcache.insert( reqid, new SMSEventCacheValue( sv ) );
@@ -1820,7 +1820,7 @@ namespace ICQ2000 {
     } else if (ev->getType() == MessageEvent::URL) {
 
       URLMessageEvent *uv = static_cast<URLMessageEvent*>(ev);
-      ist = new URLICQSubType(uv->getMessage(), uv->getURL(), m_uin, c->getUIN());
+      ist = new URLICQSubType(uv->getMessage(), uv->getURL(), m_self.getUIN(), c->getUIN());
 
     } else if (ev->getType() == MessageEvent::AwayMessage) {
 
@@ -1829,15 +1829,15 @@ namespace ICQ2000 {
     } else if (ev->getType() == MessageEvent::AuthReq) {
 
       AuthReqEvent *uv = static_cast<AuthReqEvent*>(ev);
-      ist = new AuthReqICQSubType(uv->getMessage(), m_uin, c->getUIN());
+      ist = new AuthReqICQSubType(uv->getMessage(), m_self.getUIN(), c->getUIN());
 
     } else if (ev->getType() == MessageEvent::AuthAck) {
 
       AuthAckEvent *uv = static_cast<AuthAckEvent*>(ev);
       if(uv->isGranted())
-        ist = new AuthAccICQSubType(m_uin, c->getUIN());
+        ist = new AuthAccICQSubType(m_self.getUIN(), c->getUIN());
       else
-        ist = new AuthRejICQSubType(uv->getMessage(), m_uin, c->getUIN());
+        ist = new AuthRejICQSubType(uv->getMessage(), m_self.getUIN(), c->getUIN());
 
     }
     return ist;
@@ -1855,10 +1855,10 @@ namespace ICQ2000 {
   {
         Buffer b(&m_translator);
         
-        FLAPwrapSNAC( b, SrvUpdateMainHomeInfo(m_uin, m_self.getMainHomeInfo()) );
-        FLAPwrapSNAC( b, SrvUpdateWorkInfo(m_uin, m_self.getWorkInfo()) );
-        FLAPwrapSNAC( b, SrvUpdateHomepageInfo(m_uin, m_self.getHomepageInfo()) );
-        FLAPwrapSNAC( b, SrvUpdateAboutInfo(m_uin, m_self.getAboutInfo()) );
+        FLAPwrapSNAC( b, SrvUpdateMainHomeInfo(m_self.getUIN(), m_self.getMainHomeInfo()) );
+        FLAPwrapSNAC( b, SrvUpdateWorkInfo(m_self.getUIN(), m_self.getWorkInfo()) );
+        FLAPwrapSNAC( b, SrvUpdateHomepageInfo(m_self.getUIN(), m_self.getHomepageInfo()) );
+        FLAPwrapSNAC( b, SrvUpdateAboutInfo(m_self.getUIN(), m_self.getAboutInfo()) );
 
         Send(b);
   }
@@ -2077,7 +2077,7 @@ namespace ICQ2000 {
     if ( !c->isICQContact() ) return;
 
     SignalLog(LogEvent::INFO, "Sending request Simple Userinfo Request");
-    FLAPwrapSNACandSend( SrvRequestSimpleUserInfo( m_uin, c->getUIN() ) );
+    FLAPwrapSNACandSend( SrvRequestSimpleUserInfo( m_self.getUIN(), c->getUIN() ) );
   }
 
   /**
@@ -2095,7 +2095,7 @@ namespace ICQ2000 {
 
     unsigned int reqid = NextRequestID();
     m_reqidcache.insert( reqid, new UserInfoCacheValue(c) );
-    SrvRequestDetailUserInfo ssnac( m_uin, c->getUIN() );
+    SrvRequestDetailUserInfo ssnac( m_self.getUIN(), c->getUIN() );
     ssnac.setRequestID( reqid );
     FLAPwrapSNACandSend( ssnac );
   }
@@ -2119,7 +2119,7 @@ namespace ICQ2000 {
     unsigned int reqid = NextRequestID();
     m_reqidcache.insert( reqid, new SearchCacheValue( ev ) );
 
-    SrvRequestShortWP ssnac( m_uin, nickname, firstname, lastname );
+    SrvRequestShortWP ssnac( m_self.getUIN(), nickname, firstname, lastname );
     ssnac.setRequestID( reqid );
 
     SignalLog(LogEvent::INFO, "Sending short whitepage search");
@@ -2142,7 +2142,7 @@ namespace ICQ2000 {
     unsigned int reqid = NextRequestID();
     m_reqidcache.insert( reqid, new SearchCacheValue( ev ) );
 
-    SrvRequestFullWP ssnac( m_uin, nickname, firstname, lastname, email,
+    SrvRequestFullWP ssnac( m_self.getUIN(), nickname, firstname, lastname, email,
 			    min_age, max_age, (unsigned char)sex, language, city, state,
 			    country, company_name, department, position,
 			    only_online);
@@ -2161,7 +2161,7 @@ namespace ICQ2000 {
     unsigned int reqid = NextRequestID();
     m_reqidcache.insert( reqid, new SearchCacheValue( ev ) );
 
-    SrvRequestSimpleUserInfo ssnac( m_uin, uin );
+    SrvRequestSimpleUserInfo ssnac( m_self.getUIN(), uin );
     ssnac.setRequestID( reqid );
 
     SignalLog(LogEvent::INFO, "Sending simple user info request");
@@ -2270,6 +2270,43 @@ namespace ICQ2000 {
     return m_translator.usingDefaultMap();
   }
 
+  /**
+   *  Get your uin.
+   * @return your UIN
+   */
+  unsigned int Client::getUIN() const 
+  {
+    return m_self.getUIN();
+  }
+
+    /**
+     *  Set your uin.
+     *  Use to set what the uin you would like to log in as, before connecting.
+     * @param uin your UIN
+     */
+  void Client::setUIN(unsigned int uin)
+  {
+    m_self.setUIN(uin);
+  }
+
+  /** 
+   *  Set the password to use at login.
+   * @param password your password
+   */
+  void Client::setPassword(const string& password) 
+  {
+    m_password = password;
+  }
+
+  /**
+   *  Get the password you set for login
+   * @return your password
+   */
+  string Client::getPassword() const
+  {
+    return m_password;
+  }
+  
   /**
    *  set the hostname of the login server.
    *  You needn't touch this normally, it will default automatically to login.icq.com.

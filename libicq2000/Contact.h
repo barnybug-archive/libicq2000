@@ -143,6 +143,7 @@ namespace ICQ2000 {
     ~Contact();
 
     unsigned int getUIN() const;
+    void setUIN(unsigned int uin);
     string getStringUIN() const;
     string getMobileNo() const;
     string getAlias() const;
