@@ -2047,10 +2047,41 @@ namespace ICQ2000
   {
     Buffer b;
     
-    FLAPwrapSNAC( b, SrvUpdateMainHomeInfo(m_self->getUIN(), m_self->getMainHomeInfo()) );
-    FLAPwrapSNAC( b, SrvUpdateWorkInfo(m_self->getUIN(), m_self->getWorkInfo()) );
-    FLAPwrapSNAC( b, SrvUpdateHomepageInfo(m_self->getUIN(), m_self->getHomepageInfo()) );
-    FLAPwrapSNAC( b, SrvUpdateAboutInfo(m_self->getUIN(), m_self->getAboutInfo()) );
+    ICQ2000::Contact::MainHomeInfo& imh = m_self->getMainHomeInfo();
+    ICQ2000::Contact::MainHomeInfo  omh;
+    omh.alias     = m_translator->client_to_server( imh.alias,     ENCODING_CONTACT_LOCALE, m_self );
+    omh.firstname = m_translator->client_to_server( imh.firstname, ENCODING_CONTACT_LOCALE, m_self );
+    omh.lastname  = m_translator->client_to_server( imh.lastname,  ENCODING_CONTACT_LOCALE, m_self );
+    omh.email     = m_translator->client_to_server( imh.email,     ENCODING_CONTACT_LOCALE, m_self );
+    omh.city      = m_translator->client_to_server( imh.city,      ENCODING_CONTACT_LOCALE, m_self );
+    omh.state     = m_translator->client_to_server( imh.state,     ENCODING_CONTACT_LOCALE, m_self );
+    omh.phone     = m_translator->client_to_server( imh.phone,     ENCODING_CONTACT_LOCALE, m_self );
+    omh.fax       = m_translator->client_to_server( imh.fax,       ENCODING_CONTACT_LOCALE, m_self );
+    omh.street    = m_translator->client_to_server( imh.street,    ENCODING_CONTACT_LOCALE, m_self );
+    omh.zip       = m_translator->client_to_server( imh.zip,       ENCODING_CONTACT_LOCALE, m_self );
+    omh.setMobileNo( imh.getMobileNo() );
+    omh.country   = imh.country;
+    omh.timezone  = imh.timezone;
+
+    ICQ2000::Contact::HomepageInfo ohp = m_self->getHomepageInfo();
+    m_translator->client_to_server_inplace( ohp.homepage, ENCODING_CONTACT_LOCALE, m_self );
+    
+    ICQ2000::Contact::WorkInfo& iw = m_self->getWorkInfo();
+    ICQ2000::Contact::WorkInfo  ow;
+    ow.city             = m_translator->client_to_server( iw.city,             ENCODING_CONTACT_LOCALE, m_self );
+    ow.state            = m_translator->client_to_server( iw.state,            ENCODING_CONTACT_LOCALE, m_self );
+    ow.street           = m_translator->client_to_server( iw.street,           ENCODING_CONTACT_LOCALE, m_self );
+    ow.zip              = m_translator->client_to_server( iw.zip,              ENCODING_CONTACT_LOCALE, m_self );
+    ow.company_name     = m_translator->client_to_server( iw.company_name,     ENCODING_CONTACT_LOCALE, m_self );
+    ow.company_dept     = m_translator->client_to_server( iw.company_dept,     ENCODING_CONTACT_LOCALE, m_self );
+    ow.company_position = m_translator->client_to_server( iw.company_position, ENCODING_CONTACT_LOCALE, m_self );
+    ow.company_web      = m_translator->client_to_server( iw.company_web,      ENCODING_CONTACT_LOCALE, m_self );
+    
+    FLAPwrapSNAC( b, SrvUpdateMainHomeInfo(m_self->getUIN(), omh) );
+    FLAPwrapSNAC( b, SrvUpdateWorkInfo(m_self->getUIN(), ow) );
+    FLAPwrapSNAC( b, SrvUpdateHomepageInfo(m_self->getUIN(), ohp) );
+    FLAPwrapSNAC( b, SrvUpdateAboutInfo(m_self->getUIN(),
+					m_translator->client_to_server( m_self->getAboutInfo(), ENCODING_CONTACT_LOCALE, m_self ) ) );
     
     Send(b);
   }
