@@ -793,6 +793,9 @@ namespace ICQ2000 {
   void Client::ICBMCookieCache_expired_cb(MessageEvent *ev) {
     SignalLog(LogEvent::WARN, "Message timeout without receiving ACK, sending offline");
     SendViaServerNormal(ev);
+    /* downgrade Contact's capabilities, so we don't
+       attempt to send it as advanced again           */
+    ev->getContact()->setAcceptAdvMsgs(false);
   }
 
   void Client::reqidcache_expired_cb(RequestIDCacheValue* v) 
