@@ -27,7 +27,7 @@
 Buffer::Buffer(Translator *translator) : m_data(), m_endn(BIG), m_out_pos(0), 
   m_translator(translator) { }
 
-Buffer::Buffer(const unsigned char* d, int size, Translator *translator) 
+Buffer::Buffer(const unsigned char* d, unsigned int size, Translator *translator) 
   : m_data(d, d+size), m_endn(BIG), m_out_pos(0) { }
 
 Buffer::Buffer(Buffer& b, unsigned int start, unsigned int data_len) 
@@ -53,7 +53,7 @@ void Buffer::chopOffBuffer(Buffer& b, unsigned int sz) {
   m_out_pos = 0;
 }
 
-void Buffer::Pack(const unsigned char *d, int size) {
+void Buffer::Pack(const unsigned char *d, unsigned int size) {
   copy(d, d+size, back_inserter(m_data));
 }
 
@@ -90,8 +90,10 @@ void Buffer::UnpackUint32String(string& s) {
 void Buffer::UnpackUint16StringNull(string& s) {
   unsigned short sh;
   (*this) >> sh;
-  Unpack(s, sh-1);
-  (*this).advance(1);
+  if (sh > 0) {
+    Unpack(s, sh-1);
+    (*this).advance(1);
+  }
 }
 
 void Buffer::UnpackUint16TranslatedNull(string& s) {
@@ -105,7 +107,7 @@ void Buffer::UnpackByteString(string& s) {
   Unpack(s, c);
 }
 
-void Buffer::Unpack(string& s, int size) {
+void Buffer::Unpack(string& s, unsigned int size) {
   if (m_out_pos >= m_data.size()) return;
 
   if (m_out_pos+size > m_data.size()) size = m_data.size()-m_out_pos;
@@ -121,7 +123,7 @@ void Buffer::Unpack(string& s, int size) {
   m_out_pos += size;
 }
 
-void Buffer::Unpack(unsigned char *const d, int size) {
+void Buffer::Unpack(unsigned char *const d, unsigned int size) {
   if (m_out_pos+size > m_data.size()) size = m_data.size()-m_out_pos;
   copy(m_data.begin()+m_out_pos, m_data.begin()+m_out_pos+size, d);
   m_out_pos += size;

@@ -58,7 +58,7 @@ class Buffer {
 
  public:
   Buffer(Translator *translator);
-  Buffer(const unsigned char *d, int size, Translator *translator); 
+  Buffer(const unsigned char *d, unsigned int size, Translator *translator); 
   // construct from an array
   Buffer(Buffer& b, unsigned int start, unsigned int data_len); // construct by copying from another Buffer
 
@@ -100,14 +100,14 @@ class Buffer {
   Buffer& operator>>(signed int& l) { return (*this) >> (unsigned int&)l; }
   Buffer& operator>>(string&);
 
-  void Pack(const unsigned char *d, int size);
+  void Pack(const unsigned char *d, unsigned int size);
   void Pack(const string& s);
   void PackUint16StringNull(const string& s);
   void PackUint16TranslatedNull(const string& s);
   void PackByteString(const string& s);
 
-  void Unpack(string& s, int size);
-  void Unpack(unsigned char *const d, int size);
+  void Unpack(string& s, unsigned int size);
+  void Unpack(unsigned char *const d, unsigned int size);
   unsigned char UnpackChar();
   void UnpackUint32String(string& s);
   void UnpackUint16StringNull(string& s);
