@@ -52,10 +52,10 @@ namespace ICQ2000 {
     // iterators
     class iterator {
      private:
-      map<unsigned int,ContactRef>::iterator iter;
+      std::map<unsigned int,ContactRef>::iterator iter;
   
      public:
-      iterator(map<unsigned int,ContactRef>::iterator i)
+      iterator(std::map<unsigned int,ContactRef>::iterator i)
       : iter(i) { }
   
       iterator& operator++() { ++iter; return *this; }
@@ -67,10 +67,10 @@ namespace ICQ2000 {
 
     class const_iterator {
      private:
-      map<unsigned int,ContactRef>::const_iterator iter;
+      std::map<unsigned int,ContactRef>::const_iterator iter;
   
      public:
-      const_iterator(map<unsigned int,ContactRef>::const_iterator i)
+      const_iterator(std::map<unsigned int,ContactRef>::const_iterator i)
       : iter(i) { }
   
       const_iterator& operator++() { ++iter; return *this; }

@@ -620,9 +620,9 @@ namespace ICQ2000 {
     ContactTree::iterator curr = tree.begin();
     while (curr != tree.end()) {
       ContactTree::Group::iterator gcurr = (*curr).begin();
-      cout << "Group: " << (*curr).get_label() << endl;
+      std::cout << "Group: " << (*curr).get_label() << endl;
       while (gcurr != (*curr).end()) {
-	cout << "  Contact: " << (*gcurr)->getAlias() << endl;
+	std::cout << "  Contact: " << (*gcurr)->getAlias() << endl;
 	++gcurr;
       }
       ++curr;
