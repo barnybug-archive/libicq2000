@@ -53,7 +53,8 @@
 SimpleClient::SimpleClient(unsigned int uin, const string& pass)
   : icqclient(uin, pass) {
 
-  /* set up the libicq2000 callbacks: the SigC callback system is used
+  /*
+   * set up the libicq2000 callbacks: the SigC callback system is used
    * extensively in libicq2000, and when an event happens we can
    * register callbacks for methods to be called, which in turn will
    * be called when the relevant event happens
@@ -72,11 +73,16 @@ void SimpleClient::run() {
   icqclient.setStatus(STATUS_ONLINE);
 
   while (1) {
+    /*
+     * the input object (a Select object, written to wrap a nicer C++
+     * wrapper round the C select(2) system call), handles the lists
+     * of file descriptors we need to select on for read or write
+     * (multiplex).
+     */
     bool b = input.run(5000);
-    if (b) {
-      // timeout was hit - poll the server
-      icqclient.Poll();
-    }
+
+    if (b) icqclient.Poll();
+    // timeout was hit - poll the server
   }
   
   // never reached
@@ -102,6 +108,7 @@ void SimpleClient::socket_cb(SocketEvent *ev) {
     cout << "connecting socket " << fd << endl;
 
     // register this socket with our Select object
+    m_sockets[fd] =
     input.connect( slot(this,&SimpleClient::select_socket_cb),
 		   // the slot that the Select object will callback
 		   fd,
@@ -120,6 +127,12 @@ void SimpleClient::socket_cb(SocketEvent *ev) {
     int fd = cev->getSocketHandle();
 
     cout << "disconnecting socket " << fd << endl;
+    if (m_sockets.count(fd) == 0) {
+      cerr << "Problem: file descriptor not connected" << endl;
+    } else {
+      m_sockets[fd].disconnect();
+      m_sockets.erase(fd);
+    }
 
   }
   

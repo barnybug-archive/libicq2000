@@ -26,8 +26,8 @@ Select::Select()
 { }
 
 SigC::Connection Select::connect(const SlotType &s,
-			 int source,
-			 SocketInputCondition condition)
+				 int source,
+				 SocketInputCondition condition)
 {
   // this is all SigC voodoo.. I wouldn't concern yourself with it,
   // unless you're really keen
@@ -43,7 +43,7 @@ SigC::Connection Select::connect(const SlotType &s,
 
   // register disconnection data
   sd->list_.insert_direct(sd->list_.begin(),
-                          new SelectSigCNode());
+                          new SelectSigCNode(this, source));
   return sd;
 }
 
@@ -89,12 +89,44 @@ bool Select::run(unsigned int interval)
   int ret = select(max_fd+1, &rfds, &wfds, &efds, &tv);
   if (ret) {
     /*
-     * Care must be taken here, when iterating through the sets of
-     * file descriptors the Client::socket_cb()'s may signal
-     * Adding/Removing - modifying the sets inplace whilst we are
-     * iterating through them. Use a temporary copy for safety.
-     *
+     * Find the descriptor that is ready and make the callback.
      */
+
+    // read descriptors
+    bool done = false;
+    SocketMap::const_iterator curr = rfdl.begin();
+    while (curr != rfdl.end()) {
+      if ( FD_ISSET( (*curr).first, &rfds ) ) {
+	((*curr).second)->call((*curr).first, Read);
+	done = true;
+	break;
+      }
+      ++curr;
+    }
+
+    if (!done) {
+      curr = wfdl.begin();
+      while (curr != wfdl.end()) {
+	if ( FD_ISSET( (*curr).first, &wfds ) ) {
+	  ((*curr).second)->call((*curr).first, Write);
+	  done = true;
+	  break;
+	}
+	++curr;
+      }
+    }
+    
+    if (!done) {
+      curr = efdl.begin();
+      while (curr != efdl.end()) {
+	if ( FD_ISSET( (*curr).first, &efds ) ) {
+	  ((*curr).second)->call((*curr).first, Exception);
+	  done = true;
+	  break;
+	}
+	++curr;
+      }
+    }
     
   } else {
     // timeout
@@ -102,8 +134,30 @@ bool Select::run(unsigned int interval)
   }	
 }
 
-SelectSigCNode::SelectSigCNode()
+void Select::_disconnect(int fd)
+{
+  cout << "_disconnect" << endl;
+  // unmap this file descriptor
+  if (rfdl.count(fd) != 0) {
+    rfdl.erase(fd);
+    return;
+  }
+  if (wfdl.count(fd) != 0) {
+    wfdl.erase(fd);
+    return;
+  }
+  if (efdl.count(fd) != 0) {
+    efdl.erase(fd);
+    return;
+  }
+  
+}
+
+SelectSigCNode::SelectSigCNode(Select *parent, int fd)
+  : m_parent(parent), m_fd(fd)
 { }
 
 SelectSigCNode::~SelectSigCNode()
-{ }
+{
+  m_parent->_disconnect( m_fd );
+}

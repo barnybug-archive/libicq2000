@@ -2,6 +2,10 @@
  * Select (Helper) class - handles list of file descriptors to make
  * select calls a little easier and C++ier.
  *
+ * Limitations: Doesn't support more than one of READ/WRITE/EXCEPTION
+ * on a particular descriptor at once (the disconnection code isn't
+ * intelligent enough to)
+ *
  * Copyright (C) 2002 Barnaby Gray <barnaby@beedesign.co.uk>
  *
  * This library is free software; you can redistribute it and/or
@@ -68,11 +72,21 @@ class Select {
    * @return boolean, true if the timeout was hit, false otherwise
    */
   bool run(unsigned int interval = 0);
+
+  /**
+   *  For internal use only.
+   */
+  void _disconnect(int fd);
 };
 
-struct SelectSigCNode : public SigC::SlotNode
+class SelectSigCNode : public SigC::SlotNode
 {
-  SelectSigCNode();
+ private:
+  Select *m_parent;
+  int m_fd;
+
+ public:
+  SelectSigCNode(Select *parent, int fd);
   virtual ~SelectSigCNode();
 };
 
