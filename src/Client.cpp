@@ -1757,6 +1757,7 @@ namespace ICQ2000 {
     UINICQSubType *ist = EventToUINICQSubType(ev);
     ist->setAdvanced(true);
     ist->setStatus( Contact::MapStatusToICQStatus(m_self.getStatus(), m_self.isInvisible()) );
+    ist->setDestination( c->getUIN() );
     
     MsgSendSNAC msnac(ist);
     msnac.setAdvanced(true);
@@ -1775,6 +1776,7 @@ namespace ICQ2000 {
     Contact *c = ev->getContact();
     UINICQSubType *ist = EventToUINICQSubType(ev);
     ist->setAdvanced(false);
+    ist->setDestination( c->getUIN() );
     
     MsgSendSNAC msnac(ist);
     msnac.setAdvanced(false);
