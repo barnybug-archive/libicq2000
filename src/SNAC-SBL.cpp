@@ -72,6 +72,7 @@ namespace ICQ2000 {
                     dataLength -= infoLength;
                     c->setAlias(nickname);
 		    c->setServerSideInfo(group_id, tag_id);
+		    c->setServerBased(true);
                     m_contacts.add(c);
                     break;
                 }
@@ -104,7 +105,8 @@ namespace ICQ2000 {
     : m_buddy_list(), m_group_id(0) { 
     ContactList::const_iterator curr = l.begin();
     while (curr != l.end()) {
-      if ((*curr)->isICQContact()) m_buddy_list.push_back(*curr);
+      if ((*curr)->isICQContact())
+      if (!(*curr)->getServerBased()) m_buddy_list.push_back(*curr);
       ++curr;
     }
   }

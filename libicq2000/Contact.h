@@ -142,6 +142,7 @@ namespace ICQ2000 {
     bool m_invisible;
     bool m_authreq, m_authawait;
     bool m_direct;
+    bool m_server_based;
     unsigned int m_ext_ip, m_lan_ip;
     unsigned short m_ext_port, m_lan_port, m_group_id, m_tag_id;
     Capabilities m_capabilities;
@@ -185,6 +186,7 @@ namespace ICQ2000 {
     bool isInvisible() const;
     bool getAuthReq() const;
     bool getAuthAwait() const;
+    bool getServerBased() const;
 
     unsigned int getExtIP() const;
     unsigned int getLanIP() const;
@@ -207,6 +209,7 @@ namespace ICQ2000 {
     void setEmail(const std::string& em);
     void setAuthReq(bool b);
     void setAuthAwait(bool b);
+    void setServerBased(bool b);
 
     bool getDirect() const;
     void setDirect(bool b);

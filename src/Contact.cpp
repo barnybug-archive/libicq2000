@@ -76,6 +76,8 @@ namespace ICQ2000 {
     m_last_away_msg_check_time = 0;
     m_group_id = 0;
     m_tag_id = 0;
+    m_server_based = false;
+    m_authreq = false;
   }
 
   unsigned int Contact::getUIN() const { return m_uin; }
@@ -166,6 +168,8 @@ namespace ICQ2000 {
 
   bool Contact::getAuthAwait() const { return m_authawait; }
 
+  bool Contact::getServerBased() const { return m_server_based; }
+
   void Contact::setMobileNo(const string& mn) {
     m_main_home_info.setMobileNo(mn);
     userinfo_change_emit();
@@ -241,6 +245,11 @@ namespace ICQ2000 {
 
   void Contact::setAuthAwait(bool b) {
     m_authawait = b;
+    userinfo_change_emit(true);
+  }
+
+  void Contact::setServerBased(bool b) {
+    m_server_based = b;
     userinfo_change_emit(true);
   }
 

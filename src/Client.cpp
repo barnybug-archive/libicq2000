@@ -466,6 +466,7 @@ namespace ICQ2000 {
 	  c->setEmail( snac->getEmail() );
 	  c->setFirstName( snac->getFirstName() );
 	  c->setLastName( snac->getLastName() );
+	  c->setAuthReq(snac->getAuthReq());
 	}
       }
       
@@ -1180,6 +1181,7 @@ namespace ICQ2000 {
 	vector<ModificationAckSBLSNAC::Result> r = static_cast<ModificationAckSBLSNAC*>(snac)->getResults();
 	vector<ModificationAckSBLSNAC::Result>::iterator ir;
 	vector<ServerBasedContactEvent::UploadResult> updresults;
+	vector<ServerBasedContactEvent::UploadResult>::iterator iur;
 	
 	for(ir = r.begin(); ir != r.end(); ++ir)
 	switch( *ir ) {
@@ -1207,6 +1209,20 @@ namespace ICQ2000 {
 	    if ( v->getType() == RequestIDCacheValue::ServerBasedContact ) {
 	      ServerBasedContactCacheValue *sv = static_cast<ServerBasedContactCacheValue*>(v);
 	      ServerBasedContactEvent *ev = sv->getEvent();
+
+	      ContactList &cl = ev->getContactList();
+	      ContactList::iterator ic = cl.begin();
+
+	      iur = updresults.begin();
+
+	      while(iur != updresults.end() && ic != cl.end()) {
+		if(*iur == ServerBasedContactEvent::Success)
+		    (*ic)->setServerBased(ev->getType() == ServerBasedContactEvent::Upload);
+
+		++iur;
+		++ic;
+	      }
+
 	      ev->setUploadResults(updresults);
 	      server_based_contact_list.emit(ev);
 
