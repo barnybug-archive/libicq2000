@@ -19,7 +19,7 @@
  *
  */
 
-#include "SNAC.h"
+#include <libicq2000/SNAC.h>
 
 namespace ICQ2000 {
 
@@ -95,6 +95,13 @@ namespace ICQ2000 {
 	break;
       case SNAC_UIN_Response:
 	snac = new UINResponseSNAC();
+	break;
+      }
+    
+    case SNAC_FAM_SBL:
+      switch(subtype) {
+      case SNAC_SBL_List_From_Server:
+	snac = new SBLListSNAC();
 	break;
       }
       break;

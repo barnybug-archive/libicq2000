@@ -19,7 +19,7 @@
  *
  */
 
-#include "ICBMCookie.h"
+#include <libicq2000/ICBMCookie.h>
 
 #include <stdlib.h>
 

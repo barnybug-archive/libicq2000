@@ -19,10 +19,10 @@
  *
  */
 
-#include "TLV.h"
-#include "UserInfoBlock.h"
+#include <libicq2000/TLV.h>
+#include <libicq2000/UserInfoBlock.h>
 
-#include "Client.h"
+#include <libicq2000/Client.h>
 
 #include "sstream_fix.h"
 
@@ -465,9 +465,9 @@ namespace ICQ2000 {
 	c.setFirstName( snac->getFirstName() );
 	c.setLastName( snac->getLastName() );
 	UserInfoChangeEvent ev(&c);
-	contactlist.emit(&ev);
       }
-      
+    } else if (snac->getType() == SrvResponseSNAC::SearchSimpleUserInfo) {
+      // todo
     } else if (snac->getType() == SrvResponseSNAC::RMainHomeInfo) {
 
       try {
@@ -1135,6 +1135,21 @@ namespace ICQ2000 {
 	break;
       }
       break;
+    case SNAC_FAM_SBL:
+      switch(snac->Subtype()) {
+      case SNAC_SBL_List_From_Server:
+	SignalLog(LogEvent::INFO, "Received server-based list from server\n");
+        SBLListSNAC *sbs = static_cast<SBLListSNAC*>(snac);
+        ContactList l = sbs->getContactList();
+        ContactList::iterator curr = l.begin();
+        while (curr != l.end()) {
+            if ((*curr).isICQContact()) 
+                SignalServerBasedContact(&(*curr));
+            ++curr;
+            }
+	break;
+      }
+      break;
 	
 	
     } // switch(Family)
@@ -1795,6 +1810,11 @@ namespace ICQ2000 {
 
   
 
+  void Client::SignalServerBasedContact(Contact *c) {
+    ServerBasedContactEvent ev(c);
+    contactlist.emit(&ev);
+  }
+
   void Client::SignalUserAdded(Contact *c) {
     UserAddedEvent ev(c);
     contactlist.emit(&ev);
@@ -1889,6 +1909,52 @@ namespace ICQ2000 {
     m_reqidcache.insert( reqid, new UserInfoCacheValue(c) );
     SrvRequestDetailUserInfo ssnac( m_uin, c->getUIN() );
     ssnac.setRequestID( reqid );
+    b << ssnac;
+    FLAPFooter(b,d);
+
+    Send(b);
+  }
+
+  void Client::fetchBasicInfoForUin(const unsigned int uin) {
+    Buffer b(&m_translator);
+    unsigned int d;
+    d = FLAPHeader(b,0x02);
+    SrvRequestSimpleUserInfo ssnac( m_uin, uin );
+    b << ssnac;
+    FLAPFooter(b,d);
+
+    Send(b);
+  }
+
+  void Client::fetchServerBasedContactList() {
+    Buffer b(&m_translator);
+    unsigned int d;
+    d = FLAPHeader(b,0x02);
+    RequestSBLSNAC ssnac;
+    b << ssnac;
+    FLAPFooter(b,d);
+
+    Send(b);
+  }
+
+  void Client::lookupContacts(const string& nickname, const string& firstname, const string& lastname)  {
+    Buffer b(&m_translator);
+    unsigned int d;
+
+    d = FLAPHeader(b,0x02);
+    SrvRequestShortwp ssnac( m_uin, nickname, firstname, lastname );
+    b << ssnac;
+    FLAPFooter(b,d);
+
+    Send(b);
+  }
+
+  void Client::lookupContacts(const string& email)  {
+    Buffer b(&m_translator);
+    unsigned int d;
+
+    d = FLAPHeader(b,0x02);
+    SrvRequestFullwp ssnac( m_uin, email );
     b << ssnac;
     FLAPFooter(b,d);
 

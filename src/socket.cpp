@@ -22,7 +22,7 @@
 #include "sstream_fix.h"
 #include <algorithm>
 
-#include "socket.h"
+#include <libicq2000/socket.h>
 
 using std::ostringstream;
 using std::istringstream;

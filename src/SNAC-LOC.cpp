@@ -19,9 +19,9 @@
  *
  */
 
-#include "SNAC-LOC.h"
+#include <libicq2000/SNAC-LOC.h>
 
-#include "TLV.h"
+#include <libicq2000/TLV.h>
 
 namespace ICQ2000 {
 

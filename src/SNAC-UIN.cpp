@@ -19,7 +19,7 @@
  *
  */
 
-#include "SNAC-UIN.h"
+#include <libicq2000/SNAC-UIN.h>
 
 namespace ICQ2000 {
 

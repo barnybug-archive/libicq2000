@@ -30,7 +30,7 @@
 #include <time.h>
 #include <string>
 
-#include "constants.h"
+#include <libicq2000/constants.h>
 
 using std::string;
 
@@ -197,7 +197,9 @@ namespace ICQ2000 {
       UserInfoChange,
       UserAdded,
       UserRemoved,
-      MessageQueueChanged
+      MessageQueueChanged,
+      SearchResult,
+      ServerBasedContact
     };
     
    protected:
@@ -227,6 +229,27 @@ namespace ICQ2000 {
   class UserInfoChangeEvent : public ContactListEvent {
    public:
     UserInfoChangeEvent(Contact* c);
+    EventType getType() const;
+  };
+
+  /**
+   *  The event signalled when a user-search result is received.
+   */
+  class SearchResultEvent : public ContactListEvent {
+   private:
+    bool m_is_last;
+   public:
+    SearchResultEvent(Contact* c, bool is_last);
+    EventType getType() const;
+    bool isLast() const { return m_is_last; }
+  };
+
+  /**
+   *  The event signalled when a contact entry from the server-based contact list is received.
+   */
+  class ServerBasedContactEvent : public ContactListEvent {
+   public:
+    ServerBasedContactEvent(Contact *c);
     EventType getType() const;
   };
 

@@ -25,10 +25,10 @@
 #include <string>
 #include <list>
 
-#include "SNAC-base.h"
-#include "Contact.h"
-#include "ContactList.h"
-#include "UserInfoBlock.h"
+#include <libicq2000/SNAC-base.h>
+#include <libicq2000/Contact.h>
+#include <libicq2000/ContactList.h>
+#include <libicq2000/UserInfoBlock.h>
 
 namespace ICQ2000 {
 

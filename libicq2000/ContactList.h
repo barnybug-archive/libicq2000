@@ -24,31 +24,22 @@
 
 #include <list>
 #include <string>
+#include <map>
 
-#include <config.h>
-
-#ifdef HAVE_EXT_HASH_MAP
-# include <ext/hash_map>
-#elif HAVE_HASH_MAP
-# include <hash_map>
-#else
-# error "hash_map not defined"
-#endif
-
-#include "Contact.h"
+#include <libicq2000/Contact.h>
 
 using std::list;
 using std::string;
-using std::hash_map;
+using std::map;
 
 namespace ICQ2000 {
 
   class _ContactList_iterator {
   private:
-    hash_map<unsigned int,Contact>::iterator iter;
+    map<unsigned int,Contact>::iterator iter;
   
   public:
-    _ContactList_iterator(hash_map<unsigned int,Contact>::iterator i)
+    _ContactList_iterator(map<unsigned int,Contact>::iterator i)
       : iter(i) { }
   
     _ContactList_iterator& operator++() { ++iter; return *this; }
@@ -60,10 +51,10 @@ namespace ICQ2000 {
 
   class _ContactList_const_iterator {
   private:
-    hash_map<unsigned int,Contact>::const_iterator iter;
+    map<unsigned int,Contact>::const_iterator iter;
   
   public:
-    _ContactList_const_iterator(hash_map<unsigned int,Contact>::const_iterator i)
+    _ContactList_const_iterator(map<unsigned int,Contact>::const_iterator i)
       : iter(i) { }
   
     _ContactList_const_iterator& operator++() { ++iter; return *this; }
@@ -75,7 +66,7 @@ namespace ICQ2000 {
 
   class ContactList {
   private:
-    hash_map<unsigned int,Contact> m_cmap;
+    map<unsigned int,Contact> m_cmap;
 
     /* Mobile contacts are implemented as
      * Contact's and should still have UINs.

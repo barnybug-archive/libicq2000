@@ -19,7 +19,7 @@
  *
  */
 
-#include "ContactList.h"
+#include <libicq2000/ContactList.h>
 
 namespace ICQ2000 {
 

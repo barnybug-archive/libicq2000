@@ -22,10 +22,10 @@
 #ifndef SNAC_MSG_H
 #define SNAC_MSG_H
 
-#include "SNAC-base.h"
-#include "ICQ.h"
-#include "UserInfoBlock.h"
-#include "ICBMCookie.h"
+#include <libicq2000/SNAC-base.h>
+#include <libicq2000/ICQ.h>
+#include <libicq2000/UserInfoBlock.h>
+#include <libicq2000/ICBMCookie.h>
 
 namespace ICQ2000 {
 

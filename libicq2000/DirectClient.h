@@ -29,15 +29,15 @@
 
 #include <stdlib.h>
 
-#include "socket.h"
-#include "buffer.h"
-#include "events.h"
-#include "exceptions.h"
-#include "ICQ.h"
-#include "Contact.h"
-#include "ContactList.h"
-#include "SeqNumCache.h"
-#include "Translator.h"
+#include <libicq2000/socket.h>
+#include <libicq2000/buffer.h>
+#include <libicq2000/events.h>
+#include <libicq2000/exceptions.h>
+#include <libicq2000/ICQ.h>
+#include <libicq2000/Contact.h>
+#include <libicq2000/ContactList.h>
+#include <libicq2000/SeqNumCache.h>
+#include <libicq2000/Translator.h>
 
 using std::string;
 using std::list;

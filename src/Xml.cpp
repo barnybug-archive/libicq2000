@@ -19,7 +19,7 @@
  *
  */
 
-#include "Xml.h"
+#include <libicq2000/Xml.h>
 
 // ---------- XmlNode ---------------------------
 

@@ -19,10 +19,10 @@
  *
  */
 
-#include "SNAC-GEN.h"
+#include <libicq2000/SNAC-GEN.h>
 
-#include "TLV.h"
-#include "buffer.h"
+#include <libicq2000/TLV.h>
+#include <libicq2000/buffer.h>
 
 namespace ICQ2000 {
 

@@ -24,10 +24,10 @@
 
 #include <string>
 #include <time.h>
-#include "SNAC-base.h"
-#include "ICQ.h"
-#include "constants.h"
-#include "Contact.h"
+#include <libicq2000/SNAC-base.h>
+#include <libicq2000/ICQ.h>
+#include <libicq2000/constants.h>
+#include <libicq2000/Contact.h>
 
 namespace ICQ2000 {
 
@@ -35,6 +35,7 @@ namespace ICQ2000 {
   const unsigned short SNAC_SRV_Error = 0x0001;
   const unsigned short SNAC_SRV_Send = 0x0002;
   const unsigned short SNAC_SRV_Response = 0x0003;
+
   /*
    * SRV_Response is very generic - ICQ have hacked all the extra ICQ
    * functionality into this one
@@ -100,6 +101,30 @@ namespace ICQ2000 {
     unsigned short Subtype() const { return SNAC_SRV_Send; }
   };
 
+  class SrvRequestShortwp : public SrvFamilySNAC, public OutSNAC {
+
+   protected:
+    unsigned int m_my_uin;
+    string m_requested_nickname, m_requested_first_name, m_requested_last_name;
+    void OutputBody(Buffer& b) const;
+
+   public:
+    SrvRequestShortwp(unsigned int my_uin, const string& requested_nickname, const string& requested_first_name, const string& requested_last_name);
+    unsigned short Subtype() const { return SNAC_SRV_Send; }
+  };
+
+  class SrvRequestFullwp : public SrvRequestShortwp {
+   private:
+    string m_requested_email;
+
+   protected:
+    void OutputBody(Buffer& b) const;
+
+   public:
+    SrvRequestFullwp(unsigned int my_uin, const string& requested_email);
+    unsigned short Subtype() const { return SNAC_SRV_Send; }
+  };
+
   class SrvRequestDetailUserInfo : public SrvFamilySNAC, public OutSNAC {
    private:
     unsigned int m_my_uin, m_user_uin;
@@ -112,6 +137,22 @@ namespace ICQ2000 {
     unsigned short Subtype() const { return SNAC_SRV_Send; }
   };
 
+  const unsigned short SrvResponse_Error          = 0x0001;
+  const unsigned short SrvResponse_SMS            = 0x0064;
+  const unsigned short SrvResponse_SMS_Done       = 0x0096;
+  const unsigned short SrvResponse_SimpleUI       = 0x0190;
+  const unsigned short SrvResponse_SimpleUI_Done  = 0x019a;
+  const unsigned short SrvResponse_SearchUI       = 0x01a4;
+  const unsigned short SrvResponse_SearchUI_Done  = 0x01ae;
+  const unsigned short SrvResponse_MainHomeInfo   = 0x00c8;
+  const unsigned short SrvResponse_WorkInfo       = 0x00d2;
+  const unsigned short SrvResponse_HomePageInfo   = 0x00dc;
+  const unsigned short SrvResponse_AboutInfo      = 0x00e6;
+  const unsigned short SrvResponse_EmailInfo      = 0x00eb;
+  const unsigned short SrvResponse_InterestInfo   = 0x00f0;
+  const unsigned short SrvResponse_BackgroundInfo = 0x00fa;
+  const unsigned short SrvResponse_Unknown        = 0x010e;
+
   class SrvResponseSNAC : public SrvFamilySNAC, public InSNAC {
    public:
     enum ResponseType {
@@ -120,6 +161,7 @@ namespace ICQ2000 {
       SMS_Error,
       SMS_Response,
       SimpleUserInfo,
+      SearchSimpleUserInfo,
       RMainHomeInfo,
       RHomepageInfo,
       REmailInfo,
@@ -147,6 +189,7 @@ namespace ICQ2000 {
     // SimpleUserInfo fields
     unsigned int m_uin;
     string m_alias, m_first_name, m_last_name, m_email;
+    bool m_last_in_search;
 
     // DetailedUserInfo fields
     MainHomeInfo m_main_home_info;
@@ -165,8 +208,8 @@ namespace ICQ2000 {
     void ParseOfflineMessage(Buffer& b);
     void ParseSMSError(Buffer& b);
     void ParseSMSResponse(Buffer& b);
-    void ParseSimpleUserInfo(Buffer &b);
-    void ParseDetailedUserInfo(Buffer &b, int mode);
+    void ParseSimpleUserInfo(Buffer &b, unsigned short subtype);
+    void ParseDetailedUserInfo(Buffer &b, unsigned short subtype);
     
    public:
     SrvResponseSNAC();
@@ -190,6 +233,7 @@ namespace ICQ2000 {
     string getFirstName() const { return m_first_name; }
     string getLastName() const { return m_last_name; }
     string getEmail() const { return m_email; }
+    bool isLastInSearch() const { return m_last_in_search; }
 
     unsigned short Subtype() const { return SNAC_SRV_Response; }
 

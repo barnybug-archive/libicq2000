@@ -22,8 +22,8 @@
 #ifndef SEQNUMCACHE_H
 #define SEQNUMCACHE_H
 
-#include "Cache.h"
-#include "events.h"
+#include <libicq2000/Cache.h>
+#include <libicq2000/events.h>
 
 #include <sigc++/signal_system.h>
 

@@ -19,12 +19,12 @@
  *
  */
 
-#include "Contact.h"
+#include <libicq2000/Contact.h>
 
 #include "sstream_fix.h"
 #include <time.h>
 
-#include "userinfoconstants.h"
+#include <libicq2000/userinfoconstants.h>
 
 using std::ostringstream;
 using std::istringstream;

@@ -1,6 +1,5 @@
 /*
- * ICBM Cookie
- * Simple 8 byte message cookie
+ * SNACs 
  *
  * Copyright (C) 2001 Barnaby Gray <barnaby@beedesign.co.uk>
  *
@@ -20,32 +19,22 @@
  *
  */
 
-#ifndef ICBMCOOKIE_H
-#define ICBMCOOKIE_H
+#ifndef SNAC_H
+#define SNAC_H
 
-#include "buffer.h"
+#include <libicq2000/buffer.h>
+
+#include <libicq2000/SNAC-base.h>
+#include <libicq2000/SNAC-BUD.h>
+#include <libicq2000/SNAC-LOC.h>
+#include <libicq2000/SNAC-GEN.h>
+#include <libicq2000/SNAC-UIN.h>
+#include <libicq2000/SNAC-MSG.h>
+#include <libicq2000/SNAC-SRV.h>
+#include <libicq2000/SNAC-SBL.h>
 
 namespace ICQ2000 {
-
-  class ICBMCookie {
-   private:
-    unsigned int m_c1, m_c2;
-
-   public:
-    ICBMCookie();
-    
-    void generate();
-
-    void Parse(Buffer& b);
-    void Output(Buffer& b) const;
-
-    bool operator==(const ICBMCookie& c) const;
-    ICBMCookie& operator=(const ICBMCookie& c);
-  };
-
+  InSNAC* ParseSNAC(Buffer& b);
 }
-
-Buffer& operator<<(Buffer& b, const ICQ2000::ICBMCookie& c);
-Buffer& operator>>(Buffer& b, ICQ2000::ICBMCookie& c);
 
 #endif

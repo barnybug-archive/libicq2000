@@ -1,5 +1,5 @@
 /*
- * ICBMCookieCache
+ * DCCache
  *
  * Copyright (C) 2001 Barnaby Gray <barnaby@beedesign.co.uk>
  *
@@ -19,12 +19,10 @@
  *
  */
 
-#ifndef ICBMCOOKIECACHE_H
-#define ICBMCOOKIECACHE_H
+#ifndef DCCACHE_H
+#define DCCACHE_H
 
-#include "Cache.h"
-#include "ICBMCookie.h"
-#include "events.h"
+#include <libicq2000/Cache.h>
 
 #include <sigc++/signal_system.h>
 
@@ -32,41 +30,38 @@ using SigC::Signal1;
 
 namespace ICQ2000 {
 
-  class ICBMCookieCache : public Cache<ICBMCookie, MessageEvent*> {
+  // fd -> DirectClient
+  class DCCache : public Cache<int, DirectClient*> {
    public:
-    ICBMCookieCache() { }
+    DCCache() { }
 
-    void removeItem(const ICBMCookieCache::literator& l) {
+    void removeItem(const DCCache::literator& l) {
       delete ((*l).getValue());
-      Cache<ICBMCookie, MessageEvent*>::removeItem(l);
+      Cache<int, DirectClient*>::removeItem(l);
     }
 
-    void expireItem(const ICBMCookieCache::literator& l) {
+    void expireItem(const DCCache::literator& l) {
       expired.emit( (*l).getValue() );
-      Cache<ICBMCookie, MessageEvent*>::expireItem(l);
-    }
-
-    ICBMCookie generateUnique() const {
-      ICBMCookie c;
-      c.generate();
-      while (exists(c)) c.generate();
-      return c;
+      Cache<int, DirectClient*>::expireItem(l);
     }
 
     void removeContact(Contact *c) {
       literator curr = m_list.begin();
       literator next = curr;
       while ( curr != m_list.end() ) {
+	DirectClient *dc = (*curr).getValue();
 	++next;
-	MessageEvent *ev = (*curr).getValue();
-	if ( ev->getContact() == c ) removeItem(curr);
+	if ( dc->getContact() == c ) {
+	  dc->setContact(NULL); // invalidate contact so the DC doesn't attempt to redeliver
+	  removeItem(curr);
+	}
 	curr = next;
       }
     }
 
-    Signal1<void,MessageEvent*> expired;
-
+    Signal1<void,DirectClient*> expired;
   };
+  
 }
 
 #endif

@@ -22,7 +22,7 @@
 #ifndef SNAC_LOC_H
 #define SNAC_LOC_H
 
-#include "SNAC-base.h"
+#include <libicq2000/SNAC-base.h>
 
 namespace ICQ2000 {
 

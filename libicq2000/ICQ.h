@@ -24,10 +24,10 @@
 
 #include <string>
 
-#include "Xml.h"
-#include "buffer.h"
-#include "exceptions.h"
-#include "constants.h"
+#include <libicq2000/Xml.h>
+#include <libicq2000/buffer.h>
+#include <libicq2000/exceptions.h>
+#include <libicq2000/constants.h>
 
 using std::string;
 

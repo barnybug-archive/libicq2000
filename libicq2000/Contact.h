@@ -26,8 +26,8 @@
 #include <list>
 #include <string>
 
-#include "events.h"
-#include "constants.h"
+#include <libicq2000/events.h>
+#include <libicq2000/constants.h>
 
 using std::list;
 using std::string;

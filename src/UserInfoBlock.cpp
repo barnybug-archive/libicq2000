@@ -19,10 +19,10 @@
  *
  */
 
-#include "UserInfoBlock.h"
+#include <libicq2000/UserInfoBlock.h>
 
-#include "Contact.h"
-#include "TLV.h"
+#include <libicq2000/Contact.h>
+#include <libicq2000/TLV.h>
 
 namespace ICQ2000 {
 

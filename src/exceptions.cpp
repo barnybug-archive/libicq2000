@@ -19,7 +19,7 @@
  *
  */
 
-#include "exceptions.h"
+#include <libicq2000/exceptions.h>
 
 namespace ICQ2000 {
 

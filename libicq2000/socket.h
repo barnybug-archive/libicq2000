@@ -36,7 +36,7 @@
 #include <stdio.h>
 #include <fcntl.h>
 
-#include "buffer.h"
+#include <libicq2000/buffer.h>
 
 using std::string;
 using std::exception;

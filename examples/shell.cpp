@@ -3,9 +3,9 @@
 #include "sstream_fix.h"
 #include <set>
 
-#include "Client.h"
-#include "events.h"
-#include "constants.h"
+#include <libicq2000/Client.h>
+#include <libicq2000/events.h>
+#include <libicq2000/constants.h>
 
 #include <sys/time.h>
 #include <sys/types.h>

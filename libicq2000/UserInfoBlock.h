@@ -24,7 +24,7 @@
 
 #include <string>
 
-#include "buffer.h"
+#include <libicq2000/buffer.h>
 
 namespace ICQ2000 {
  

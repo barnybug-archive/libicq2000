@@ -19,7 +19,7 @@
  *
  */
 
-#include "DirectClient.h"
+#include <libicq2000/DirectClient.h>
 
 #include "sstream_fix.h"
 

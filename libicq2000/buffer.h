@@ -28,7 +28,7 @@
 #include <string>
 #include <iterator>
 
-#include "Translator.h"
+#include <libicq2000/Translator.h>
 
 using std::vector;
 using std::string;

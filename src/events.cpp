@@ -19,9 +19,9 @@
  *
  */
 
-#include "events.h"
+#include <libicq2000/events.h>
 
-#include "Contact.h"
+#include <libicq2000/Contact.h>
 
 namespace ICQ2000 {
 
@@ -233,6 +233,11 @@ namespace ICQ2000 {
   UserAddedEvent::UserAddedEvent(Contact* contact) : ContactListEvent(contact) { }
   ContactListEvent::EventType UserAddedEvent::getType() const { return UserAdded; }
 
+  // ----------------- ServerBasedContact Event -------------------
+
+  ServerBasedContactEvent::ServerBasedContactEvent(Contact* contact) : ContactListEvent(contact) { }
+  ContactListEvent::EventType ServerBasedContactEvent::getType() const { return ServerBasedContact; }
+
   // ----------------- UserRemoved Event -------------------
 
   /**
@@ -253,6 +258,17 @@ namespace ICQ2000 {
   UserInfoChangeEvent::UserInfoChangeEvent(Contact* contact) : ContactListEvent(contact) { }
   ContactListEvent::EventType UserInfoChangeEvent::getType() const { return UserInfoChange; }
 
+  // ----------------- SearchResult Event -------------------
+
+  /**
+   *  Constructor for a SearchResultEvent
+   *
+   * @param contact a contact matching the search criteria
+   * @param is_last a flag indicating whether this result is the last match
+   */
+  SearchResultEvent::SearchResultEvent(Contact* contact, bool is_last) : ContactListEvent(contact), m_is_last(is_last) { }
+  SearchResultEvent::EventType SearchResultEvent::getType() const { return SearchResult; }
+  
   // ----------------- MessageQueueChangedEvent -------------------
 
   /**

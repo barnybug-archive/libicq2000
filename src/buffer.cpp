@@ -19,7 +19,7 @@
  *
  */
 
-#include "buffer.h"
+#include <libicq2000/buffer.h>
 
 #include <algorithm>
 #include <ctype.h>

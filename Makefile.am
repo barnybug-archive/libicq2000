@@ -2,7 +2,7 @@
 ## Process with automake to produce Makefile.in
 ##
 
-SUBDIRS = src examples
+SUBDIRS = src libicq2000 examples
 
 EXTRA_DIST = THANKS NEWS doc
 

@@ -25,35 +25,25 @@
 #include <iostream>
 #include <string>
 
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif
-
-#ifdef HAVE_EXT_HASH_MAP
-# include <ext/hash_map>
-#elif HAVE_HASH_MAP
-# include <hash_map>
-#else
-# error "hash_map not defined"
-#endif
+#include <map>
 
 #include <sigc++/signal_system.h>
 
 #include <time.h>
 
-#include "buffer.h"
-#include "socket.h"
-#include "SNAC.h"
-#include "events.h"
-#include "constants.h"
-#include "Contact.h"
-#include "ContactList.h"
-#include "custom_marshal.h"
-#include "Translator.h"
-#include "RequestIDCache.h"
-#include "ICBMCookieCache.h"
-#include "DirectClient.h"
-#include "DCCache.h"
+#include <libicq2000/buffer.h>
+#include <libicq2000/socket.h>
+#include <libicq2000/SNAC.h>
+#include <libicq2000/events.h>
+#include <libicq2000/constants.h>
+#include <libicq2000/Contact.h>
+#include <libicq2000/ContactList.h>
+#include <libicq2000/custom_marshal.h>
+#include <libicq2000/Translator.h>
+#include <libicq2000/RequestIDCache.h>
+#include <libicq2000/ICBMCookieCache.h>
+#include <libicq2000/DirectClient.h>
+#include <libicq2000/DCCache.h>
 
 using std::string;
 using SigC::Signal1;
@@ -113,7 +103,7 @@ namespace ICQ2000 {
     TCPServer m_listenServer;
 
     DCCache m_dccache;   // this is for established connections
-    hash_map<unsigned int, DirectClient*> m_uinmap;
+    map<unsigned int, DirectClient*> m_uinmap;
 
     time_t m_last_server_ping;
 
@@ -152,6 +142,7 @@ namespace ICQ2000 {
     void SignalUserOnline(BuddyOnlineSNAC *snac);
     void SignalUserOffline(BuddyOfflineSNAC *snac);
     void SignalUserAdded(Contact *c);
+    void SignalServerBasedContact(Contact *c);
     void SignalUserRemoved(Contact *c);
     void SignalAddSocket(int fd, SocketEvent::Mode m);
     void SignalRemoveSocket(int fd);
@@ -382,6 +373,21 @@ namespace ICQ2000 {
     Contact* getContact(const unsigned int uin);
     void fetchSimpleContactInfo(Contact* c);
     void fetchDetailContactInfo(Contact* c);
+    void fetchBasicInfoForUin(const unsigned int uin);
+    void fetchServerBasedContactList();
+    void lookupContacts(const string& nickname, const string& firstname, const string& lastname);
+    void lookupContacts(const string& email);
+
+    /*
+     *  Poll must be called regularly (at least every 60 seconds)
+     *  but I recommended 5 seconds, so timeouts work with good
+     *  granularity.
+     *  It is not related to the socket callback - the client using
+     *  this library must select() on the sockets it gets signalled
+     *  and call socket_cb when select returns a status flag on one
+     *  of the sockets. ickle simply uses the gtk-- built in signal handlers
+     *  to do all this.
+     */
 
     void setLoginServerHost(const string& host);
     string getLoginServerHost() const;

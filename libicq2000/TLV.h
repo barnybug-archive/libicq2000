@@ -23,28 +23,19 @@
 #define TLV_H
 
 #include <string>
-
-#include <config.h>
-
-#ifdef HAVE_EXT_HASH_MAP
-# include <ext/hash_map>
-#elif HAVE_HASH_MAP
-# include <hash_map>
-#else
-# error "hash_map not defined"
-#endif
+#include <map>
 
 #include <string.h>
 #include <stdlib.h>
 
-#include "Xml.h"
-#include "exceptions.h"
-#include "buffer.h"
-#include "constants.h"
-#include "ICQ.h"
+#include <libicq2000/Xml.h>
+#include <libicq2000/exceptions.h>
+#include <libicq2000/buffer.h>
+#include <libicq2000/constants.h>
+#include <libicq2000/ICQ.h>
 
 using std::string;
-using std::hash_map;
+using std::map;
 
 namespace ICQ2000 {
  
@@ -563,7 +554,7 @@ namespace ICQ2000 {
 
   class TLVList {
    private:
-    hash_map<unsigned short,InTLV*> tlvmap;
+    map<unsigned short,InTLV*> tlvmap;
    public:
     TLVList();
     ~TLVList();

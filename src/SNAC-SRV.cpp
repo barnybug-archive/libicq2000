@@ -19,13 +19,13 @@
  *
  */
 
-#include "SNAC-SRV.h"
+#include <libicq2000/SNAC-SRV.h>
 
 #include <memory>
 #include "sstream_fix.h"
 
-#include "TLV.h"
-#include "Xml.h"
+#include <libicq2000/TLV.h>
+#include <libicq2000/Xml.h>
 
 using std::auto_ptr;
 using std::istringstream;
@@ -156,6 +156,78 @@ namespace ICQ2000 {
     
   }
 
+  SrvRequestShortwp::SrvRequestShortwp(unsigned int my_uin, const string& requested_nickname, const string& requested_first_name, const string& requested_last_name)
+    : m_my_uin(my_uin), m_requested_nickname(requested_nickname), m_requested_first_name(requested_first_name), m_requested_last_name(requested_last_name) { }
+
+  void SrvRequestShortwp::OutputBody(Buffer& b) const {
+    b << (unsigned short)0x0001
+      << (unsigned short)(0x000c+9+m_requested_first_name.size()
+                                 +m_requested_last_name.size()
+                                 +m_requested_nickname.size());
+
+    b.setEndianness(Buffer::LITTLE);
+    b << (unsigned short)(0x000a+9+m_requested_first_name.size()
+                                 +m_requested_last_name.size()
+                                 +m_requested_nickname.size()); // 9=3*(2+1) size and null terminators
+    b << m_my_uin;
+
+    b << (unsigned short)2000	/* type 9808 */
+      << (unsigned short)0x0000
+      << (unsigned short)0x0515;	/* subtype wp-short-request */
+    b.PackUint16StringNull(m_requested_first_name);
+    b.PackUint16StringNull(m_requested_last_name);
+    b.PackUint16StringNull(m_requested_nickname);
+   
+  }
+
+  SrvRequestFullwp::SrvRequestFullwp(unsigned int my_uin, const string& requested_email)
+    : SrvRequestShortwp(my_uin, "", "", ""), m_requested_email(requested_email) { }
+
+  void SrvRequestFullwp::OutputBody(Buffer& b) const {
+    b << (unsigned short)0x0001
+      << (unsigned short)(0x000c+3+m_requested_first_name.size()
+                                +3+m_requested_last_name.size()
+                                +3+m_requested_nickname.size()
+                                +3+m_requested_email.size()
+                                +45 );
+
+    b.setEndianness(Buffer::LITTLE);
+    b << (unsigned short)(0x000a+3+m_requested_first_name.size()
+                                +3+m_requested_last_name.size()
+                                +3+m_requested_nickname.size()
+                                +3+m_requested_email.size()
+                                +45 );
+    b << m_my_uin;
+
+    b << (unsigned short)2000	/* type 9808 */
+      << (unsigned short)0x0000
+      << (unsigned short)0x0533;	/* subtype wp-full-request */
+    b.PackUint16StringNull(m_requested_first_name);
+    b.PackUint16StringNull(m_requested_last_name);
+    b.PackUint16StringNull(m_requested_nickname);
+    b.PackUint16StringNull(m_requested_email);
+    b << (unsigned short)0x0000;		// minimum age
+    b << (unsigned short)0x0000;		// maximum age
+    b << (unsigned char)0x00;			// sex
+    b << (unsigned char)0x00;			// language
+    b.PackUint16StringNull("");			// city
+    b.PackUint16StringNull("");			// state
+    b << (unsigned short)0x0000;		// country
+    b.PackUint16StringNull("");			// company name
+    b.PackUint16StringNull("");			// department
+    b.PackUint16StringNull("");			// position
+    b << (unsigned char)0x00;			// occupation
+    b << (unsigned short)0x0000;		// past info category
+    b.PackUint16StringNull("");			//           description
+    b << (unsigned short)0x0000;		// interests category
+    b.PackUint16StringNull("");			//           description
+    b << (unsigned short)0x0000;		// affiliation/organization
+    b.PackUint16StringNull("");			//           		    description
+    b << (unsigned short)0x0000;		// homepage category
+    b.PackUint16StringNull("");			//           description
+    b << (unsigned char)0x00;			// only-online flag
+}
+
   SrvRequestDetailUserInfo::SrvRequestDetailUserInfo(unsigned int my_uin, unsigned int user_uin)
     : m_my_uin(my_uin), m_user_uin(user_uin) { }
 
@@ -255,40 +327,37 @@ namespace ICQ2000 {
 
   void SrvResponseSNAC::ParseICQResponse(Buffer& b) {
 
-    /* Subtype
-     * 1 = an error
-     * 100 = sms response - problem 
-     * 150 = sms response - ok ??
-     * 410 = simple user info
-     */
     unsigned short subtype;
     b >> subtype;
 
-    if (subtype == 1)
-      ParseSMSError(b);
-    else if (subtype == 100 || subtype == 150)
+    switch(subtype) {
+    case SrvResponse_Error:
+      ParseSMSError(b); // fix
+      break;
+    case SrvResponse_SMS:
+    case SrvResponse_SMS_Done:
       ParseSMSResponse(b);
-    else if (subtype == 410)	// simple user info 0x9a010a
-      ParseSimpleUserInfo(b);
-    else if (subtype == 0x00c8)
-      ParseDetailedUserInfo(b,0);
-    else if (subtype == 0x00dc)
-      ParseDetailedUserInfo(b,1);
-    else if (subtype == 0x00eb)
-      ParseDetailedUserInfo(b,2);
-    else if (subtype == 0x010e)
-      ParseDetailedUserInfo(b,3);
-    else if (subtype == 0x00d2)
-      ParseDetailedUserInfo(b,4);
-    else if (subtype == 0x00e6)
-      ParseDetailedUserInfo(b,5);
-    else if (subtype == 0x00f0)
-      ParseDetailedUserInfo(b,6);
-    else if (subtype == 0x00fa)
-      ParseDetailedUserInfo(b,7);
-
-    else
+      break;
+    case SrvResponse_SimpleUI:
+    case SrvResponse_SimpleUI_Done:
+    case SrvResponse_SearchUI:
+    case SrvResponse_SearchUI_Done:
+      ParseSimpleUserInfo(b, subtype);
+      break;
+    case SrvResponse_MainHomeInfo:
+    case SrvResponse_WorkInfo:
+    case SrvResponse_HomePageInfo:
+    case SrvResponse_AboutInfo:
+    case SrvResponse_EmailInfo:
+    case SrvResponse_InterestInfo:
+    case SrvResponse_BackgroundInfo:
+    case SrvResponse_Unknown:
+      ParseDetailedUserInfo(b, subtype);
+      break;
+    default:
       throw ParseException("Unknown ICQ subtype for Server response SNAC");
+    }
+    
 
   }
 
@@ -383,11 +452,12 @@ namespace ICQ2000 {
 
   }
 
-  void SrvResponseSNAC::ParseDetailedUserInfo(Buffer& b, int mode) {
+  void SrvResponseSNAC::ParseDetailedUserInfo(Buffer& b, unsigned short subtype) {
     unsigned char wb;
-    switch(mode) {
-    case 0: {
-      b >> wb; // status code ?
+    b >> wb; // status code ?
+
+    switch(subtype) {
+    case SrvResponse_MainHomeInfo: {
       string s;
       b.UnpackUint16StringNull(m_main_home_info.alias);     // alias
       b.ServerToClient(m_main_home_info.alias);
@@ -423,8 +493,7 @@ namespace ICQ2000 {
       m_type = RMainHomeInfo;
       break;
     }
-    case 1: {
-      b >> wb; // status code ?
+    case SrvResponse_HomePageInfo: {
       b >> m_homepage_info.age;
       unsigned char unk;
       b >> unk;
@@ -442,9 +511,7 @@ namespace ICQ2000 {
       m_type = RHomepageInfo;
       break;
     }
-    case 2: {
-      b >> wb; // status code ?
-      
+    case SrvResponse_EmailInfo: {
       unsigned char n;
       b >> n;
       while(n > 0) {
@@ -457,15 +524,7 @@ namespace ICQ2000 {
       m_type = REmailInfo;
       break;
     }
-    case 3: {
-      b >> wb; // 0a status code
-      unsigned short ws;
-      b >> ws;
-      m_type = RUnknown;
-      break;
-    }
-    case 4: {
-      b >> wb; // 0a status code
+    case SrvResponse_WorkInfo: {
       b.UnpackUint16StringNull(m_work_info.city);
       b.ServerToClient(m_work_info.city);
       b.UnpackUint16StringNull(m_work_info.state);
@@ -491,14 +550,12 @@ namespace ICQ2000 {
       m_type = RWorkInfo;
       break;
     }
-    case 5:
-      b >> wb; // 0a status code
+    case SrvResponse_AboutInfo:
       b.UnpackUint16StringNull(m_about);
       b.ServerToClient(m_about);
       m_type = RAboutInfo;
       break;
-    case 6: {
-      b >> wb; // 0a status code
+    case SrvResponse_InterestInfo: {
       unsigned char n;
       b >> n;
       while (n > 0) {
@@ -513,8 +570,7 @@ namespace ICQ2000 {
       m_type = RInterestInfo;
       break;
     }
-    case 7: {
-      b >> wb; // 0a status code
+    case SrvResponse_BackgroundInfo: {
       unsigned char n;
       b >> n;
       while (n > 0) {
@@ -530,13 +586,23 @@ namespace ICQ2000 {
       m_type = RBackgroundInfo;
       break;
     }
+    case SrvResponse_Unknown: {
+      unsigned short ws;
+      b >> ws;
+      m_type = RUnknown;
+      break;
+    }
     default:
       throw ParseException("Unknown mode for Detailed user info parsing");
     } 
   }
 
-  void SrvResponseSNAC::ParseSimpleUserInfo(Buffer& b) {
-    m_type = SimpleUserInfo;
+  void SrvResponseSNAC::ParseSimpleUserInfo(Buffer& b, unsigned short subtype) {
+    if (subtype == SrvResponse_SimpleUI || subtype == SrvResponse_SimpleUI_Done) m_type = SimpleUserInfo;
+    if (subtype == SrvResponse_SearchUI || subtype == SrvResponse_SearchUI_Done) m_type = SearchSimpleUserInfo;
+    
+    if (subtype == SrvResponse_SimpleUI_Done || subtype == SrvResponse_SearchUI_Done) m_last_in_search = true;
+    else m_last_in_search = false;
 
     unsigned char wb;
     b >> wb; // status code ?

@@ -22,7 +22,7 @@
 #ifndef SNAC_BASE_H
 #define SNAC_BASE_H
 
-#include "buffer.h"
+#include <libicq2000/buffer.h>
 
 namespace ICQ2000 {
  
@@ -43,6 +43,8 @@ namespace ICQ2000 {
   const unsigned short SNAC_FAM_TRT = 0x000c;
   const unsigned short SNAC_FAM_CNV = 0x000d;
   const unsigned short SNAC_FAM_CHT = 0x000e;
+
+  const unsigned short SNAC_FAM_SBL = 0x0013; // Server-based lists
 
   const unsigned short SNAC_FAM_SRV = 0x0015; // Server messages
   const unsigned short SNAC_FAM_UIN = 0x0017; // UIN registration

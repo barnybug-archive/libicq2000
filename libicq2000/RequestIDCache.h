@@ -22,7 +22,7 @@
 #ifndef REQUESTIDCACHE_H
 #define REQUESTIDCACHE_H
 
-#include "Cache.h"
+#include <libicq2000/Cache.h>
 
 namespace ICQ2000 {
 

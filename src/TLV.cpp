@@ -19,7 +19,7 @@
  *
  */
 
-#include "TLV.h"
+#include <libicq2000/TLV.h>
 
 namespace ICQ2000 {
 
@@ -520,8 +520,8 @@ namespace ICQ2000 {
 
   TLVList::TLVList() { }
   TLVList::~TLVList() {
-    // delete all elements from hash_map
-    hash_map<unsigned short,InTLV*>::iterator i = tlvmap.begin();
+    // delete all elements from map
+    map<unsigned short,InTLV*>::iterator i = tlvmap.begin();
     while (i != tlvmap.end()) {
       InTLV *t = (*i).second;
       delete t;
