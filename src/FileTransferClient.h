@@ -40,10 +40,9 @@
 #include "SocketClient.h"
 #include "MessageHandler.h"
 
-
-
-
 namespace ICQ2000 {
+
+#define MAX_FileChunk 4096
 
   class UINICQSubType;
   
@@ -55,8 +54,6 @@ namespace ICQ2000 {
 		 WAITING_FOR_INIT2,
 		 CONNECTED };
 
-     static const unsigned short MAX_FileChunk = 4096;
-    
     TCPServer m_listenserver;
     FileTransferEvent* m_ev;
 

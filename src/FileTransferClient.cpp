@@ -695,9 +695,9 @@ namespace ICQ2000
 
     while ( length>0 )
     {
-        b.Unpack( m_const_buf, min(length, MAX_FileChunk) );
-        m_fout.write((const char*)m_const_buf, std::min(length, MAX_FileChunk) );
-        length = max(0, length-MAX_FileChunk);
+        b.Unpack( m_const_buf, min(length, (unsigned short)MAX_FileChunk) );
+        m_fout.write((const char*)m_const_buf, std::min(length, (unsigned short)MAX_FileChunk) );
+        length = max(0, length-(unsigned short)MAX_FileChunk);
     }
     m_fout.flush();  //prob. isn't needed.. but I feel safer ;)
 
