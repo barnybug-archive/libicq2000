@@ -62,16 +62,18 @@ string IPtoString(unsigned int ip) {
 }
 
 TCPSocket::TCPSocket()
-  : socketDescriptor(-1), blocking(false), m_state(NOT_CONNECTED)
+  : m_socketDescriptor(-1), m_socketDescriptor_valid(false),
+    blocking(false), m_state(NOT_CONNECTED)
 {
   memset(&remoteAddr, 0, sizeof(remoteAddr));
 }
 
 TCPSocket::TCPSocket( int fd, struct sockaddr_in addr )
-  : socketDescriptor(fd), remoteAddr(addr), blocking(false), m_state(CONNECTED)
+  : m_socketDescriptor(fd), m_socketDescriptor_valid(true), remoteAddr(addr),
+    blocking(false), m_state(CONNECTED)
 {
   socklen_t localLen = sizeof(struct sockaddr_in);
-  getsockname( socketDescriptor, (struct sockaddr *)&localAddr, &localLen );
+  getsockname( m_socketDescriptor, (struct sockaddr *)&localAddr, &localLen );
 
   fcntlSetup();
 }
@@ -83,25 +85,27 @@ TCPSocket::~TCPSocket() {
 void TCPSocket::Connect() {
   if (m_state != NOT_CONNECTED) throw SocketException("Already connected");
 
-  socketDescriptor = socket(AF_INET,SOCK_STREAM,0);
-  if (socketDescriptor == -1) throw SocketException("Couldn't create socket");
+  m_socketDescriptor = socket(AF_INET,SOCK_STREAM,0);
+  if (m_socketDescriptor == -1) throw SocketException("Couldn't create socket");
+  m_socketDescriptor_valid = true;
   remoteAddr.sin_family = AF_INET;
 
   fcntlSetup();
 
-  if (connect(socketDescriptor,(struct sockaddr *)&remoteAddr,sizeof(struct sockaddr)) == -1) {
+  if (connect(m_socketDescriptor,(struct sockaddr *)&remoteAddr,sizeof(struct sockaddr)) == -1) {
     if (errno == EINPROGRESS) {
       m_state = NONBLOCKING_CONNECT;
       return; // non-blocking connect
     }
 
-    close(socketDescriptor);
-    socketDescriptor = -1;
+    // m_state will still be NOT_CONNECTED
+    close(m_socketDescriptor);
+    m_socketDescriptor_valid = false;
     throw SocketException("Couldn't connect socket");
   }
 
   socklen_t localLen = sizeof(struct sockaddr_in);
-  getsockname( socketDescriptor, (struct sockaddr *)&localAddr, &localLen );
+  getsockname( m_socketDescriptor, (struct sockaddr *)&localAddr, &localLen );
 
   m_state = CONNECTED;
 }
@@ -111,29 +115,31 @@ void TCPSocket::FinishNonBlockingConnect() {
   // after the socket is writeable
   int so_error;
   socklen_t optlen = sizeof(so_error);
-  if (getsockopt(socketDescriptor, SOL_SOCKET, SO_ERROR, &so_error, &optlen) == -1 || so_error != 0) {
-    close(socketDescriptor);
-    socketDescriptor = -1;
+  if (getsockopt(m_socketDescriptor, SOL_SOCKET, SO_ERROR, &so_error, &optlen) == -1 || so_error != 0) {
     m_state = NOT_CONNECTED;
+    close(m_socketDescriptor);
+    m_socketDescriptor_valid = false;
     throw SocketException("Couldn't connect socket");
   }
 
   // success
   socklen_t localLen = sizeof(struct sockaddr_in);
-  getsockname( socketDescriptor, (struct sockaddr *)&localAddr, &localLen );
+  getsockname( m_socketDescriptor, (struct sockaddr *)&localAddr, &localLen );
 
   m_state = CONNECTED;
 }
 
 void TCPSocket::Disconnect() {
-  if (socketDescriptor != -1) {
-    close(socketDescriptor);
-    socketDescriptor = -1;
+
+  if (m_socketDescriptor_valid) {
+    close(m_socketDescriptor);
+    m_socketDescriptor_valid = false;
   }
+
   m_state = NOT_CONNECTED;
 }
 
-int TCPSocket::getSocketHandle() { return socketDescriptor; }
+int TCPSocket::getSocketHandle() { return m_socketDescriptor; }
 
 TCPSocket::State TCPSocket::getState() const { return m_state; }
 
@@ -151,10 +157,10 @@ bool TCPSocket::isBlocking() const {
 }
 
 void TCPSocket::fcntlSetup() {
-  if (socketDescriptor != -1) {
-    int f = fcntl(socketDescriptor, F_GETFL);
-    if (blocking) fcntl(socketDescriptor, F_SETFL, f & ~O_NONBLOCK);
-    else fcntl(socketDescriptor, F_SETFL, f | O_NONBLOCK);
+  if (m_socketDescriptor_valid) {
+    int f = fcntl(m_socketDescriptor, F_GETFL);
+    if (blocking) fcntl(m_socketDescriptor, F_SETFL, f & ~O_NONBLOCK);
+    else fcntl(m_socketDescriptor, F_SETFL, f | O_NONBLOCK);
   }
 }
 
@@ -169,11 +175,11 @@ void TCPSocket::Send(Buffer& b) {
 
   while (sent < b.size())
   {
-    ret = send(socketDescriptor, data + sent, b.size() - sent, 0);
+    ret = send(m_socketDescriptor, data + sent, b.size() - sent, 0);
     if (ret == -1) {
-      close(socketDescriptor);
-      socketDescriptor = -1;
       m_state = NOT_CONNECTED;
+      close(m_socketDescriptor);
+      m_socketDescriptor_valid = false;
       throw SocketException("Sending on socket");
     }
     
@@ -186,13 +192,13 @@ bool TCPSocket::Recv(Buffer& b) {
 
   unsigned char buffer[max_receive_size];
 
-  int ret = recv(socketDescriptor, buffer, max_receive_size, 0);
+  int ret = recv(m_socketDescriptor, buffer, max_receive_size, 0);
   if (ret <= 0) {
     if (ret == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) return false;
 
     m_state = NOT_CONNECTED;
-    close(socketDescriptor);
-    socketDescriptor = -1;
+    close(m_socketDescriptor);
+    m_socketDescriptor_valid = false;
 
     if (ret == 0) throw SocketException( "Other end closed connection" );
     else throw SocketException( strerror(errno) );
@@ -251,20 +257,20 @@ unsigned long TCPSocket::gethostname(const char *hostname) {
 /**
  * TCPServer class
  */
-TCPServer::TCPServer() {
-  socketDescriptor = -1;
-}
+TCPServer::TCPServer()
+  : m_socketDescriptor_valid(false)
+{ }
 
 TCPServer::~TCPServer() {
   Disconnect();
 }
 
 void TCPServer::StartServer() {
-
-  if (socketDescriptor != -1) throw SocketException("Already listening");
+  if (m_socketDescriptor_valid) throw SocketException("Already listening");
   
-  socketDescriptor = socket( AF_INET, SOCK_STREAM, 0 );
-  if (socketDescriptor < 0) throw SocketException("Couldn't create socket");
+  m_socketDescriptor = socket( AF_INET, SOCK_STREAM, 0 );
+  if (m_socketDescriptor < 0) throw SocketException("Couldn't create socket");
+  m_socketDescriptor_valid = true;
   
   /*
    * don't bother with bind, we don't care which port
@@ -274,16 +280,16 @@ void TCPServer::StartServer() {
    *   localAddr.sin_addr.s_addr = INADDR_ANY;
    *   localAddr.sin_port = 0;
    *
-   *   if ( bind( socketDescriptor,
+   *   if ( bind( m_socketDescriptor,
    *   (struct sockaddr *)&localAddr,
    *   sizeof(struct sockaddr) ) < 0 ) throw SocketException("Couldn't bind socket");
    */
 
-  listen( socketDescriptor, 5 );
+  listen( m_socketDescriptor, 5 );
   // queue size of 5 should be sufficient
   
   socklen_t localLen = sizeof(struct sockaddr_in);
-  getsockname( socketDescriptor, (struct sockaddr *)&localAddr, &localLen );
+  getsockname( m_socketDescriptor, (struct sockaddr *)&localAddr, &localLen );
 }
 
 unsigned short TCPServer::getPort() const {
@@ -299,27 +305,31 @@ TCPSocket* TCPServer::Accept() {
   socklen_t remoteLen;
   struct sockaddr_in remoteAddr;
 
-  if (socketDescriptor == -1) throw SocketException("Not connected");
+  if (!m_socketDescriptor_valid) throw SocketException("Not connected");
 
   remoteLen = sizeof(remoteAddr);
-  newsockfd = accept( socketDescriptor,
+  newsockfd = accept( m_socketDescriptor,
 		      (struct sockaddr *) &remoteAddr, 
 		      &remoteLen );
-  if (newsockfd < 0) throw SocketException("Error on accept");
+  if (newsockfd < 0) {
+    close(m_socketDescriptor);
+    m_socketDescriptor_valid = false;
+    throw SocketException("Error on accept");
+  }
 
   return new TCPSocket( newsockfd, remoteAddr );
 }
 
-int TCPServer::getSocketHandle() { return socketDescriptor; }
+int TCPServer::getSocketHandle() { return m_socketDescriptor; }
 
 void TCPServer::Disconnect() {
-  if (socketDescriptor != -1) {
-    close(socketDescriptor);
-    socketDescriptor = -1;
+  if (m_socketDescriptor_valid) {
+    close(m_socketDescriptor);
+    m_socketDescriptor_valid = false;
   }
 }
 
-bool TCPServer::isStarted() const { return socketDescriptor != -1; }
+bool TCPServer::isStarted() const { return m_socketDescriptor_valid; }
 
 /**
  * SocketException class

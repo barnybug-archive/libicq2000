@@ -58,7 +58,8 @@ class TCPSocket {
   
   unsigned long gethostname(const char *hostname);
 
-  int socketDescriptor;
+  int m_socketDescriptor;
+  bool m_socketDescriptor_valid;
   struct sockaddr_in remoteAddr, localAddr;
   bool blocking;
   State m_state;
@@ -103,7 +104,8 @@ class TCPSocket {
 
 class TCPServer {
  private:
-  int socketDescriptor;
+  int m_socketDescriptor;
+  bool m_socketDescriptor_valid;
   struct sockaddr_in localAddr;
 
  public:

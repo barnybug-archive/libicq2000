@@ -1493,9 +1493,6 @@ namespace ICQ2000 {
 	  && (m & SocketEvent::WRITE)) {
 	// the non-blocking connect has completed (good/bad)
 
-	SignalRemoveSocket(fd);
-	// no longer select on write
-
 	try {
 	  sock->FinishNonBlockingConnect();
 	} catch(SocketException e) {
@@ -1506,6 +1503,9 @@ namespace ICQ2000 {
 	  DisconnectDirectConn( fd );
 	  return;
 	}
+
+	SignalRemoveSocket(fd);
+	// no longer select on write
 
 	SignalAddSocket(fd, SocketEvent::READ);
 	// select on read now
