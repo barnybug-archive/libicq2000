@@ -75,7 +75,7 @@ namespace ICQ2000 {
       b.PackByteString( Contact::UINtoString(ust->getDestination()) );
       
       b << (unsigned short)0x0005;
-      b << (unsigned short)(m_icqsubtype->Length() + 89);
+      Buffer::marker m1 = b.getAutoSizeShortMarker();
 
       b << (unsigned short)0x0000     // status
 	<< m_cookie
@@ -91,9 +91,8 @@ namespace ICQ2000 {
       b << (unsigned short)0x000f  // TLV
 	<< (unsigned short)0x0000;
 
-      b << (unsigned short)0x2711  // TLV
-	<< (unsigned short)(m_icqsubtype->Length() + 49);
-      
+      b << (unsigned short)0x2711;  // TLV
+      Buffer::marker m2 = b.getAutoSizeShortMarker();
 
       // unknown..
       b << (unsigned int)  0x1B000700
@@ -122,6 +121,9 @@ namespace ICQ2000 {
       b << (unsigned short)0x0003
 	<< (unsigned short)0x0000;
 
+      b.setAutoSizeMarker(m1);
+      b.setAutoSizeMarker(m2);
+
       return;
     }
 
@@ -135,9 +137,8 @@ namespace ICQ2000 {
       // Destination UIN (screenname)
       b.PackByteString( Contact::UINtoString(nst->getDestination()) );
       
-      string m_text = nst->getMessage();
-      b.ClientToServer(m_text);
-      unsigned short text_size = m_text.size();
+      string text = nst->getMessage();
+      b.ClientToServer(text);
 
       /*
        * Message Block TLV
@@ -145,114 +146,54 @@ namespace ICQ2000 {
        * 0x0501 - don't know what this is
        * 0x0101 - the message
        */
-      b << (unsigned short)0x0002
-	<< (unsigned short)(13+text_size);
+      b << (unsigned short)0x0002;
+      Buffer::marker m1 = b.getAutoSizeShortMarker();
       
-      // TLV 0x0501
+      // TLV 0x0501 - unknown
       b << (unsigned short)0x0501
 	<< (unsigned short)0x0001
 	<< (unsigned char) 0x01;
       
-      // TLV 0x0101
-      b << (unsigned short)0x0101
-	<< (unsigned short)(4+text_size);
+      // TLV 0x0101 - flags + the message
+      b << (unsigned short)0x0101;
+      Buffer::marker m2 = b.getAutoSizeShortMarker();
       
-      // flags
+      // flags - for what?
       b << (unsigned short)0x0000
 	<< (unsigned short)0x0000;
       
-      b.Pack(m_text);
-      
-    } else if (m_icqsubtype->getType() == MSG_Type_URL) {
-      URLICQSubType *ust = static_cast<URLICQSubType*>(m_icqsubtype);
-      
-      b << (unsigned short)0x0004;
+      b.Pack(text);
 
-      // Destination UIN (screenname)
-      b.PackByteString( Contact::UINtoString(ust->getDestination()) );
+      b.setAutoSizeMarker(m1);
+      b.setAutoSizeMarker(m2);
       
-      string m_text, m_url;
-      m_text = ust->getMessage();
-      m_url = ust->getURL();
-      b.ClientToServer(m_text);
-      unsigned short total_size = m_text.size() + 2 + m_url.size();
-
-      /* Data Block TLV
-       */
-      b << (unsigned short)0x0005
-	<< (unsigned short)(8+total_size);
-
-      b.setLittleEndian();
-      b << (unsigned int)ust->getSource()
-	<< (unsigned short)MSG_Type_URL // ICQ Subtype
-	<< (unsigned short)total_size;
-      b.Pack(m_text);
-      b << (unsigned char)0xfe; // separator
-      b.Pack(m_url);
-      b << (unsigned char)0x00; // null terminated
-    } if (m_icqsubtype->getType() == MSG_Type_AuthReq) {
-      AuthReqICQSubType *ust = static_cast<AuthReqICQSubType*>(m_icqsubtype);
+    } else if (m_icqsubtype->getType() == MSG_Type_URL
+	       || m_icqsubtype->getType() == MSG_Type_AuthReq
+	       || m_icqsubtype->getType() == MSG_Type_AuthAcc
+	       || m_icqsubtype->getType() == MSG_Type_AuthRej) {
+      UINICQSubType *ust = dynamic_cast<UINICQSubType*>(m_icqsubtype);
+      if (ust == NULL) return;
       
       b << (unsigned short)0x0004;
 
       // Destination UIN (screenname)
       b.PackByteString( Contact::UINtoString(ust->getDestination()) );
       
-      string m_text;
-      m_text = ust->getMessage();
-      b.ClientToServer(m_text);
-
-      /* Data Block TLV
+      /*
+       * Data Block TLV
        */
-      b << (unsigned short)0x0005
-	<< (unsigned short)(9+m_text.size());
+      b << (unsigned short)0x0005;
+      Buffer::marker m1 = b.getAutoSizeShortMarker();
 
       b.setLittleEndian();
-      b << (unsigned int)ust->getSource()
-	<< (unsigned short)MSG_Type_AuthReq; // ICQ Subtype
-      b.PackUint16StringNull(m_text);
-    } else if (m_icqsubtype->getType() == MSG_Type_AuthRej) {
-      AuthRejICQSubType *ust = static_cast<AuthRejICQSubType*>(m_icqsubtype);
-      
-      b << (unsigned short)0x0004;
+      b << (unsigned int)ust->getSource();
+      ust->Output(b);
+      b.setAutoSizeMarker(m1);
 
-      // Destination UIN (screenname)
-      b.PackByteString( Contact::UINtoString(ust->getDestination()) );
-      
-      string m_text;
-      m_text = ust->getMessage();
-      b.ClientToServer(m_text);
-
-      /* Data Block TLV
-       */
-      b << (unsigned short)0x0005
-	<< (unsigned short)(9+m_text.size());
-
-      b.setLittleEndian();
-      b << (unsigned int)ust->getSource()
-	<< (unsigned short)MSG_Type_AuthRej; // ICQ Subtype
-      b.PackUint16StringNull(m_text);
-    } else if (m_icqsubtype->getType() == MSG_Type_AuthAcc) {
-      AuthAccICQSubType *ust = static_cast<AuthAccICQSubType*>(m_icqsubtype);
-      
-      b << (unsigned short)0x0004;
-
-      // Destination UIN (screenname)
-      b.PackByteString( Contact::UINtoString(ust->getDestination()) );
-      
-
-      /* Data Block TLV
-       */
-      b << (unsigned short)0x0005
-	<< (unsigned short)0x9;
-      b.setLittleEndian();
-      b << (unsigned int)ust->getSource()
-	<< (unsigned short)MSG_Type_AuthAcc; // ICQ Subtype
-      b.PackUint16StringNull("");
     }
 
-
-    /* Another TLV - dunno what it means
+    /*
+     * Another TLV - dunno what it means
      * - it doesn't seem to matter if I take this out
      */
     b.setBigEndian();

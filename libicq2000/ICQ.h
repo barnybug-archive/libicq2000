@@ -66,6 +66,14 @@ namespace ICQ2000 {
   const unsigned short Priority_Urgent        = 0x0002;
   const unsigned short Priority_ToContactList = 0x0004;
 
+  const unsigned short AcceptStatus_Online     = 0x0000; // accepted
+  const unsigned short AcceptStatus_Away       = 0x0004; // accepted in away
+  const unsigned short AcceptStatus_Occupied   = 0x0009; // not accepted in occupied
+  const unsigned short AcceptStatus_DND        = 0x000a; // not accepted in DND
+  const unsigned short AcceptStatus_Occ_Accept = 0x000c; // accepted from a to contact list in occupied
+  const unsigned short AcceptStatus_NA         = 0x000e; // accepted in NA
+
+
   /* ICQSubtype classes
    * An attempt at clearing up the complete
    * mess ICQ have made of bundling everything
@@ -103,6 +111,7 @@ namespace ICQ2000 {
     bool m_advanced, m_ack;
     bool m_urgent, m_tocontactlist;
     unsigned short m_status;
+    string m_away_message;
 
    public:
     UINICQSubType();

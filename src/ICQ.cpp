@@ -285,11 +285,14 @@ namespace ICQ2000 {
       b.PackUint16StringNull("");
     } else {
       ostringstream ostr;
-      string m_text = m_message;
-      b.ClientToServer(m_text);
-      ostr << m_text << (unsigned char)0xfe << m_url;
-      m_text = ostr.str();
-      b.PackUint16StringNull(m_text);
+
+      string message = m_message;
+      string url = m_url;
+      b.ClientToServer(message);
+      b.ClientToServer(url);     // I think url should be translated too ??
+      ostr << message << (unsigned char)0xfe << url;
+
+      b.PackUint16StringNull( ostr.str() );
     }
   }
 
@@ -336,9 +339,7 @@ namespace ICQ2000 {
   }
 
   void AwayMsgSubType::OutputBodyUIN(Buffer& b) const {
-    string tekst = m_message;
-    b.ClientToServer(tekst);
-    b.PackUint16StringNull(tekst);
+    b.PackUint16TranslatedNull( m_message );
   }
 
   unsigned short AwayMsgSubType::Length() const {
@@ -509,7 +510,6 @@ namespace ICQ2000 {
     int pos;
     string text;
 
-    b.advance(3);
     b.UnpackUint16StringNull(text);
 
     /*
@@ -533,9 +533,7 @@ namespace ICQ2000 {
   }
 
   void AuthReqICQSubType::OutputBodyUIN(Buffer& b) const {
-    string m_text = m_message;
-    b.ClientToServer(m_text);
-    b.PackUint16StringNull(m_text);
+    b.PackUint16TranslatedNull( m_message );
   }
 
   unsigned short AuthReqICQSubType::Length() const {
@@ -545,7 +543,7 @@ namespace ICQ2000 {
   unsigned char AuthReqICQSubType::getType() const { return MSG_Type_AuthReq; }
   
   AuthRejICQSubType::AuthRejICQSubType()
-    { }
+  { }
 
   AuthRejICQSubType::AuthRejICQSubType(const string& msg)
     : m_message(msg)  { }
@@ -560,9 +558,7 @@ namespace ICQ2000 {
   }
 
   void AuthRejICQSubType::OutputBodyUIN(Buffer& b) const {
-    string m_text = m_message;
-    b.ClientToServer(m_text);
-    b.PackUint16StringNull(m_text);
+    b.PackUint16TranslatedNull(m_message);
   }
 
   unsigned short AuthRejICQSubType::Length() const {
@@ -575,9 +571,12 @@ namespace ICQ2000 {
   { }
 
   void AuthAccICQSubType::ParseBodyUIN(Buffer& b) {
+    string nothing_much;
+    b.UnpackUint16StringNull(nothing_much);
   }
 
   void AuthAccICQSubType::OutputBodyUIN(Buffer& b) const {
+    b.PackUint16StringNull("");
   }
 
   unsigned short AuthAccICQSubType::Length() const {

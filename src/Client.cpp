@@ -1687,9 +1687,7 @@ namespace ICQ2000 {
     }
 
     if (ev->getType() == MessageEvent::Normal
-	|| ev->getType() == MessageEvent::URL
-	|| ev->getType() == MessageEvent::AuthReq
-	|| ev->getType() == MessageEvent::AuthAck) {
+	|| ev->getType() == MessageEvent::URL) {
       
       /*
        * Normal messages and URL messages sent via the server
@@ -1723,6 +1721,16 @@ namespace ICQ2000 {
 	messageack.emit(ev);
 	delete ev;
       }
+      
+    } else if (ev->getType() == MessageEvent::AuthReq
+	       || ev->getType() == MessageEvent::AuthAck) {
+      
+      /*
+       * This seems the sure way of sending authorisation messages
+       * Sending them advanced doesn't work as far as I can tell.
+       */
+      SendViaServerNormal(ev);
+      delete ev;
 
     } else if (ev->getType() == MessageEvent::SMS) {
 
@@ -1750,6 +1758,7 @@ namespace ICQ2000 {
     ist->setAdvanced(true);
     ist->setStatus( Contact::MapStatusToICQStatus(m_self.getStatus(), m_self.isInvisible()) );
     ist->setDestination( c->getUIN() );
+    ist->setSource( m_self.getUIN() );
     
     MsgSendSNAC msnac(ist);
     msnac.setAdvanced(true);
@@ -1769,6 +1778,7 @@ namespace ICQ2000 {
     UINICQSubType *ist = EventToUINICQSubType(ev);
     ist->setAdvanced(false);
     ist->setDestination( c->getUIN() );
+    ist->setSource( m_self.getUIN() );
     
     MsgSendSNAC msnac(ist);
     msnac.setAdvanced(false);
