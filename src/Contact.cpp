@@ -146,7 +146,20 @@ namespace ICQ2000 {
 
   void Contact::setEmail(const string& em) { m_main_home_info.email = em; }
 
-  void Contact::setStatus(Status st) { m_status = st; }
+  void Contact::setStatus(Status st) {
+    m_status = st;
+
+    // clear dynamic fields on going OFFLINE
+    if (m_status == STATUS_OFFLINE) {
+      m_ext_ip = 0;
+      m_lan_ip = 0;
+      m_ext_port = 0;
+      m_lan_port = 0;
+      m_tcp_version = 0;
+      m_accept_adv_msgs = false;
+    }
+    
+  }
 
   void Contact::setInvisible(bool inv) { m_invisible = inv; }
 
