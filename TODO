@@ -1,9 +1,17 @@
-Stuff to do:
-(This are in rough order of when they will get done, most pressing first)
 
-* Setting away messages
+,--------------------------------------------------------------------,
+|                                                                    |
+|              libicq2000 - The C++ ICQ2000/2001 Library             |
+|                                                                    |
+`--------------------------------------------------------------------'
 
-* Setting status to invisible
+  The official TODO list
+
+Roughly order of when they will get done, most pressing first
+
+* File transfer
+
+* Server-based contact lists
 
 * Limit message length
 
@@ -14,23 +22,11 @@ Stuff to do:
 * Foreground/background colour support for sending/receiving messages
   there is some support library side for this
 
-* Even More User info (some of the extended info isn't handled)
-
-* Setting/Retrieving owner's user info
-
 * Non-blocking DNS lookup at startup
+
+* Chat
 
 * Web presence enable/disable
 
-* Support for emailexpress messages ICQ sub type
-
 * Implement all of the login procedure - Requesting rights
   information, advert servers, etc..
-
-Things that are likely to not be included for a while at least:
-
-* File transfer
-* Chat
-
-Things that are likely never to be included:
-
