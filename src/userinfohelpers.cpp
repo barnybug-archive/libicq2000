@@ -207,7 +207,7 @@ namespace ICQ2000
     
     string getInterestsIDtoString(unsigned char id)
     {
-      if (id < Interests_table_size) {
+      if (id-Interests_offset < Interests_table_size) {
 	return Interests_table[id-Interests_offset];
       }
 
@@ -218,9 +218,9 @@ namespace ICQ2000
     {
       for (int n = 0; n < Interests_table_size; ++n) {
 	if (s == Interests_table[n]) {
-	  return n;
+	  return n+Interests_offset;
 	}
-    }
+      }
     
       return 0;
     }
