@@ -198,7 +198,7 @@ namespace ICQ2000 {
   
   unsigned short Capabilities::get_length() const
   {
-    return sizeof(Block::data) * m_flags.size();
+    return sizeof_cap * m_flags.size();
   }
 
   /*
