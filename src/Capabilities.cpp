@@ -207,7 +207,7 @@ namespace ICQ2000 {
    */
   bool Capabilities::get_accept_adv_msgs() const
   {
-    return has_capability_flag(ICQServerRelay);
+    return (has_capability_flag(ICQ) && has_capability_flag(ICQServerRelay));
   }
 
 }
