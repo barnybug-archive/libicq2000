@@ -16,6 +16,13 @@ man_MANS = libicq2000-config.1
 
 docs: src/*.cpp src/*.h
 	doxygen doxyfile.conf
+	touch docs
 
 dist: docs
+
+install-docs: docs
+	if [ ! -d $(DESTDIR)$(docdir) ]; then \
+	  mkdir -p $(DESTDIR)$(docdir) ; \
+	fi; \
+	cp -r $(top_srcdir)/doc/* $(DESTDIR)$(docdir)
 

@@ -51,6 +51,15 @@ if test "$libicq2000_use_debug" = "no"; then
   CFLAGS="`echo $CFLAGS | sed s/-g//`"
 fi
 
+AC_MSG_CHECKING(where to put the documentation)
+AC_ARG_WITH(docdir, [  --with-docdir=PATH         Specify where to put the documentation],
+        [libicq2000_cv_docdir=$withval],
+        [libicq2000_cv_docdir='$(prefix)/share/doc/libicq2000'])
+AC_MSG_RESULT($libicq2000_cv_docdir)
+
+docdir=$libicq2000_cv_docdir
+AC_SUBST(docdir)
+
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
