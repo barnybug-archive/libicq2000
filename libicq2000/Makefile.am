@@ -18,4 +18,4 @@ headersinclude_HEADERS = Client.h buffer.h socket.h TLV.h constants.h				\
     events.h Xml.h Contact.h ContactList.h exceptions.h custom_marshal.h                        \
     DirectClient.h ICQ.h UserInfoBlock.h ICBMCookie.h userinfoconstants.h                       \
     Translator.h Cache.h RequestIDCache.h ICBMCookieCache.h                                     \
-    SeqNumCache.h DCCache.h version.h
+    SeqNumCache.h DCCache.h version.h userinfohelpers.h
