@@ -54,9 +54,11 @@ namespace ICQ2000
 
     std::string getInterestsIDtoString(unsigned char id);
     unsigned char getInterestsStringtoID(const std::string& s);
+    std::vector<std::string> getInterestsAllStrings();
     
     std::string getBackgroundIDtoString(unsigned short id);
     unsigned short getBackgroundStringtoID(const std::string& s);
+    std::vector<std::string> getBackgroundAllStrings();
   }
   
 }

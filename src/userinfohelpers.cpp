@@ -207,23 +207,62 @@ namespace ICQ2000
     
     string getInterestsIDtoString(unsigned char id)
     {
-      // todo
+      if (id < Interests_table_size) {
+	return Interests_table[id-Interests_offset];
+      }
+
+      return "";
     }
     
     unsigned char getInterestsStringtoID(const string& s)
     {
-      // todo
+      for (int n = 0; n < Interests_table_size; ++n) {
+	if (s == Interests_table[n]) {
+	  return n;
+	}
     }
     
+      return 0;
+    }
+
+    vector<string> getInterestsAllStrings()
+    {
+      vector<string> ret;
+      for (int n = 0; n < Interests_table_size; ++n) {
+	ret.push_back( Interests_table[n] );
+      }
+      return ret;
+    }
     
     string getBackgroundIDtoString(unsigned short id)
     {
-      // todo
+      for (int n = 0; n < Background_table_size; ++n) {
+	if (id == Background_table[n].code) {
+	  return Background_table[n].name;
+	}
+      }
+      
+      return "";
     }
     
     unsigned short getBackgroundStringtoID(const string& s)
     {
-      // todo
+      for (int n = 0; n < Background_table_size; ++n) {
+	if (s == Background_table[n].name) {
+	  return Background_table[n].code;
+	}
+      }
+      
+      return 0;
+    }
+
+    vector<string> getBackgroundAllStrings()
+    {
+      vector<string> ret;
+      for (int n = 0; n < Background_table_size; ++n) {
+	ret.push_back( Background_table[n].name );
+      }
+      return ret;
     }
     
   }
