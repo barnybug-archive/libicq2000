@@ -171,7 +171,7 @@ namespace ICQ2000 {
   void Contact::setStatus(Status st, bool i) {
     if (m_status == st && m_invisible == i) return;
     
-    StatusChangeEvent sev(this, m_status, st);
+    StatusChangeEvent sev(this, st, m_status);
 
     m_status = st;
     m_invisible = i;
