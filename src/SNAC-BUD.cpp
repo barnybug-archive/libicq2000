@@ -32,11 +32,15 @@ namespace ICQ2000 {
 
   AddBuddySNAC::AddBuddySNAC() { }
 
-  AddBuddySNAC::AddBuddySNAC(const ContactList& l)
+  AddBuddySNAC::AddBuddySNAC(const ContactTree& l)
     : m_buddy_list() { 
-    ContactList::const_iterator curr = l.begin();
+    ContactTree::const_iterator curr = l.begin();
     while (curr != l.end()) {
-      if ((*curr)->isICQContact()) m_buddy_list.push_back((*curr)->getStringUIN());
+      ContactTree::Group::const_iterator gcurr = curr->begin();
+      while (gcurr != curr->end()) {
+	if ((*gcurr)->isICQContact()) m_buddy_list.push_back((*gcurr)->getStringUIN());
+	++gcurr;
+      }
       ++curr;
     }
     

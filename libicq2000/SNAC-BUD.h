@@ -28,6 +28,7 @@
 #include <libicq2000/SNAC-base.h>
 #include <libicq2000/Contact.h>
 #include <libicq2000/ContactList.h>
+#include <libicq2000/ContactTree.h>
 #include <libicq2000/UserInfoBlock.h>
 
 namespace ICQ2000 {
@@ -55,7 +56,7 @@ namespace ICQ2000 {
 
    public:
     AddBuddySNAC();
-    AddBuddySNAC(const ContactList& l);
+    AddBuddySNAC(const ContactTree& l);
     AddBuddySNAC(const ContactRef& c);
 
     void addBuddy(const ContactRef& c);
