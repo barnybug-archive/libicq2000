@@ -42,12 +42,12 @@ namespace ICQ2000 {
 
   class UINRequestSNAC : public UINFamilySNAC, public OutSNAC {
    protected:
-    string m_password;
+    std::string m_password;
     
     void OutputBody(Buffer& b) const;
 
    public:
-    UINRequestSNAC(const string& p);
+    UINRequestSNAC(const std::string& p);
 
     unsigned short Subtype() const { return SNAC_UIN_Request; }
    };
