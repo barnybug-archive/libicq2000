@@ -115,8 +115,7 @@ namespace ICQ2000 {
 
     SMTPClient m_smtp;
 
-    DCCache m_dccache;   // this is for established connections
-    map<unsigned int, DirectClient*> m_uinmap;
+    DCCache m_dccache;
 
     time_t m_last_server_ping;
 
@@ -137,7 +136,7 @@ namespace ICQ2000 {
     // -- Ping server --
     void PingServer();
 
-    DirectClient* ConnectDirect(ContactRef c);
+    DirectClient* ConnectDirect(const ContactRef& c);
     void DisconnectDirectConns();
     void DisconnectDirectConn(int fd);
 

@@ -30,7 +30,13 @@ using SigC::Signal1;
 
 namespace ICQ2000 {
 
-  // fd -> DirectClient
+  /* fd -> DirectClient cache
+   *
+   * Where the party is at. Once a DirectClient object is added to the
+   * cache MM for it is assumed on the cache. Also lookups for a
+   * Contact are done in linear time now, it was just too much of a
+   * head-ache maintaining the uin map in Client.
+   */
   class DCCache : public Cache<int, DirectClient*> {
    public:
     DCCache() { }
@@ -43,9 +49,12 @@ namespace ICQ2000 {
     void expireItem(const DCCache::literator& l) {
       expired.emit( (*l).getValue() );
       Cache<int, DirectClient*>::expireItem(l);
+      /* this will removeItem(..), which'll delete the DirectClient
+       * (see above).
+       */
     }
 
-    void removeContact(ContactRef c) {
+    void removeContact(const ContactRef& c) {
       literator curr = m_list.begin();
       literator next = curr;
       while ( curr != m_list.end() ) {
@@ -57,6 +66,21 @@ namespace ICQ2000 {
 	}
 	curr = next;
       }
+    }
+
+    DirectClient* getByContact(const ContactRef& c)
+    {
+      // linear lookup
+      literator curr = m_list.begin();
+      while ( curr != m_list.end() ) {
+	DirectClient *dc = (*curr).getValue();
+	if ( dc->getContact()->getUIN() == c->getUIN() )
+	  return dc; // found it
+
+	++curr;
+      }
+
+      return NULL; // not found
     }
 
     void clearoutMessagesPoll() {

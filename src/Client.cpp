@@ -219,14 +219,11 @@ namespace ICQ2000 {
 
   void Client::DisconnectDirectConns() {
     m_dccache.removeAll();
-    m_uinmap.clear();
   }
 
   void Client::DisconnectDirectConn(int fd) {
     if (m_dccache.exists(fd)) {
       DirectClient *dc = m_dccache[fd];
-      unsigned int uin = dc->getUIN();
-      if ( m_uinmap.count(uin) > 0 && m_uinmap[uin] == dc) m_uinmap.erase(uin);
       m_dccache.remove(fd);
     } else if (m_smtp.getfd() == fd) {
       SignalRemoveSocket( m_smtp.getfd() );
@@ -758,12 +755,9 @@ namespace ICQ2000 {
 
   void Client::dccache_expired_cb(DirectClient *dc) {
     SignalLog(LogEvent::WARN, "Direct connection timeout reached");
-    unsigned int uin = dc->getUIN();
-    if ( m_uinmap.count(uin) > 0 && m_uinmap[uin] == dc) m_uinmap.erase(uin);
   }
 
   void Client::dc_connected_cb(DirectClient *dc) {
-    m_uinmap[ dc->getUIN() ] = dc;
     m_dccache.setTimeout(dc->getfd(), 600);
     // once we are properly connected a direct
     // connection will only timeout after 10 mins
@@ -1605,9 +1599,9 @@ namespace ICQ2000 {
     return true;
   }
 
-  DirectClient* Client::ConnectDirect(ContactRef c) {
-    DirectClient *dc;
-    if (m_uinmap.count(c->getUIN()) == 0) {
+  DirectClient* Client::ConnectDirect(const ContactRef& c) {
+    DirectClient *dc = m_dccache.getByContact(c);
+    if (dc == NULL) {
       if (!m_out_dc) return NULL;
       /*
        * If their external IP != internal IP then it's
@@ -1640,11 +1634,8 @@ namespace ICQ2000 {
       }
 
       m_dccache[ dc->getfd() ] = dc;
-      m_uinmap[c->getUIN()] = dc;
-
-    } else {
-      dc = m_uinmap[c->getUIN()];
     }
+
     return dc;
   }
 
@@ -1903,8 +1894,8 @@ namespace ICQ2000 {
 	fetchDetailContactInfo(c);
       }
 
-    } else {
-
+    } else if (ev->getType() == ContactListEvent::UserRemoved) {
+      
       if (c->isICQContact() && m_state == BOS_LOGGED_IN) {
 	FLAPwrapSNACandSend( RemoveBuddySNAC(c) );
       }
