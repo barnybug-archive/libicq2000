@@ -11,7 +11,7 @@ debian/libicq2000-doc.links debian/libicq2000.docs		\
 debian/libicq2000.files debian/rules                            \
 debian/libicq2000-dev.manpages doxyfile.conf libicq2000-config.1
 
-pkgdata_DATA = doc
+#pkgdata_DATA = doc
 
 bin_SCRIPTS = libicq2000-config
 
