@@ -129,7 +129,10 @@ namespace ICQ2000 {
     void OutputBody(Buffer& b) const;
 
     virtual void ParseBodyUIN(Buffer& b) = 0;
+    virtual void ParseBodyUINACK(Buffer& b);
+
     virtual void OutputBodyUIN(Buffer& b) const = 0;
+    virtual void OutputBodyUINACK(Buffer& b) const;
 
     bool isAdvanced() const;
     void setAdvanced(bool b);
@@ -165,6 +168,9 @@ namespace ICQ2000 {
 
     void ParseBodyUIN(Buffer& b);
     void OutputBodyUIN(Buffer& b) const;
+    void ParseBodyUINACK(Buffer& b);
+    void OutputBodyUINACK(Buffer& b) const;
+
     unsigned short Length() const;
     unsigned char getType() const;
   };

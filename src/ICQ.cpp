@@ -179,11 +179,8 @@ namespace ICQ2000 {
     if (!m_ack) {
       ParseBodyUIN(b);
     } else {
-      /* whatever the message type, ACKs are always the same
-	 - the current away message */
-      b.UnpackUint16TranslatedNull(m_away_message);
+      ParseBodyUINACK(b);
     }
-    
     
   }
 
@@ -205,9 +202,21 @@ namespace ICQ2000 {
     if (!m_ack) {
       OutputBodyUIN(b);
     } else {
-      b.PackUint16TranslatedNull(m_away_message);
+      OutputBodyUINACK(b);
     }
     
+  }
+
+  void UINICQSubType::OutputBodyUINACK(Buffer& b) const
+  {
+    b.PackUint16TranslatedNull(m_away_message);
+  }
+
+  void UINICQSubType::ParseBodyUINACK(Buffer& b)
+  {
+    /* whatever the message type, ACKs are always the same
+       - the current away message */
+    b.UnpackUint16TranslatedNull(m_away_message);
   }
 
   NormalICQSubType::NormalICQSubType(bool multi)
@@ -238,22 +247,28 @@ namespace ICQ2000 {
   }
 
   void NormalICQSubType::OutputBodyUIN(Buffer& b) const {
-    if (m_ack) {
-      b.PackUint16StringNull("");
-    } else {
-      string m_text = m_message;
-      b.ClientToServer(m_text);
-      b.PackUint16StringNull(m_text);
-    }
-    
+    b.PackUint16TranslatedNull(m_message);
+
     if (m_advanced) {
-      if (m_ack) {
-	b << (unsigned int)0x00000000
-	  << (unsigned int)0xffffffff;
-      } else {
-	b << (unsigned int)m_foreground
-	  << (unsigned int)m_background;
-      }
+      b << (unsigned int)m_foreground
+	<< (unsigned int)m_background;
+    }
+  }
+
+  void NormalICQSubType::ParseBodyUINACK(Buffer& b)
+  {
+    b.UnpackUint16TranslatedNull(m_away_message);
+    b.advance(8);
+  }
+
+  void NormalICQSubType::OutputBodyUINACK(Buffer& b) const
+  {
+    /* hmmff.. Normal messages differ from all the other ACKs by
+       having these two pointless ints. */
+    b.PackUint16TranslatedNull(m_away_message);
+    if (m_advanced) {
+      b << (unsigned int)0x00000000
+	<< (unsigned int)0xffffffff;
     }
   }
 
