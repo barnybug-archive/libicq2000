@@ -264,6 +264,13 @@ namespace ICQ2000 {
 
       if (ist->isAdvanced()) SendAdvancedACK(snac);
     }
+    else if (type == MSG_Type_EmailEx) {
+      // these come from 'magic' UIN 10
+      EmailExICQSubType *subtype = static_cast<EmailExICQSubType*>(st);
+      contact = lookupEmail( subtype->getEmail() );
+      e = new EmailExEvent(contact, subtype->getEmail(),
+			   subtype->getSender(), subtype->getMessage());
+    }
     else if (type == MSG_Type_SMS) {
       SMSICQSubType *sst = static_cast<SMSICQSubType*>(st);
       
