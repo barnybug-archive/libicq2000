@@ -607,7 +607,8 @@ namespace ICQ2000 {
     enum SearchType {
       ShortWhitepage,
       FullWhitepage,
-      UIN
+      UIN,
+      Keyword
     };
 	
    private:

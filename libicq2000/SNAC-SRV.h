@@ -138,6 +138,20 @@ namespace ICQ2000 {
     unsigned short Subtype() const { return SNAC_SRV_Send; }
   };
 
+  class SrvRequestKeywordSearch : public SrvFamilySNAC, public OutSNAC 
+  {
+   private:
+    unsigned int m_my_uin;
+    std::string m_keyword;
+
+   protected:
+    void OutputBody(Buffer& b) const;
+    
+  public:
+    SrvRequestKeywordSearch(unsigned int my_uin, const std::string& keyword);
+    unsigned short Subtype() const { return SNAC_SRV_Send; }
+  };
+
   class SrvRequestDetailUserInfo : public SrvFamilySNAC, public OutSNAC {
    private:
     unsigned int m_my_uin, m_user_uin;
@@ -272,7 +286,8 @@ namespace ICQ2000 {
     Contact::WorkInfo m_work_info;
     Contact::BackgroundInfo m_background_info;
     Contact::PersonalInterestInfo m_personal_interest_info;
-    string m_about;
+    std::string m_about;
+    unsigned char m_sex, m_age;
 
     bool m_authreq;
     Status m_status;

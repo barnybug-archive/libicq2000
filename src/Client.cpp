@@ -2248,6 +2248,21 @@ namespace ICQ2000 {
     return ev;
   }
 
+  SearchResultEvent* Client::searchForContacts(const std::string& keyword)
+  {
+    SearchResultEvent *ev = new SearchResultEvent( SearchResultEvent::Keyword );
+    unsigned int reqid = NextRequestID();
+    m_reqidcache.insert( reqid, new SearchCacheValue( ev ) );
+    
+    SrvRequestKeywordSearch ssnac( m_self->getUIN(), keyword );
+    ssnac.setRequestID( reqid );
+    
+    SignalLog(LogEvent::INFO, "Sending contact keyword search request");
+    FLAPwrapSNACandSend( ssnac );
+    
+    return ev;
+  }
+
   void Client::Disconnect(DisconnectedEvent::Reason r) {
     if (m_state == NOT_CONNECTED) return;
 

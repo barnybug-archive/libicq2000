@@ -245,6 +245,34 @@ namespace ICQ2000 {
     b.setAutoSizeMarker(m2);
   }
 
+  SrvRequestKeywordSearch::SrvRequestKeywordSearch(unsigned int my_uin, const string& keyword)
+    : m_my_uin(my_uin), m_keyword(keyword)
+  { }
+  
+  void SrvRequestKeywordSearch::OutputBody(Buffer& b) const
+  { 
+    b << (unsigned short)0x0001;
+
+    Buffer::marker m1 = b.getAutoSizeShortMarker();
+
+    b.setLittleEndian();
+    Buffer::marker m2 = b.getAutoSizeShortMarker();
+
+    b << m_my_uin;
+
+    b << (unsigned short)2000	     /* type 9808 */
+      << (unsigned short)m_requestID /* low word of the request ID */
+      << (unsigned short)0x055F      /* subtype keyword-search */
+      << (unsigned short)0x0226;     /* unknown */
+
+    Buffer::marker m3 = b.getAutoSizeShortMarker();
+    b.PackUint16TranslatedNull(m_keyword);
+    b.setAutoSizeMarker(m3);
+    
+    b.setAutoSizeMarker(m1);
+    b.setAutoSizeMarker(m2);
+  }
+  
   SrvRequestDetailUserInfo::SrvRequestDetailUserInfo(unsigned int my_uin, unsigned int user_uin)
     : m_my_uin(my_uin), m_user_uin(user_uin) { }
 
@@ -813,6 +841,12 @@ namespace ICQ2000 {
     }
 
     b >> wb; // unknown
+
+    if (b.remains() == 3 || b.remains() == 7) {
+      b >> m_sex;
+      b >> m_age;
+      b >> wb;       // unknown
+    }
 
     if (subtype == SrvResponse_SimpleUI_Done || subtype == SrvResponse_SearchUI_Done) {
       b >> m_more_results;

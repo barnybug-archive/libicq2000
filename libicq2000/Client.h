@@ -416,6 +416,8 @@ namespace ICQ2000 {
 
     SearchResultEvent* searchForContacts(unsigned int uin);
 
+    SearchResultEvent* searchForContacts(const std::string& keyword);
+
     /*
      *  Poll must be called regularly (at least every 60 seconds)
      *  but I recommended 5 seconds, so timeouts work with good
