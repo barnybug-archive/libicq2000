@@ -82,7 +82,7 @@ namespace ICQ2000 {
 
   class BackgroundInfo {
    public:
-    typedef pair<unsigned short, string> School;
+    typedef std::pair<unsigned short, string> School;
     list<School> schools;   // school names
 
     BackgroundInfo();
@@ -92,7 +92,7 @@ namespace ICQ2000 {
 
   class PersonalInterestInfo {
    public:
-    typedef pair<unsigned short, string> Interest;
+    typedef std::pair<unsigned short, string> Interest;
     list<Interest> interests;
 
     PersonalInterestInfo();
