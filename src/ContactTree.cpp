@@ -314,7 +314,7 @@ namespace ICQ2000 {
     from.relocate_from(ct);
     to.relocate_to(ct);
     
-    UserRelocatedEvent ev(ct, from, to);
+    UserRelocatedEvent ev(ct, to, from);
     contactlist_signal.emit( &ev );
   }
   
