@@ -569,7 +569,7 @@ namespace ICQ2000 {
       if (deliverable->getValue() == "Yes") m_deliverable = true;
       if (deliverable->getValue() == "SMTP")
 	throw ParseException("SMS messages for your provider must be sent via an SMTP (email) proxy, "
-			     "ickle doesn't support that yet, but may in the future.");
+			     "libicq2000 doesn't support that yet, but may in the future.");
     }
 
     if (m_deliverable) {
