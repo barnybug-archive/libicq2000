@@ -411,6 +411,13 @@ namespace ICQ2000 {
 
     }
 
+    /* trailing GUID ? */
+    if (b.remains() > 0) {
+      unsigned int len;
+      b >> len;
+      b.advance(len);
+    }
+    
   }
 
   void MessageOfflineUserSNAC::ParseBody(Buffer& b) {
