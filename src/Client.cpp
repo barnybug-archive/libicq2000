@@ -1787,6 +1787,22 @@ namespace ICQ2000 {
     return m_self->isInvisible();
   }
 
+  /**
+   *  Get the last requested status
+   */
+  Status Client::getStatusWanted() const 
+  {
+    return m_status_wanted;
+  }
+  
+  /**
+   *  Get the last invisibility status wanted
+   */
+  bool Client::getInvisibleWanted() const
+  {
+    return m_invisible_wanted;
+  }
+
   bool Client::getWebAware() const
   {
     return m_web_aware;

@@ -382,6 +382,10 @@ namespace ICQ2000 {
     
     Status getStatus() const;
     bool getInvisible() const;
+
+    Status getStatusWanted() const;
+    bool getInvisibleWanted() const;
+
     bool getWebAware() const;
 
     void uploadSelfDetails();
