@@ -79,7 +79,13 @@ namespace ICQ2000 {
       literator curr = m_list.begin();
       while ( curr != m_list.end() ) {
 	DirectClient *dc = (*curr).getValue();
-	if ( dc->getContact()->getUIN() == c->getUIN() )
+	if (  dc->getContact().get() != NULL
+	     /* Direct Connections won't have a contact associated
+	      * with them initially just after having been accepted as
+	      * an incoming connection (we don't know who they are
+	      * yet) - so Contact could be a NULL ref.
+	      */
+	     && dc->getContact()->getUIN() == c->getUIN() )
 	  return dc; // found it
 
 	++curr;
