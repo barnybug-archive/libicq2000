@@ -148,7 +148,7 @@ main ()
   else
      AC_MSG_RESULT(no)
      if test "$LIBICQ2000_CONFIG" = "no" ; then
-       echo "*** The libicq2000-config script is installed but libicq2000 could not be found"
+       echo "*** The libicq2000-config script installed by libicq2000 could not be found."
        echo "*** If libicq2000 was installed in PREFIX, make sure PREFIX/bin is in"
        echo "*** your path, or set the LIBICQ2000_CONFIG environment variable to the"
        echo "*** full path to libicq2000-config."
