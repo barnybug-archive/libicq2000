@@ -1955,14 +1955,12 @@ namespace ICQ2000 {
 
   Contact* Client::lookupEmail(const string& m) {
     if (!m_contact_list.email_exists(m)) {
-      Contact c;
+      Contact c(m);
       c.setEmail(m);
-      c.setAlias(m);
       addContact(c);
     }
     return &(m_contact_list[m]);
   }
-  
 
   void Client::SignalServerBasedContactList(const ContactList& l) {
     ServerBasedContactEvent ev(l);

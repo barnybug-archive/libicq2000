@@ -123,7 +123,7 @@ namespace ICQ2000 {
    private:
     void Init();
     bool m_icqcontact;
-    bool m_mobilecontact;
+    bool m_virtualcontact;
 
     list<MessageEvent*> m_pending_msgs;
 
@@ -156,8 +156,10 @@ namespace ICQ2000 {
 
   public:
     Contact();
+
     Contact(unsigned int uin);
     Contact(const string& a, const string& m);
+    Contact(const string& a);
 
     ~Contact();
 
@@ -219,7 +221,9 @@ namespace ICQ2000 {
     const string& getAboutInfo() const;
 
     bool isICQContact() const;
-    bool isMobileContact() const;
+    bool isVirtualContact() const;
+
+    bool isSMSable() const;
 
     unsigned short nextSeqNum();
 

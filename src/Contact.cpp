@@ -33,15 +33,20 @@ using std::istringstream;
 
 namespace ICQ2000 {
 
+  /**
+   *  Do not use this constructor outside the library.
+   *  It constructs a contact that is virtual, but doesn't have
+   *  an imaginary UIN allocated to it.
+   */
   Contact::Contact()
-    : m_icqcontact(false), m_mobilecontact(false), m_uin(0), m_status(STATUS_OFFLINE), 
+    : m_virtualcontact(true), m_uin(0), m_status(STATUS_OFFLINE), 
       m_invisible(false), m_seqnum(0xffff)
   {
     Init();
   }
 
   Contact::Contact(unsigned int uin)
-    : m_icqcontact(true), m_mobilecontact(false), m_uin(uin), m_status(STATUS_OFFLINE), 
+    : m_virtualcontact(false), m_uin(uin), m_status(STATUS_OFFLINE), 
       m_invisible(false), m_seqnum(0xffff)
   {
     m_main_home_info.alias = UINtoString(m_uin);
@@ -49,12 +54,19 @@ namespace ICQ2000 {
   }
 
   Contact::Contact(const string& a, const string& m)
-    : m_icqcontact(false),
-      m_mobilecontact(true), m_uin(nextImaginaryUIN()),
+    : m_virtualcontact(true), m_uin(nextImaginaryUIN()),
       m_status(STATUS_OFFLINE), m_invisible(false), m_seqnum(0xffff)
   {
     m_main_home_info.alias = a;
     m_main_home_info.setMobileNo(m);
+    Init();
+  }
+
+  Contact::Contact(const string& a)
+    : m_virtualcontact(true), m_uin(nextImaginaryUIN()),
+      m_status(STATUS_OFFLINE), m_invisible(false), m_seqnum(0xffff)
+  {
+    m_main_home_info.alias = a;
     Init();
   }
 
@@ -79,7 +91,7 @@ namespace ICQ2000 {
 
   void Contact::setUIN(unsigned int uin) {
     m_uin = uin;
-    m_icqcontact = true;
+    m_virtualcontact = false;
   }
 
   string Contact::getStringUIN() const { return UINtoString(m_uin); }
@@ -124,9 +136,6 @@ namespace ICQ2000 {
 
   void Contact::setMobileNo(const string& mn) {
     m_main_home_info.setMobileNo(mn);
-    
-    if (!mn.empty()) m_mobilecontact = true;
-    else m_mobilecontact = false;
   }
 
   void Contact::setAlias(const string& al) { m_main_home_info.alias = al; }
@@ -143,9 +152,15 @@ namespace ICQ2000 {
 
   void Contact::setAuthReq(bool b) { m_authreq = b; }
 
-  bool Contact::isICQContact() const { return m_icqcontact; }
+  bool Contact::isICQContact() const { return !m_virtualcontact; }
 
-  bool Contact::isMobileContact() const { return m_mobilecontact; }
+  bool Contact::isVirtualContact() const { return m_virtualcontact; }
+
+  bool Contact::isSMSable() const 
+  {
+    // ' SMS' suffix might be better way, but isn't reliable really
+    return !m_main_home_info.getNormalisedMobileNo().empty();
+  }
 
   void Contact::setExtIP(unsigned int ip) { m_ext_ip = ip; }
 
