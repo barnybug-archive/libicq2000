@@ -456,6 +456,7 @@ namespace ICQ2000 {
     unsigned int m_lan_ip;
     unsigned short m_lan_port, m_firewall;
     unsigned char m_tcp_version;
+    unsigned int m_dc_cookie;
     
    public:
     LANDetailsTLV();
@@ -468,6 +469,7 @@ namespace ICQ2000 {
     unsigned short getLanPort() const { return m_lan_port; }
     unsigned short getFirewall() const { return m_firewall; }
     unsigned char getTCPVersion() const { return m_tcp_version; }
+    unsigned int getDCCookie() const { return m_dc_cookie; }
 
     void ParseValue(Buffer& b);
     void OutputValue(Buffer& b) const;

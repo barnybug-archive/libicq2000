@@ -52,7 +52,7 @@ namespace ICQ2000 {
     ICQMessageEvent* UINICQSubTypeToEvent(UINICQSubType *st, const ContactRef& contact);
 
     ContactRef lookupUIN(unsigned int uin);
-    ContactRef lookupEmail(const std::string& email);
+    ContactRef lookupEmail(const std::string& email, const std::string& alias);
     ContactRef lookupMobile(const std::string& m);
 
     UINICQSubType* EventToUINICQSubType(MessageEvent *ev);

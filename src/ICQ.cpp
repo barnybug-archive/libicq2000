@@ -64,6 +64,9 @@ namespace ICQ2000 {
     case MSG_Type_EmailEx:
       ist = new EmailExICQSubType();
       break;
+    case MSG_Type_WebPager:
+      ist = new WebPagerICQSubType();
+      break;
     case MSG_Type_UserAdd:
       ist = new UserAddICQSubType();
       break;
@@ -639,6 +642,10 @@ namespace ICQ2000 {
 
   unsigned char AuthAccICQSubType::getType() const { return MSG_Type_AuthAcc; }
 
+  // ============================================================================
+  //  Email Express message
+  // ============================================================================
+
   EmailExICQSubType::EmailExICQSubType() { }
 
   void EmailExICQSubType::ParseBody(Buffer& b) {
@@ -673,6 +680,49 @@ namespace ICQ2000 {
   string EmailExICQSubType::getEmail() const { return m_email; }
 
   string EmailExICQSubType::getSender() const { return m_sender; }
+
+  // ============================================================================
+  //  Web Pager message
+  // ============================================================================
+
+  WebPagerICQSubType::WebPagerICQSubType() { }
+
+  void WebPagerICQSubType::ParseBody(Buffer& b) {
+    string text;
+
+    b.UnpackUint16StringNull(text);
+
+    list<string> fields;
+    string_split( text, string("\xfe"), 6, fields);
+
+    list<string>::iterator iter = fields.begin();
+    m_sender = b.ServerToClientCC(*(iter++));
+    ++iter; // ???
+    ++iter; // ???
+    m_email = b.ServerToClientCC(*(iter++));
+    ++iter; // ???
+    m_message = b.ServerToClientCC(*(iter++));
+  }
+
+  void WebPagerICQSubType::OutputBody(Buffer& b) const {
+    // never sent
+  }
+
+  unsigned short WebPagerICQSubType::Length() const {
+    return 0;
+  }
+
+  unsigned char WebPagerICQSubType::getType() const { return MSG_Type_WebPager; }
+
+  string WebPagerICQSubType::getMessage() const { return m_message; }
+
+  string WebPagerICQSubType::getEmail() const { return m_email; }
+
+  string WebPagerICQSubType::getSender() const { return m_sender; }
+
+  // ============================================================================
+  //  "You were added" message
+  // ============================================================================
 
   UserAddICQSubType::UserAddICQSubType() { }
 

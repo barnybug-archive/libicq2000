@@ -49,6 +49,7 @@ namespace ICQ2000 {
   const unsigned char MSG_Type_AuthRej = 0x07;
   const unsigned char MSG_Type_AuthAcc = 0x08;
   const unsigned char MSG_Type_UserAdd = 0x0c;
+  const unsigned char MSG_Type_WebPager= 0x0d;
   const unsigned char MSG_Type_EmailEx = 0x0e;
   const unsigned char MSG_Type_SMS     = 0x1a;
 
@@ -322,6 +323,27 @@ namespace ICQ2000 {
     string getSender() const;
   };
 
+  /*
+   *  (why the hell ICQ invented another subtype for this when it's almost identical to
+   *   an email express message is anyones guess..)
+   */
+  class WebPagerICQSubType : public ICQSubType {
+   private:
+    string m_message, m_email, m_sender;
+
+   public:
+    WebPagerICQSubType();
+
+    void ParseBody(Buffer& b);
+    void OutputBody(Buffer& b) const;
+    unsigned short Length() const;
+    unsigned char getType() const;
+
+    string getMessage() const;
+    string getEmail() const;
+    string getSender() const;
+  };
+
   class UserAddICQSubType : public UINICQSubType {
    private:
     std::string m_alias, m_firstname, m_lastname, m_email;
@@ -337,6 +359,8 @@ namespace ICQ2000 {
     unsigned short Length() const;
     unsigned char getType() const;
   };
+
+  // helper functions
 
   void string_split(const std::string& in, const std::string& sep,
 		    int count, std::list<std::string>& fields);

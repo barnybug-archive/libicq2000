@@ -334,10 +334,10 @@ namespace ICQ2000 {
   // ----------------- LAN Details TLV ------------
 
   LANDetailsTLV::LANDetailsTLV()
-    : m_firewall(0x0400), m_tcp_version(7) { }
+    : m_firewall(0x0400), m_tcp_version(7), m_dc_cookie(0) { }
 
   LANDetailsTLV::LANDetailsTLV(unsigned int ip, unsigned short port)
-    : m_lan_ip(ip), m_lan_port(port), m_firewall(0x0400), m_tcp_version(7) { }
+    : m_lan_ip(ip), m_lan_port(port), m_firewall(0x0400), m_tcp_version(7), m_dc_cookie(0) { }
 
   void LANDetailsTLV::ParseValue(Buffer& b) {
     unsigned short length;
@@ -350,17 +350,22 @@ namespace ICQ2000 {
       b >> m_lan_port;
     }
 
-    unsigned int waste_int;
-    unsigned short waste_short;
+    unsigned short no_timestamps;
     b >> m_firewall
       >> m_tcp_version
-      >> waste_int // unknown
-      >> waste_int // always 0x00000050
-      >> waste_int // always 0x00000003
-      >> waste_int // unknown
-      >> waste_int // unknown
-      >> waste_int // unknown
-      >> waste_short; // unknown
+      >> m_dc_cookie;
+    b.advance(4); // always 0x00000050
+    b.advance(2); // unknown
+
+    b >> no_timestamps;
+    if (no_timestamps > 100) no_timestamps = 100; // place a sensible limit
+    
+    while(no_timestamps-- > 0) {
+      b.advance(4);
+      // don't really know the purpose of these timestamps
+    }
+    
+    b.advance(2); // unknown
   }
 
   void LANDetailsTLV::OutputValue(Buffer& b) const {
@@ -369,21 +374,13 @@ namespace ICQ2000 {
     b << (unsigned int)m_lan_port;
     b << m_firewall
       << m_tcp_version
-      << (unsigned int)0x279c6996
+      << (unsigned int)0x00000000 // dc cookie (server picks it for us (apparently))
       << (unsigned int)0x00000050
-      << (unsigned int)0x00000003
-
-      //      << (unsigned int)0x3bb9d506
-      //      << (unsigned int)0x3bb9d4f9
-      //      << (unsigned int)0x3bb9d4fa
-      << (unsigned int)0x3AA773EE
-      << (unsigned int)0x3AA66380
-      << (unsigned int)0x3A877A42
-
-
-      //      << (unsigned int)0x00000000
-      //      << (unsigned int)0x00000000
-      //      << (unsigned int)0x00000000
+      << (unsigned short)0x0000
+      << (unsigned short)0x0003   // number of timestamps
+      << (unsigned int)0x3AA773EE // timestamp1
+      << (unsigned int)0x3AA66380 // timestamp1
+      << (unsigned int)0x3A877A42 // timestamp1
       << (unsigned short)0x0000;
   }
 

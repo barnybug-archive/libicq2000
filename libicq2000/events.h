@@ -341,7 +341,8 @@ namespace ICQ2000 {
       AwayMessage,
       EmailEx,
       UserAdd,
-      Email
+      Email,
+      WebPager
     };
 
     enum DeliveryFailureReason {
@@ -580,6 +581,23 @@ namespace ICQ2000 {
 
     MessageType getType() const;
     unsigned int getSenderUIN() const;
+  };
+
+  /**
+   *  A Web Pager message
+   */
+  class WebPagerEvent : public MessageEvent {
+   private:
+    string m_sender, m_email, m_message;
+
+   public:
+    WebPagerEvent(ContactRef c, const string& email, const string& sender, const string& msg);
+
+    string getMessage() const;
+    string getEmail() const;
+    string getSender() const;
+
+    MessageType getType() const;
   };
 
   /**

@@ -967,7 +967,22 @@ namespace ICQ2000 {
 
   MessageEvent::MessageType EmailExEvent::getType() const { return MessageEvent::EmailEx; }
 
-  unsigned int EmailExEvent::getSenderUIN() const { return m_contact->getUIN(); }
+  // ============================================================================
+  //  Web Pager message
+  // ============================================================================
+
+  WebPagerEvent::WebPagerEvent(ContactRef c, const string& email,
+			       const string& sender, const string& msg)
+    : MessageEvent(c), m_sender(sender), m_email(email), m_message(msg)
+  { }
+
+  string WebPagerEvent::getMessage() const { return m_message; }
+
+  string WebPagerEvent::getEmail() const { return m_email; }
+
+  string WebPagerEvent::getSender() const { return m_sender; }
+
+  MessageEvent::MessageType WebPagerEvent::getType() const { return MessageEvent::WebPager; }
 
   // ============================================================================
   //  "You were added" message

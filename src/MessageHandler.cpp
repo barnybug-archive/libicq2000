@@ -323,11 +323,22 @@ namespace ICQ2000 {
     {
       // these come from 'magic' UIN 10
       EmailExICQSubType *subtype = static_cast<EmailExICQSubType*>(st);
-      contact = lookupEmail( subtype->getEmail() );
+      contact = lookupEmail( subtype->getEmail(), subtype->getSender() );
       e = new EmailExEvent(contact,
 			   subtype->getEmail(),
 			   subtype->getSender(),
 			   subtype->getMessage());
+      break;
+    }
+
+    case MSG_Type_WebPager:
+    {
+      WebPagerICQSubType *subtype = static_cast<WebPagerICQSubType*>(st);
+      contact = lookupEmail( subtype->getEmail(), subtype->getSender() );
+      e = new WebPagerEvent(contact,
+			    subtype->getEmail(),
+			    subtype->getSender(),
+			    subtype->getMessage());
       break;
     }
 
@@ -443,13 +454,13 @@ namespace ICQ2000 {
     return ret;
   }
 
-  ContactRef MessageHandler::lookupEmail(const string& email) {
+  ContactRef MessageHandler::lookupEmail(const string& email, const string& alias) {
     ContactRef ret;
     
     if (m_contact_list->email_exists(email)) {
       ret = m_contact_list->lookup_email(email);
     } else {
-      ret = ContactRef( new Contact(email) );
+      ret = ContactRef( new Contact(alias) );
       ret->setEmail(email);
     }
 
