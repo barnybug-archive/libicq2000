@@ -472,6 +472,50 @@ namespace ICQ2000 {
 	SignalLog(LogEvent::WARN, e.what());
       }
 
+    } else if (snac->getType() == SrvResponseSNAC::RWorkInfo) {
+
+      try {
+	Contact* c = getUserInfoCacheContact( snac->RequestID() );
+	c->setWorkInfo( snac->getWorkInfo() );
+	UserInfoChangeEvent ev(c);
+	contactlist.emit(&ev);
+      } catch(ParseException e) {
+	SignalLog(LogEvent::WARN, e.what());
+      }
+
+    } else if (snac->getType() == SrvResponseSNAC::RBackgroundInfo) {
+
+      try {
+	Contact* c = getUserInfoCacheContact( snac->RequestID() );
+	c->setBackgroundInfo( snac->getBackgroundInfo() );
+	UserInfoChangeEvent ev(c);
+	contactlist.emit(&ev);
+      } catch(ParseException e) {
+	SignalLog(LogEvent::WARN, e.what());
+      }
+
+    } else if (snac->getType() == SrvResponseSNAC::RInterestInfo) {
+
+      try {
+	Contact* c = getUserInfoCacheContact( snac->RequestID() );
+	c->setInterestInfo( snac->getPersonalInterestInfo() );
+	UserInfoChangeEvent ev(c);
+	contactlist.emit(&ev);
+      } catch(ParseException e) {
+	SignalLog(LogEvent::WARN, e.what());
+      }
+
+    } else if (snac->getType() == SrvResponseSNAC::REmailInfo) {
+
+      try {
+	Contact* c = getUserInfoCacheContact( snac->RequestID() );
+	c->setEmailInfo( snac->getEmailInfo() );
+	UserInfoChangeEvent ev(c);
+	contactlist.emit(&ev);
+      } catch(ParseException e) {
+	SignalLog(LogEvent::WARN, e.what());
+      }
+
     } else if (snac->getType() == SrvResponseSNAC::RAboutInfo) {
 
       try {

@@ -196,6 +196,10 @@ namespace ICQ2000 {
     // detailed user info structures
     MainHomeInfo& getMainHomeInfo() { return m_main_home_info; }
     HomepageInfo& getHomepageInfo() { return m_homepage_info; }
+    EmailInfo &getEmailInfo() { return m_email_info; }
+    WorkInfo &getWorkInfo() { return m_work_info; }
+    BackgroundInfo &getBackgroundInfo() { return m_background_info; }
+    PersonalInterestInfo &getPersonalInterestInfo() { return m_personal_interest_info; }
     string getAboutInfo() const { return m_about; }
   };
 

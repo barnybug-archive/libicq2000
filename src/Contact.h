@@ -80,19 +80,20 @@ namespace ICQ2000 {
   };
 
   class BackgroundInfo {
-    list<string> schools;   // school names
-
    public:
+    typedef pair<unsigned short, string> School;
+    list<School> schools;   // school names
+
     BackgroundInfo();
 
-    void addSchool(const string& s);
+    void addSchool(unsigned short cat, const string& s);
   };
 
   class PersonalInterestInfo {
-    list<unsigned short> categories;
-    list<string> specifics;
-    
    public:
+    typedef pair<unsigned short, string> Interest;
+    list<Interest> interests;
+
     PersonalInterestInfo();
     
     void addInterest(unsigned short cat, const string& s);
@@ -128,6 +129,7 @@ namespace ICQ2000 {
     EmailInfo m_email_info;
     WorkInfo m_work_info;
     PersonalInterestInfo m_personal_interest_info;
+    BackgroundInfo m_background_info;
     string m_about;
 
   public:
@@ -177,13 +179,15 @@ namespace ICQ2000 {
     void setEmailInfo(const EmailInfo &e);
     void setWorkInfo(const WorkInfo &w);
     void setInterestInfo(const PersonalInterestInfo& p);
+    void setBackgroundInfo(const BackgroundInfo& b);
     void setAboutInfo(const string& about);
 
     MainHomeInfo& getMainHomeInfo();
     HomepageInfo& getHomepageInfo();
     EmailInfo& getEmailInfo();
     WorkInfo& getWorkInfo();
-    PersonalInterestInfo& getInterestInfo();
+    BackgroundInfo& getBackgroundInfo();
+    PersonalInterestInfo& getPersonalInterestInfo();
     const string& getAboutInfo() const;
 
     bool isICQContact() const;

@@ -150,11 +150,21 @@ namespace ICQ2000 {
 
   void Contact::setInterestInfo(const PersonalInterestInfo& s) { m_personal_interest_info = s; }
 
+  void Contact::setBackgroundInfo(const BackgroundInfo& b) { m_background_info = b; }
+
   void Contact::setAboutInfo(const string& about) { m_about = about; }
 
   MainHomeInfo& Contact::getMainHomeInfo() { return m_main_home_info; }
 
   HomepageInfo& Contact::getHomepageInfo() { return m_homepage_info; }
+
+  WorkInfo& Contact::getWorkInfo() { return m_work_info; }
+
+  PersonalInterestInfo &Contact::getPersonalInterestInfo() { return m_personal_interest_info; }
+
+  BackgroundInfo& Contact::getBackgroundInfo() { return m_background_info; }
+
+  EmailInfo& Contact::getEmailInfo() { return m_email_info; }
 
   const string& Contact::getAboutInfo() const { return m_about; }
 
@@ -253,15 +263,14 @@ namespace ICQ2000 {
     
   BackgroundInfo::BackgroundInfo() { }
 
-  void BackgroundInfo::addSchool(const string& s) {
-    schools.push_back(s);
+  void BackgroundInfo::addSchool(unsigned short cat, const string& s) {
+    schools.push_back(School(cat, s));
   }
 
   PersonalInterestInfo::PersonalInterestInfo() { }
 
   void PersonalInterestInfo::addInterest(unsigned short cat, const string& s) {
-    categories.push_back(cat);
-    specifics.push_back(s);
+    interests.push_back(Interest(cat, s));
   }
 
 }

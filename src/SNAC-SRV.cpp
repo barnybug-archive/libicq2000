@@ -507,7 +507,7 @@ namespace ICQ2000 {
 	b >> cat;
 	b.UnpackUint16StringNull(spec);
 	b.ServerToClient(spec);
-	m_personal_interest_info.addInterest(cat,spec);
+	m_personal_interest_info.addInterest(cat, spec);
 	--n;
       }
       m_type = RInterestInfo;
@@ -515,19 +515,18 @@ namespace ICQ2000 {
     }
     case 7: {
       b >> wb; // 0a status code
-      // not sure how to decipher this properly... seems there are 3 strings
-      // perhaps that's because all my friends are in university
-      unsigned short ws;
-      b >> ws; // number of fields?
-
-      if (ws > 0) b >> wb;
-      for (int i=0; i < 3; i++) {
+      unsigned char n;
+      b >> n;
+      while (n > 0) {
+	unsigned short cat;
 	string s;
+	b >> cat;
 	b.UnpackUint16StringNull(s);
 	b.ServerToClient(s);
-	m_background_info.addSchool(s);
+	m_background_info.addSchool(cat, s);
+	--n;
       }
-      b >> wb; // end marker?
+
       m_type = RBackgroundInfo;
       break;
     }
