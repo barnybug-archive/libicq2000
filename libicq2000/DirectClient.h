@@ -124,6 +124,7 @@ namespace ICQ2000 {
     Signal1<void,MessageEvent*> messageack;
     Signal1<void,SocketEvent*> socket;
     Signal0<void> connected;
+    Signal1<void,AwayMessageEvent*> want_auto_resp;
 
     unsigned int getUIN() const;
     unsigned int getIP() const;

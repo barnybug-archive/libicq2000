@@ -226,7 +226,7 @@ namespace ICQ2000 {
     b << (unsigned short)0x0000;		// homepage category
     b.PackUint16StringNull("");			//           description
     b << (unsigned char)0x00;			// only-online flag
-}
+  }
 
   SrvRequestDetailUserInfo::SrvRequestDetailUserInfo(unsigned int my_uin, unsigned int user_uin)
     : m_my_uin(my_uin), m_user_uin(user_uin) { }
@@ -583,6 +583,8 @@ namespace ICQ2000 {
 	--n;
       }
 
+      unsigned char junk;
+      b >> junk;
       m_type = RBackgroundInfo;
       break;
     }

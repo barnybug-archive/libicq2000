@@ -451,25 +451,44 @@ namespace ICQ2000 {
 
     if (command == 0) throw ParseException("Invalid TCP Packet");
 
+    unsigned short type = icqsubtype->getType();
+
     MessageEvent *ev;
 
     switch(command) {
 
     case V6_TCP_START:
 
-      if (icqsubtype->getType() == MSG_Type_Normal) {
+      if (type == MSG_Type_Normal) {
 	NormalICQSubType *nst = static_cast<NormalICQSubType*>(icqsubtype);
 	ev = new NormalMessageEvent(m_contact, nst->getMessage(), nst->isMultiParty());
 	SignalMessageEvent(ev);
 
 	SendPacketAck(icqsubtype);
 
-      } else if (icqsubtype->getType() == MSG_Type_URL) {
+      } else if (type == MSG_Type_URL) {
 	URLICQSubType *ust = static_cast<URLICQSubType*>(icqsubtype);
 	ev = new URLMessageEvent(m_contact, ust->getMessage(), ust->getURL());
 	SignalMessageEvent(ev);
 
 	SendPacketAck(icqsubtype);
+      } else if (type == MSG_Type_AutoReq_Away
+	       || type == MSG_Type_AutoReq_Occ
+	       || type == MSG_Type_AutoReq_NA
+	       || type == MSG_Type_AutoReq_DND
+	       || type == MSG_Type_AutoReq_FFC)
+      {
+        AwayMsgSubType *ast = static_cast<AwayMsgSubType*>(icqsubtype);
+	AwayMessageEvent aev(m_contact);
+	want_auto_resp.emit(&aev);
+        ast->setMessage(aev.getMessage());
+
+	ostringstream ostr;
+	ostr << "Sending direct auto response to "
+	   << m_contact->getAlias() << " (" << m_contact->getStringUIN() << ")";
+	SignalLog(LogEvent::INFO, ostr.str());
+	
+        SendPacketAck(icqsubtype);
       }
 
       break;

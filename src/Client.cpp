@@ -230,7 +230,8 @@ namespace ICQ2000 {
     ICQSubType *st = snac->getICQSubType();
     if (st == NULL) return;
 
-    if (st->getType() == MSG_Type_Normal) {
+    unsigned short type = st->getType();
+    if (type == MSG_Type_Normal) {
       NormalICQSubType *nst = static_cast<NormalICQSubType*>(st);
       
       contact = lookupICQ( nst->getSource() );
@@ -239,7 +240,7 @@ namespace ICQ2000 {
       
       if (nst->isAdvanced()) SendAdvancedACK(snac);
 
-    } else if (st->getType() == MSG_Type_URL) {
+    } else if (type == MSG_Type_URL) {
       URLICQSubType *ust = static_cast<URLICQSubType*>(st);
       
       contact = lookupICQ( ust->getSource() );
@@ -249,7 +250,7 @@ namespace ICQ2000 {
 
       if (ust->isAdvanced()) SendAdvancedACK(snac);
 
-    } else if (st->getType() == MSG_Type_SMS) {
+    } else if (type == MSG_Type_SMS) {
       SMSICQSubType *sst = static_cast<SMSICQSubType*>(st);
       
       if (sst->getSMSType() == SMSICQSubType::SMS) {
@@ -270,7 +271,7 @@ namespace ICQ2000 {
 				sst->delivered());
       }
 
-    } else if (st->getType() == MSG_Type_AuthReq) {
+    } else if (type == MSG_Type_AuthReq) {
       AuthReqICQSubType *ust = static_cast<AuthReqICQSubType*>(st);
       
       contact = lookupICQ( ust->getSource() );
@@ -278,19 +279,45 @@ namespace ICQ2000 {
 			       ust->getLastName(),ust->getEmail(),
                                ust->getMessage());
 
-    } else if (st->getType() == MSG_Type_AuthRej) {
+    } else if (type == MSG_Type_AuthRej) {
       AuthRejICQSubType *ust = static_cast<AuthRejICQSubType*>(st);
     
       contact = lookupICQ( ust->getSource() );
       e = new AuthAckEvent(contact, ust->getMessage(), false);
 
-    } else if (st->getType() == MSG_Type_AuthAcc) {
+    } else if (type == MSG_Type_AuthAcc) {
       AuthAccICQSubType *ust = static_cast<AuthAccICQSubType*>(st);
     
       contact = lookupICQ( ust->getSource() );
       e = new AuthAckEvent(contact, true);
 
+    } else if (type == MSG_Type_AutoReq_Away
+	       || type == MSG_Type_AutoReq_Occ
+	       || type == MSG_Type_AutoReq_NA
+	       || type == MSG_Type_AutoReq_DND
+	       || type == MSG_Type_AutoReq_FFC)
+    {
+      AwayMsgSubType *ast = static_cast<AwayMsgSubType*>(st);
+      contact = lookupICQ(ast->getSource());
+      AwayMessageEvent aev(contact);
+      want_auto_resp.emit(&aev);
+      ast->setMessage(aev.getMessage());
+
+      ostringstream dude;
+      dude << contact->getAlias() << " (" << contact->getStringUIN() << ")";
+      if (ast->isAdvanced()) {
+	ostringstream ostr;
+	// Has to be dude.str(), the ostringstream itself will not <<... weird
+	ostr << "Sending auto response through server to " << dude.str();
+	SignalLog(LogEvent::INFO, ostr.str());
+	SendAdvancedACK(snac);
       }
+      else {
+	ostringstream ostr;
+	ostr << "Got malformed away message request from " << dude.str();
+	SignalLog(LogEvent::WARN, ostr.str());
+      }
+    }
 
     if (e != NULL) {
       contact->addPendingMessage(e);
@@ -1375,6 +1402,7 @@ namespace ICQ2000 {
       dc->messageack.connect( slot(this, &Client::dc_messageack_cb) );
       dc->connected.connect( SigC::bind<DirectClient*>( slot(this, &Client::dc_connected_cb), dc ) );
       dc->socket.connect( slot(this, &Client::dc_socket_cb) );
+      dc->want_auto_resp.connect( want_auto_resp.slot() );
       SignalAddSocket( sock->getSocketHandle(), SocketEvent::READ );
 
     } else {
@@ -1636,6 +1664,7 @@ namespace ICQ2000 {
       dc->messageack.connect( slot(this, &Client::dc_messageack_cb) );
       dc->connected.connect( SigC::bind<DirectClient*>( slot(this, &Client::dc_connected_cb), dc ) );
       dc->socket.connect( slot(this, &Client::dc_socket_cb) );
+      dc->want_auto_resp.connect( want_auto_resp.slot() );
 
       try {
 	dc->Connect();

@@ -353,6 +353,14 @@ namespace ICQ2000 {
      * @see MyStatusChangeEvent
      */
     Signal1<void,MyStatusChangeEvent*> statuschanged;
+
+    /**
+     *  Signal when someone requests your away message. The client
+     *  should setMessage in the AutoMessageEvent to what your away
+     *  message is. This allows dynamic away messages for different
+     *  people.
+     */
+    Signal1<void,AwayMessageEvent*> want_auto_resp;
     // -------------
 
     // -- Signal Dispatchers --

@@ -280,12 +280,14 @@ namespace ICQ2000 {
     b << (unsigned short)0x0000
       << (unsigned short)0x0001;
 
-    // empty message
-    b << (unsigned short)0x0001
-      << (unsigned char)0x00;
+    string tekst = m_message;
+    b.ClientToServer(tekst);
+    b.PackUint16StringNull(tekst);
   }
 
   unsigned short AwayMsgSubType::Length() const {
+    // This doesn't appear to be called when sending an away message
+    // response, so I'm leaving this as 9.
     return 9;
   }
 
