@@ -103,6 +103,12 @@ namespace ICQ2000 {
       case SNAC_SBL_List_From_Server:
 	snac = new SBLListSNAC();
 	break;
+      case SNAC_SBL_Edit_Access_Granted:
+	snac = new EditReqAccessGrantedSBLSNAC();
+	break;
+      case SNAC_SBL_Modification_Ack:
+	snac = new ModificationAckSBLSNAC();
+	break;
       }
       break;
     }

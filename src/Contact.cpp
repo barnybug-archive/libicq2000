@@ -74,6 +74,8 @@ namespace ICQ2000 {
     m_last_status_change_time = 0;
     m_last_message_time = 0;
     m_last_away_msg_check_time = 0;
+    m_group_id = 0;
+    m_tag_id = 0;
   }
 
   unsigned int Contact::getUIN() const { return m_uin; }
@@ -268,6 +270,28 @@ namespace ICQ2000 {
   void Contact::setTCPVersion(unsigned char v) {
     m_tcp_version = v;
     userinfo_change_emit(true);
+  }
+
+  void Contact::setServerSideInfo(unsigned short group_id, unsigned short tag_id)
+  {
+    m_group_id = group_id;
+    m_tag_id = tag_id;
+  }
+
+  unsigned short Contact::getServerSideGroupID() const {
+    return m_group_id;
+  }
+
+  unsigned short Contact::getServerSideID() const {
+    unsigned short r = m_tag_id;
+    if(!r) r = m_uin;
+
+    if(r > 50000) {
+      r -= r-1000;
+      r += rand()%1000;
+    }
+
+    return r;
   }
 
   void Contact::set_capabilities(const Capabilities& c)

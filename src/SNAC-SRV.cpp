@@ -589,6 +589,9 @@ namespace ICQ2000 {
     case SrvResponse_RandomChatFound:
       ParseRandomChatFound(b);
       break;
+    case SrvResponse_AckRandomGroupSet:
+      ParseRandomGroupSetAck(b);
+      break;
     default:
       throw ParseException("Unknown ICQ subtype for Server response SNAC");
     }
@@ -928,6 +931,10 @@ namespace ICQ2000 {
     b >> wb;
     b >> m_uin;
     b >> wb;
+  }
+
+  void SrvResponseSNAC::ParseRandomGroupSetAck(Buffer& b) {
+    m_type = RandomGroupSet;
   }
 
 }

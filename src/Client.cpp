@@ -101,6 +101,9 @@ namespace ICQ2000 {
     m_lower_port = 0;
     m_upper_port = 0;
 
+    m_default_group = 0x13a0;
+    m_default_group_name = "General";
+
     m_cookiecache.setDefaultTimeout(30);
     // 30 seconds is hopefully enough for even the slowest connections
     m_cookiecache.expired.connect( slot(this,&Client::ICBMCookieCache_expired_cb) );
@@ -1165,12 +1168,34 @@ namespace ICQ2000 {
       switch(snac->Subtype()) {
       case SNAC_SBL_List_From_Server:
 	SignalLog(LogEvent::INFO, "Received server-based list from server\n");
-        SBLListSNAC *sbs = static_cast<SBLListSNAC*>(snac);
-        SignalServerBasedContactList( sbs->getContactList() );
+	SignalServerBasedContactList( static_cast<SBLListSNAC*>(snac)->getContactList() );
+	break;
+      case SNAC_SBL_Edit_Access_Granted:
+	SignalLog(LogEvent::INFO, "Access to the server-based contact list was granted\n");
+      break;
+      case SNAC_SBL_Modification_Ack: {
+	vector<ModificationAckSBLSNAC::Result> r = static_cast<ModificationAckSBLSNAC*>(snac)->getResults();
+	vector<ModificationAckSBLSNAC::Result>::iterator ir;
+	
+	for(ir = r.begin(); ir != r.end(); ++ir)
+	switch( *ir ) {
+	  case ModificationAckSBLSNAC::Success:
+	    SignalLog(LogEvent::INFO, "Server-based contact list modification succeeded\n");
+	    break;
+	  case ModificationAckSBLSNAC::Failed:
+	    SignalLog(LogEvent::INFO, "Server-based contact list modification failed\n");
+	    break;
+	  case ModificationAckSBLSNAC::AuthRequired:
+	    SignalLog(LogEvent::INFO, "Authentification is required to perform the server-based modification\n");
+	    break;
+	  case ModificationAckSBLSNAC::AlreadyExists:
+	    SignalLog(LogEvent::INFO, "Already exists on the server-based contact list\n");
+	    break;
+	  }
+	}
 	break;
       }
       break;
-	
 	
     } // switch(Family)
 
@@ -1698,7 +1723,6 @@ namespace ICQ2000 {
     Send(b);
   }
 
-
   void Client::uploadSelfDetails()
   {
     Buffer b(&m_translator);
@@ -1711,6 +1735,41 @@ namespace ICQ2000 {
     Send(b);
   }
     
+  void Client::uploadServerBasedContactList()
+  {
+    uploadServerBasedContactList(m_contact_list);
+  }
+
+  void Client::uploadServerBasedContactList(const ContactList &l)
+  {
+    Buffer b(&m_translator);
+
+    FLAPwrapSNAC( b, EditReqAccessSBLSNAC() );
+
+    FLAPwrapSNAC( b, AddItemSBLSNAC(m_default_group_name, m_default_group) );
+    FLAPwrapSNAC( b, AddItemSBLSNAC(l) );
+
+    FLAPwrapSNAC( b, EditFinishSBLSNAC() );
+
+    Send(b);
+  }
+
+  void Client::removeServerBasedContactList()
+  {
+    removeServerBasedContactList(m_contact_list);
+  }
+
+  void Client::removeServerBasedContactList(const ContactList &l)
+  {
+    Buffer b(&m_translator);
+
+    FLAPwrapSNAC( b, EditReqAccessSBLSNAC() );
+    FLAPwrapSNAC( b, RemoveItemSBLSNAC(l) );
+    FLAPwrapSNAC( b, EditFinishSBLSNAC() );
+
+    Send(b);
+  }
+
   /**
    *  Set your status. This is used to set your status, as well as to
    *  connect and disconnect from the network. When you wish to
@@ -1817,6 +1876,11 @@ namespace ICQ2000 {
       SignalLog(LogEvent::INFO, "Setting random chat group");
       FLAPwrapSNACandSend( ssnac );
     }
+  }
+
+  void Client::setServerSideGroup(const std::string &group_name, unsigned short group_id) {
+    m_default_group = group_id;
+    m_default_group_name = group_name;
   }
 
   /**
@@ -1941,6 +2005,7 @@ namespace ICQ2000 {
 
     if (!m_contact_list.exists(c->getUIN())) {
       m_contact_list.add(c);
+      c->setServerSideInfo(m_default_group, 0);
       c->status_change_signal.connect( contact_status_change_signal.slot() );
       c->userinfo_change_signal.connect( contact_userinfo_change_signal.slot() );
     }

@@ -85,6 +85,9 @@ namespace ICQ2000 {
     bool m_web_aware;
     unsigned short m_random_group;
 
+    std::string m_default_group_name;
+    unsigned short m_default_group;
+
     std::string m_authorizerHostname;
     unsigned short m_authorizerPort;
 
@@ -396,6 +399,13 @@ namespace ICQ2000 {
     bool getWebAware() const;
 
     void uploadSelfDetails();
+    
+    void setServerSideGroup(const std::string &group_name, unsigned short group_id);
+
+    void uploadServerBasedContactList();
+    void uploadServerBasedContactList(const ContactList &l);
+    void removeServerBasedContactList();
+    void removeServerBasedContactList(const ContactList &l);
     
     // -- Contact List --
     void addContact(ContactRef c);

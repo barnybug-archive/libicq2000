@@ -143,7 +143,7 @@ namespace ICQ2000 {
     bool m_authreq;
     bool m_direct;
     unsigned int m_ext_ip, m_lan_ip;
-    unsigned short m_ext_port, m_lan_port;
+    unsigned short m_ext_port, m_lan_port, m_group_id, m_tag_id;
     Capabilities m_capabilities;
     unsigned int m_signon_time, m_last_online_time, m_last_status_change_time;
     unsigned int m_last_message_time, m_last_away_msg_check_time;
@@ -218,6 +218,10 @@ namespace ICQ2000 {
     void setLanPort(unsigned short port);
     void setTCPVersion(unsigned char v);
     void set_capabilities(const Capabilities& c);
+
+    void setServerSideInfo(unsigned short group_id, unsigned short tag_id);
+    unsigned short getServerSideGroupID() const;
+    unsigned short getServerSideID() const;
 
     void set_signon_time(unsigned int t);
     void set_last_online_time(unsigned int t);

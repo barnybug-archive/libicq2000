@@ -23,7 +23,6 @@
  */
 
 #include <libicq2000/SNAC-SBL.h>
-
 #include <libicq2000/TLV.h>
 
 using std::string;
@@ -44,7 +43,7 @@ namespace ICQ2000 {
   void SBLListSNAC::ParseBody(Buffer& b) {
         
         b.advance(1);			// 00
-        unsigned short entityCount;
+	unsigned short entityCount, group_id, tag_id;
         b >> entityCount;		// number of entities?
         while (b.pos()<=b.size()-10)
         {
@@ -52,7 +51,9 @@ namespace ICQ2000 {
             b >> nameLength;
             string name;
             b.Unpack(name, nameLength);
-            b.advance(6);
+	    b >> group_id;
+	    b >> tag_id;
+	    b.advance(2);
             unsigned short dataLength;
             b >> dataLength;
             while (dataLength>=2)
@@ -70,6 +71,7 @@ namespace ICQ2000 {
                     b.Unpack(nickname, infoLength);
                     dataLength -= infoLength;
                     c->setAlias(nickname);
+		    c->setServerSideInfo(group_id, tag_id);
                     m_contacts.add(c);
                     break;
                 }
@@ -83,4 +85,179 @@ namespace ICQ2000 {
         }
         b.advance(4);
     }
+
+  EditStartSBLSNAC::EditStartSBLSNAC() { }
+
+  void EditStartSBLSNAC::OutputBody(Buffer& b) const {
+    // empty
+    }
+
+  EditFinishSBLSNAC::EditFinishSBLSNAC() { }
+
+  void EditFinishSBLSNAC::OutputBody(Buffer& b) const {
+    // empty
+    }
+
+  AddItemSBLSNAC::AddItemSBLSNAC() { }
+
+  AddItemSBLSNAC::AddItemSBLSNAC(const ContactList& l)
+    : m_buddy_list(), m_group_id(0) { 
+    ContactList::const_iterator curr = l.begin();
+    while (curr != l.end()) {
+      if ((*curr)->isICQContact()) m_buddy_list.push_back(*curr);
+      ++curr;
+    }
   }
+
+  AddItemSBLSNAC::AddItemSBLSNAC(const ContactRef& c)
+    : m_buddy_list(1, c), m_group_id(0) { }
+
+  AddItemSBLSNAC::AddItemSBLSNAC(const std::string &group_name, unsigned short group_id)
+    : m_group_name(group_name), m_group_id(group_id) { }
+
+  void AddItemSBLSNAC::addBuddy(const ContactRef& c) {
+    m_buddy_list.push_back(c);
+    }
+
+  void AddItemSBLSNAC::OutputBody(Buffer& b) const {
+    if(m_group_id) {
+      b << (unsigned short) m_group_name.size();
+      b.Pack(m_group_name);
+      b << m_group_id;
+      b << (unsigned short) 0x0000;
+      b << (unsigned short) 0x0001;
+      b << (unsigned short) 0x0000;
+
+    } else {
+      std::list<ContactRef>::const_iterator curr = m_buddy_list.begin();
+      while (curr != m_buddy_list.end()) {
+	std::string suin = (*curr)->getStringUIN();
+	std::string alias = (*curr)->getAlias();
+
+	b << (unsigned short) suin.size();
+	b.Pack(suin);
+	b << (unsigned short) (*curr)->getServerSideGroupID();
+	b << (unsigned short) (*curr)->getServerSideID();
+	b << (unsigned short) 0x0000;
+
+	b << (unsigned short) (4 + alias.size());
+
+	b << (unsigned short) TLV_ContactNickname;
+	b << (unsigned short) alias.size();
+	b.Pack(alias);
+
+	++curr;
+      }
+
+    }
+  }
+
+  RemoveItemSBLSNAC::RemoveItemSBLSNAC() { }
+
+  RemoveItemSBLSNAC::RemoveItemSBLSNAC(const ContactList& l)
+    : m_buddy_list(), m_group_id(0) { 
+    ContactList::const_iterator curr = l.begin();
+    while (curr != l.end()) {
+      if ((*curr)->isICQContact()) m_buddy_list.push_back(*curr);
+      ++curr;
+    }
+  }
+
+  RemoveItemSBLSNAC::RemoveItemSBLSNAC(const ContactRef& c)
+    : m_buddy_list(1, c), m_group_id(0) { }
+
+  RemoveItemSBLSNAC::RemoveItemSBLSNAC(const std::string &group_name, unsigned short group_id)
+    : m_group_name(group_name), m_group_id(group_id) { }
+
+  void RemoveItemSBLSNAC::OutputBody(Buffer& b) const {
+    if(m_group_id) {
+      b << (unsigned short) m_group_name.size();
+      b.Pack(m_group_name);
+      b << m_group_id;
+      b << (unsigned short) 0x0000;
+      b << (unsigned short) 0x0001;
+      b << (unsigned short) 0x0000;
+
+    } else {
+      std::list<ContactRef>::const_iterator curr = m_buddy_list.begin();
+      while (curr != m_buddy_list.end()) {
+	std::string suin = (*curr)->getStringUIN();
+	std::string alias = (*curr)->getAlias();
+
+	b << (unsigned short) suin.size();
+	b.Pack(suin);
+	b << (unsigned short) (*curr)->getServerSideGroupID();
+	b << (unsigned short) (*curr)->getServerSideID();
+	b << (unsigned short) 0x0000;
+
+	b << (unsigned short) (4 + alias.size());
+
+	b << (unsigned short) TLV_ContactNickname;
+	b << (unsigned short) alias.size();
+	b.Pack(alias);
+
+	++curr;
+      }
+
+    }
+  }
+
+  EditReqAccessSBLSNAC::EditReqAccessSBLSNAC() { }
+
+  void EditReqAccessSBLSNAC::OutputBody(Buffer& b) const {
+    // empty
+    }
+
+  EditReqAccessGrantedSBLSNAC::EditReqAccessGrantedSBLSNAC() { }
+  
+  void EditReqAccessGrantedSBLSNAC::ParseBody(Buffer& b) {
+    // some mess is inside, isn't worth parsing
+    }
+
+  ModificationAckSBLSNAC::ModificationAckSBLSNAC() { }
+
+  void ModificationAckSBLSNAC::ParseBody(Buffer& b) {
+    unsigned short errcode;
+
+    while(b.remains() >= 2) {
+      b >> errcode;
+
+      switch(errcode) {
+        case 0x0000: m_results.push_back(Success); break;
+        case 0x0003: m_results.push_back(AlreadyExists); break;
+        case 0x000a: m_results.push_back(Failed); break;
+        case 0x000e: m_results.push_back(AuthRequired); break;
+      }
+    }
+  }
+
+  UpdateGroupSBLSNAC::UpdateGroupSBLSNAC(const std::string &group_name,
+  unsigned short group_id, const std::vector<unsigned short> &ids)
+    : m_group_name(group_name), m_group_id(group_id), m_ids(ids) { }
+
+  void UpdateGroupSBLSNAC::OutputBody(Buffer& b) const {
+    b << (unsigned short) m_group_name.size();
+    b.Pack(m_group_name);
+    b << m_group_id;
+    b << (unsigned short) 0x0000;
+    b << (unsigned short) 0x0001;
+
+    if(m_ids.empty()) {
+      b << (unsigned short) 0x0000;
+
+    } else {
+      b << (unsigned short) (4 + m_ids.size()*2);
+      b << (unsigned short) 0x00c8;
+      b << (unsigned short) (m_ids.size()*2);
+	// raw-coded TLV, found no suitable data structures in TLV.h
+
+      std::vector<unsigned short>::const_iterator curr = m_ids.begin();
+      while (curr != m_ids.end()) {
+	b << (unsigned short) *curr;
+	++curr;
+      }
+
+    }
+  }
+
+}

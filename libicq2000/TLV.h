@@ -86,6 +86,7 @@ namespace ICQ2000 {
   const unsigned short TLV_LANDetails = 0x000c;
   const unsigned short TLV_Capabilities = 0x000d;
   const unsigned short TLV_TimeOnline = 0x000f;
+  const unsigned short TLV_ContactNickname = 0x0131;
 
   // Channel 0x0004
   // const unsigned short TLV_Screenname = 0x0001;

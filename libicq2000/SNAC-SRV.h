@@ -247,6 +247,7 @@ namespace ICQ2000 {
   const unsigned short SrvResponse_AckWorkInfoChange	 = 0x006E;
   const unsigned short SrvResponse_AckHomepageInfoChange = 0x0078;
   const unsigned short SrvResponse_AckAboutInfoChange	 = 0x0082;
+  const unsigned short SrvResponse_AckRandomGroupSet     = 0x0370;
   const unsigned short SrvResponse_SMS_Done       = 0x0096;
   const unsigned short SrvResponse_SimpleUI       = 0x0190;
   const unsigned short SrvResponse_SimpleUI_Done  = 0x019a;
@@ -283,7 +284,8 @@ namespace ICQ2000 {
       AckHomepageInfoChange,
       AckWorkInfoChange,
       AckAboutInfoChange,
-      RandomChatFound
+      RandomChatFound,
+      RandomGroupSet
     };
 
    protected:
@@ -330,6 +332,7 @@ namespace ICQ2000 {
     void ParseSimpleUserInfo(Buffer &b, unsigned short subtype);
     void ParseDetailedUserInfo(Buffer &b, unsigned short subtype);
     void ParseRandomChatFound(Buffer& b);
+    void ParseRandomGroupSetAck(Buffer& b);
     
    public:
     SrvResponseSNAC();
