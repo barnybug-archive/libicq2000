@@ -1,8 +1,0 @@
-libicq2000 (0.2.9.20010111-1) unstable; urgency=low
-
-  * Development release before proper full releases.
-
- -- Barnaby Gray <barnaby@beedesign.co.uk>  Thu, 27 Dec 2001 00:36:36 +0000
-Local variables:
-mode: debian-changelog
-End:
