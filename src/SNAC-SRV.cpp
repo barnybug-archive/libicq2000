@@ -36,8 +36,8 @@ namespace ICQ2000 {
 
   SrvSendSNAC::SrvSendSNAC(const string& text, const string& destination,
 			   unsigned int senders_UIN, const string& senders_name, bool delrpt)
-    : m_text(text), m_destination(destination), m_senders_UIN(senders_UIN),
-      m_senders_name(senders_name), m_delivery_receipt(delrpt) { } 
+    : m_text(text), m_destination(destination), m_senders_name(senders_name),
+       m_senders_UIN(senders_UIN), m_delivery_receipt(delrpt) { }
 
   void SrvSendSNAC::OutputBody(Buffer& b) const {
 
@@ -196,8 +196,8 @@ namespace ICQ2000 {
       m_firstname(firstname), m_lastname(lastname),
       m_email(email), m_min_age(min_age), m_max_age(max_age),
       m_sex(sex), m_language(language), m_city(city), m_state(state),
-      m_country(country), m_company_name(company_name), m_department(department),
-      m_position(position), m_only_online(only_online)
+      m_company_name(company_name), m_department(department), m_position(position),
+      m_country(country), m_only_online(only_online)
 
   { }
 

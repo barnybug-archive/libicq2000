@@ -122,7 +122,7 @@ XmlNode *XmlNode::parse(string::iterator& curr, string::iterator end) {
   }
   
   // should never get here
-
+  return NULL;
 }
 
 string XmlNode::parseTag(string::iterator& curr, string::iterator end) {

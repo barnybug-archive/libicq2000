@@ -36,6 +36,8 @@ namespace ICQ2000 {
       Search
     };
 
+    virtual ~RequestIDCacheValue() { }
+
     virtual Type getType() const = 0;
   };
 

@@ -499,7 +499,7 @@ namespace ICQ2000 {
    */
   class EmailExEvent : public MessageEvent {
    private:
-    string m_email, m_sender, m_message;
+    string m_sender, m_email, m_message;
 
    public:
     EmailExEvent(Contact* c, const string &email, const string &sender, const string &msg);

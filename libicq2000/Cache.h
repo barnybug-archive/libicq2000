@@ -190,8 +190,8 @@ namespace ICQ2000 {
 
   template <typename Key, typename Value>
   CacheItem<Key,Value>::CacheItem(const Key &k, const Value &v, unsigned int timeout)
-    : m_key(k), m_value(v),
-      m_timestamp(time(NULL)), m_timeout(timeout) { }
+    : m_timeout(timeout), m_timestamp(time(NULL)), 
+      m_key(k), m_value(v) { }
 
   template <typename Key, typename Value>
   void CacheItem<Key,Value>::setTimestamp(time_t t) { m_timestamp = t; }

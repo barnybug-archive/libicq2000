@@ -34,23 +34,25 @@ using std::istringstream;
 namespace ICQ2000 {
 
   Contact::Contact()
-    : m_uin(0), m_status(STATUS_OFFLINE), m_invisible(false), m_seqnum(0xffff),
-      m_icqcontact(false), m_mobilecontact(false) {
+    : m_icqcontact(false), m_mobilecontact(false), m_uin(0), m_status(STATUS_OFFLINE), 
+      m_invisible(false), m_seqnum(0xffff)
+  {
     Init();
   }
 
   Contact::Contact(unsigned int uin)
-    : m_uin(uin), m_status(STATUS_OFFLINE), m_invisible(false), m_seqnum(0xffff),
-      m_icqcontact(true), m_mobilecontact(false) {
+    : m_icqcontact(true), m_mobilecontact(false), m_uin(uin), m_status(STATUS_OFFLINE), 
+      m_invisible(false), m_seqnum(0xffff)
+  {
     m_main_home_info.alias = UINtoString(m_uin);
     Init();
   }
 
   Contact::Contact(const string& a, const string& m)
     : m_icqcontact(false),
-      m_status(STATUS_OFFLINE), m_seqnum(0xffff), m_invisible(false),
-      m_mobilecontact(true), m_uin(nextImaginaryUIN()) {
-
+      m_mobilecontact(true), m_uin(nextImaginaryUIN()),
+      m_status(STATUS_OFFLINE), m_invisible(false), m_seqnum(0xffff)
+  {
     m_main_home_info.alias = a;
     m_main_home_info.setMobileNo(m);
     Init();
@@ -332,7 +334,7 @@ namespace ICQ2000 {
 
   string HomepageInfo::getLanguage(int l) const {
     if (l < 1 || l > 3) return Language_table[0];
-    unsigned char lang;
+    unsigned char lang = 0;
     if (l == 1) lang = lang1;
     if (l == 2) lang = lang2;
     if (l == 3) lang = lang3;

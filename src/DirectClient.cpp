@@ -48,10 +48,10 @@ namespace ICQ2000 {
   DirectClient::DirectClient(Contact& self, TCPSocket *sock, ContactList *cl,
 			     unsigned int ext_ip, unsigned short server_port,
 			     Translator* translator)
-    : m_self_contact(self), m_socket(sock), m_state(WAITING_FOR_INIT),
-      m_local_ext_ip(ext_ip),
-      m_local_server_port(server_port),m_translator(translator), 
-      m_recv(translator), m_contact_list(cl), m_incoming(true), m_contact(NULL)
+    : m_state(WAITING_FOR_INIT), m_socket(sock), m_recv(translator),
+      m_self_contact(self), m_contact(NULL), m_contact_list(cl),
+      m_incoming(true), m_local_ext_ip(ext_ip),
+      m_local_server_port(server_port), m_translator(translator)
   {
     Init();
   }
@@ -61,10 +61,10 @@ namespace ICQ2000 {
    */
   DirectClient::DirectClient(Contact& self, Contact *c, unsigned int ext_ip,
 			     unsigned short server_port, Translator *translator)
-    : m_self_contact(self), m_state(NOT_CONNECTED),
-      m_local_ext_ip(ext_ip), m_local_server_port(server_port),
-      m_translator(translator), m_recv(translator), m_incoming(false),
-      m_contact(c)
+    : m_state(NOT_CONNECTED), m_recv(translator), m_self_contact(self), 
+      m_contact(c), m_incoming(false), m_local_ext_ip(ext_ip),
+      m_local_server_port(server_port), m_translator(translator)
+      
   {
     Init();
     m_socket = new TCPSocket();
@@ -434,9 +434,8 @@ namespace ICQ2000 {
     b >> length;
 
     // we should get the decrypted packet in
-    unsigned int checksum, foreground, background;
-    unsigned short command, seqnum, unknown, ackFlags, msgFlags, version;
-    unsigned char subCommand, flags;
+    unsigned int checksum;
+    unsigned short command, seqnum, unknown, version;
     unsigned char junk;
     string msg;
     ostringstream ostr;
@@ -712,8 +711,6 @@ namespace ICQ2000 {
     Buffer b(m_translator);
 
     unsigned short seqnum = NextSeqNum();
-
-    Contact *co = ev->getContact();
 
     UINICQSubType *ist = EventToUINICQSubType(ev);
     if (ist == NULL) return;

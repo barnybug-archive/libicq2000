@@ -102,14 +102,14 @@ namespace ICQ2000 {
   }
 
   UINICQSubType::UINICQSubType()
-    : m_source(0), m_destination(0), m_ack(false),
-      m_advanced(false), m_status(0), m_urgent(false),
-      m_tocontactlist(false) { }
+    : m_source(0), m_destination(0), m_advanced(false),
+      m_ack(false), m_urgent(false),
+      m_tocontactlist(false), m_status(0) { }
 
   UINICQSubType::UINICQSubType(unsigned int s, unsigned int d)
-    : m_source(s), m_destination(d), m_ack(false),
-      m_advanced(false), m_status(0), m_urgent(false),
-      m_tocontactlist(false) { }
+    : m_source(s), m_destination(d), m_advanced(false),
+      m_ack(false), m_urgent(false),
+      m_tocontactlist(false), m_status(0) { }
 
   unsigned int UINICQSubType::getSource() const { return m_source; }
 
@@ -678,7 +678,6 @@ namespace ICQ2000 {
       e = new AuthAckEvent(contact, ust->getMessage(), false);
 
     } else if (type == MSG_Type_AuthAcc) {
-      AuthAccICQSubType *ust = static_cast<AuthAccICQSubType*>(st);
       e = new AuthAckEvent(contact, true);
     }
 

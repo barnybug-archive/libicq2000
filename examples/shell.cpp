@@ -279,6 +279,8 @@ void SimpleClient::disconnected_cb(DisconnectedEvent *c) {
     case DisconnectedEvent::FAILED_UNKNOWN:
       cout << "Unknown";
       break;
+    default:
+      break;
     }
     cout << endl;
   }
@@ -350,6 +352,8 @@ void SimpleClient::logger_cb(LogEvent *c) {
     break;
   case LogEvent::PACKET:
     cout << "[32m";
+    break;
+  default:
     break;
   }
 

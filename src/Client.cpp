@@ -51,7 +51,8 @@ namespace ICQ2000 {
    *  @param uin the owner's uin
    *  @param password the owner's password
    */
-  Client::Client(const unsigned int uin, const string& password) : m_password(password), m_recv(&m_translator), m_self(uin) {
+  Client::Client(const unsigned int uin, const string& password)
+    : m_self(uin), m_password(password), m_recv(&m_translator) {
     Init();
   }
 
@@ -232,7 +233,7 @@ namespace ICQ2000 {
   }
 
   void Client::SignalMessage(MessageSNAC *snac) {
-    Contact *contact;
+    Contact *contact = NULL;
     MessageEvent *e = NULL;
     ICQSubType *st = snac->getICQSubType();
     if (st == NULL) return;
@@ -313,7 +314,6 @@ namespace ICQ2000 {
   void Client::SignalMessageACK(MessageACKSNAC *snac) {
     UINICQSubType *st = snac->getICQSubType();
     if (st == NULL) return;
-    Contact *contact = lookupICQ( st->getSource() );
 
     unsigned char type = st->getType();
     if (type == MSG_Type_AutoReq_Away
@@ -442,7 +442,6 @@ namespace ICQ2000 {
         e = new AuthAckEvent(contact, ust->getMessage(), false, 
                              snac->getTime());
       } else if (st->getType() == MSG_Type_AuthAcc) {
-        AuthAccICQSubType *ust = static_cast<AuthAccICQSubType*>(st);
         e = new AuthAckEvent(contact, true, snac->getTime());
       }
       
@@ -1619,7 +1618,6 @@ namespace ICQ2000 {
    *  match messages it has sent up to their acks.
    */
   void Client::SendEvent(MessageEvent *ev) {
-    Contact *c = ev->getContact();
     if (ev->getType() == MessageEvent::Normal
 	|| ev->getType() == MessageEvent::URL
 	|| ev->getType() == MessageEvent::AwayMessage) {

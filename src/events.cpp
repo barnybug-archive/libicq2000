@@ -264,7 +264,7 @@ namespace ICQ2000 {
    *  Constructor for a SearchResultEvent
    */
   SearchResultEvent::SearchResultEvent(SearchResultEvent::SearchType t)
-    : m_searchtype(t), m_finished(false), m_expired(false),
+    : m_finished(false), m_expired(false), m_searchtype(t),
       m_last_contact(NULL), m_more_results(0)
   { }
 
@@ -431,7 +431,7 @@ namespace ICQ2000 {
    * @param multi tag message as a multireceipt message
    */
   NormalMessageEvent::NormalMessageEvent(Contact* c, const string& msg, bool multi)
-    : ICQMessageEvent(c), m_message(msg), m_multi(multi), m_offline(false),
+    : ICQMessageEvent(c), m_message(msg), m_offline(false), m_multi(multi),
       m_foreground(0x00000000), m_background(0x00ffffff) {
     setDirect(false);
   }
@@ -839,7 +839,7 @@ namespace ICQ2000 {
 
   EmailExEvent::EmailExEvent(Contact* c, const string &email,
 			     const string &sender, const string &msg)
-  : MessageEvent(c), m_message(msg), m_email(email), m_sender(sender) {
+  : MessageEvent(c), m_sender(sender), m_email(email), m_message(msg) {
   }
 
   string EmailExEvent::getMessage() const { return m_message; }

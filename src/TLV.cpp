@@ -333,7 +333,7 @@ namespace ICQ2000 {
     : m_firewall(0x0400), m_tcp_version(7) { }
 
   LANDetailsTLV::LANDetailsTLV(unsigned int ip, unsigned short port)
-    : m_firewall(0x0400), m_tcp_version(7), m_lan_ip(ip), m_lan_port(port) { }
+    : m_tcp_version(7), m_lan_ip(ip), m_lan_port(port), m_firewall(0x0400) { }
 
   void LANDetailsTLV::ParseValue(Buffer& b) {
     unsigned short length;
@@ -389,11 +389,8 @@ namespace ICQ2000 {
 
 
   void RawTLV::ParseValue(Buffer& b) {
-    unsigned short length;
-    b >> length;
-    m_length = length;    
-    unsigned char c;
-    b.advance(length);
+    b >> m_length;
+    b.advance(m_length);
   }
 
   MessageDataTLV::MessageDataTLV() { }
@@ -470,7 +467,6 @@ namespace ICQ2000 {
 
   void AdvMsgBodyTLV::ParseValue(Buffer& b) {
     unsigned short length, unknown;
-    unsigned char flags;
     b >> length;
 
     b.advance(27); // unknown

@@ -24,15 +24,15 @@
 #include <algorithm>
 #include <ctype.h>
 
-Buffer::Buffer(Translator *translator) : m_endn(BIG), m_out_pos(0), m_data(), 
+Buffer::Buffer(Translator *translator) : m_data(), m_endn(BIG), m_out_pos(0), 
   m_translator(translator) { }
 
 Buffer::Buffer(const unsigned char* d, int size, Translator *translator) 
-  : m_endn(BIG), m_out_pos(0), m_data(d, d+size) { }
+  : m_data(d, d+size), m_endn(BIG), m_out_pos(0) { }
 
 Buffer::Buffer(Buffer& b, unsigned int start, unsigned int data_len) 
-  : m_endn(BIG), m_out_pos(0), m_data(b.m_data.begin()+start, 
-  b.m_data.begin()+start+data_len), m_translator(b.m_translator) { }
+  : m_data(b.m_data.begin()+start, b.m_data.begin()+start+data_len), 
+  m_endn(BIG), m_out_pos(0), m_translator(b.m_translator) { }
 
 unsigned char& Buffer::operator[](unsigned int p) {
   return m_data[p];
@@ -108,7 +108,7 @@ void Buffer::UnpackByteString(string& s) {
 void Buffer::Unpack(string& s, int size) {
   if (m_out_pos >= m_data.size()) return;
 
-  if (size > m_data.size()-m_out_pos) size = m_data.size()-m_out_pos;
+  if (m_out_pos+size > m_data.size()) size = m_data.size()-m_out_pos;
 
   vector<unsigned char>::iterator i = m_data.begin()+m_out_pos;
   vector<unsigned char>::iterator end = m_data.begin()+m_out_pos+size;
@@ -122,7 +122,7 @@ void Buffer::Unpack(string& s, int size) {
 }
 
 void Buffer::Unpack(unsigned char *const d, int size) {
-  if (size > m_data.size()-m_out_pos) size = m_data.size()-m_out_pos;
+  if (m_out_pos+size > m_data.size()) size = m_data.size()-m_out_pos;
   copy(m_data.begin()+m_out_pos, m_data.begin()+m_out_pos+size, d);
   m_out_pos += size;
 }
@@ -294,8 +294,8 @@ void Buffer::setLittleEndian()
 void Buffer::dump(ostream& out) {
   char d[] = "123456789abcdef0";
   out << hex << setfill('0');
-  int m = ((m_data.size()+15)/16)*16;
-  for (int a = 0; a < m; a++) {
+  unsigned int m = ((m_data.size()+15)/16)*16;
+  for (unsigned int a = 0; a < m; a++) {
     if (a % 16 == 0) out << setw(4) << a << "  ";
     if (a < m_data.size()) {
       out << setw(2) << (int)m_data[a] << " ";
