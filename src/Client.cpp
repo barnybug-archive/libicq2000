@@ -1538,16 +1538,6 @@ namespace ICQ2000 {
   void Client::SendViaServer(MessageEvent *ev) {
     ContactRef c = ev->getContact();
 
-    if (m_self->getStatus() == STATUS_OFFLINE) {
-      ev->setFinished(true);
-      ev->setDelivered(false);
-      ev->setDirect(false);
-      ev->setDeliveryFailureReason(MessageEvent::Failed_NotConnected);
-      messageack.emit(ev);
-      delete ev;
-      return;
-    }
-
     if (ev->getType() == MessageEvent::Normal
 	|| ev->getType() == MessageEvent::URL) {
       
@@ -1617,6 +1607,16 @@ namespace ICQ2000 {
 
   void Client::SendViaServerAdvanced(MessageEvent *ev) 
   {
+    if (m_state == NOT_CONNECTED) {
+      ev->setFinished(true);
+      ev->setDelivered(false);
+      ev->setDirect(false);
+      ev->setDeliveryFailureReason(MessageEvent::Failed_NotConnected);
+      messageack.emit(ev);
+      delete ev;
+      return;
+    }
+
     ContactRef c = ev->getContact();
     UINICQSubType *ist = m_message_handler.handleOutgoing(ev);
     ist->setAdvanced(true);
@@ -1637,6 +1637,15 @@ namespace ICQ2000 {
   
   void Client::SendViaServerNormal(MessageEvent *ev)
   {
+    if (m_state == NOT_CONNECTED) {
+      ev->setFinished(true);
+      ev->setDelivered(false);
+      ev->setDirect(false);
+      ev->setDeliveryFailureReason(MessageEvent::Failed_NotConnected);
+      messageack.emit(ev);
+      return;
+    }
+
     ContactRef c = ev->getContact();
     UINICQSubType *ist = m_message_handler.handleOutgoing(ev);
     ist->setAdvanced(false);

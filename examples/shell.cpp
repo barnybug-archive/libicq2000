@@ -1,48 +1,9 @@
-
-#include <iostream>
-#include "sstream_fix.h"
-#include <set>
-
-#include <libicq2000/Client.h>
-#include <libicq2000/events.h>
-#include <libicq2000/constants.h>
-
-#include <sys/time.h>
-#include <sys/types.h>
-#include <unistd.h>
-
-#if HAVE_SYS_WAIT_H
-# include <sys/wait.h>
-#endif
-#ifndef WEXITSTATUS
-# define WEXITSTATUS(stat_val) ((unsigned)(stat_val) >> 8)
-#endif
-#ifndef WIFEXITED
-# define WIFEXITED(stat_val) (((stat_val) & 255) == 0)
-#endif
-
-#include <signal.h>
-
-#ifdef HAVE_GETOPT_H
-# include <getopt.h>
-#endif
-
-using namespace ICQ2000;
-using namespace std;
-
 /*
  * shell.cpp - an example of a simple command line client that uses
  * the ickle ICQ2000 libraries to automatically respond to messages
  * and sms's.
+ *
  * Copyright (C) 2001 Barnaby Gray <barnaby@beedesign.co.uk>.
- *
- * Examples of usage:
- *  ./ickle-shell uin pass cat
- *   will echo back every message sent to it
- *
- *  ./ickle-shell uin pass fortune
- *   will reply with a fortune cookie :-)
- *
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -58,203 +19,137 @@ using namespace std;
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
+ * Examples of usage:
+ *  ./ickle-shell uin pass cat
+ *   will echo back every message sent to it
+ *
+ *  ./ickle-shell uin pass fortune
+ *   will reply with a fortune cookie :-)
+ *
+ *
+ * This example uses two helper classes:
+ *
+ * - PipeExec: a class that handles forking a shell command, feeding
+ * it input, collected it's output, and terminating/killing it. This
+ * class has no particular relevance to libicq2000, and it just here
+ * for the coolness of the example. :-)
+ *
+ * - Select: this class wraps the select() system call up in a nice
+ * interface so we don't have to worry about file descriptor lists,
+ * etc.. we just register callbacks with it and pass these back to the
+ * library. Often the library you use for your user interface will
+ * handle this for you too - ie. ncurses, gtk+ or gtkmm. If you are
+ * building you own interface from scratch, then this class might come
+ * in handy, with a few extensions..
+ *
  */
 
-// ------------------------------------------------------------------
-void usage(const char *c);
-void processCommandLine(int argc, char *argv[]);
-
-char *password, *shellcmd;
-unsigned int uin;
-bool respond;
+#include "shell.h"
 
 // ------------------------------------------------------------------
-// Pipe execution class
-// ------------------------------------------------------------------
-class PipeExec {
- private:
-  FILE *fStdIn, *fStdOut;
-  int pid;
-
- public:
-  PipeExec();
-  ~PipeExec();
-
-  bool Open(const char *cmd);
-  void Read(char *buf, int size);
-  void Write(const char *buf);
-  void CloseInput();
-  void Close();
-};
-
-// ------------------------------------------------------------------
-// Simple Client declaration
-// ------------------------------------------------------------------
-
-class SimpleClient : public SigC::Object {
- private:
-  ICQ2000::Client icqclient;
-  set<int> rfdl, wfdl, efdl;
-  
- public:
-  SimpleClient(unsigned int uin, const string& pass);
-
-  void run();
-
-  // -- Callbacks --
-  void connected_cb(ConnectedEvent *c);
-  void disconnected_cb(DisconnectedEvent *c);
-  void message_cb(MessageEvent *c);
-  void logger_cb(LogEvent *c);
-  void contact_status_change_cb(StatusChangeEvent *ev);
-  void socket_cb(SocketEvent *ev);
-};
-
-
+//  Simple Client
 // ------------------------------------------------------------------
 
 SimpleClient::SimpleClient(unsigned int uin, const string& pass)
   : icqclient(uin, pass) {
 
-  // set up Callbacks
+  /* set up the libicq2000 callbacks: the SigC callback system is used
+   * extensively in libicq2000, and when an event happens we can
+   * register callbacks for methods to be called, which in turn will
+   * be called when the relevant event happens
+   */
   icqclient.connected.connect(slot(this,&SimpleClient::connected_cb));
   icqclient.disconnected.connect(slot(this,&SimpleClient::disconnected_cb));
   icqclient.messaged.connect(slot(this,&SimpleClient::message_cb));
   icqclient.logger.connect(slot(this,&SimpleClient::logger_cb));
   icqclient.contact_status_change_signal.connect(slot(this,&SimpleClient::contact_status_change_cb));
   icqclient.socket.connect(slot(this,&SimpleClient::socket_cb));
+
 }
 
 void SimpleClient::run() {
 
   icqclient.setStatus(STATUS_ONLINE);
 
-  while(1) {
-    fd_set rfds, wfds, efds;
-    struct timeval tv;
-
-    int max_fd = -1;
-    
-    // this could be done much better..
-
-    FD_ZERO(&rfds);
-    FD_ZERO(&wfds);
-    FD_ZERO(&efds);
-
-    cout << "----------------------------------------" << endl;
-    cout << "Selecting on:" << endl;
-    cout << " Read: ";
-    set<int>::iterator curr = rfdl.begin();
-    while (curr != rfdl.end()) {
-      FD_SET(*curr, &rfds);
-      if (*curr > max_fd) max_fd = *curr;
-      cout << *curr << " ";
-      ++curr;
+  while (1) {
+    bool b = input.run(5000);
+    if (b) {
+      // timeout was hit - poll the server
+      icqclient.Poll();
     }
-    cout << endl;
-
-    curr = wfdl.begin();
-    cout << " Write: ";
-    while (curr != wfdl.end()) {
-      FD_SET(*curr, &wfds);
-      if (*curr > max_fd) max_fd = *curr;
-      cout << *curr << " ";
-      ++curr;
-    }
-    cout << endl;
-
-    curr = efdl.begin();
-    cout << " Exception: ";
-    while (curr != efdl.end()) {
-      FD_SET(*curr, &efds);
-      if (*curr > max_fd) max_fd = *curr;
-      cout << *curr << " ";
-      ++curr;
-    }
-    cout << endl;
-    cout << "----------------------------------------" << endl;
-
-    // should poll icqclient every 5 seconds once connected
-    struct timeval *tvptr;
-    if (icqclient.isConnected()) {
-      tvptr = &tv;
-      tv.tv_sec = 5;
-      tv.tv_usec = 0;
-    } else {
-      tvptr = NULL;
-    }
-
-    int ret = select(max_fd+1, &rfds, &wfds, &efds, tvptr);
-    if (ret) {
-      /*
-       * Care must be taken here, when iterating through the sets of
-       * file descriptors the Client::socket_cb()'s may signal
-       * Adding/Removing - modifying the sets inplace whilst we are
-       * iterating through them. Use a temporary copy for safety.
-       *
-       */
-
-      set<int>rfdt = rfdl;
-      curr = rfdt.begin();
-      while (curr != rfdt.end()) {
-	if ( FD_ISSET( *curr, &rfds ) ) icqclient.socket_cb( *curr, SocketEvent::READ );
-	++curr;
-      }
-
-      set<int>wfdt = wfdl;
-      curr = wfdt.begin();
-      while (curr != wfdt.end()) {
-	if ( FD_ISSET( *curr, &wfds ) ) icqclient.socket_cb( *curr, SocketEvent::WRITE );
-	++curr;
-      }
-
-      set<int>efdt = efdl;
-      curr = efdt.begin();
-      while (curr != efdt.end()) {
-	if ( FD_ISSET( *curr, &efds ) ) icqclient.socket_cb( *curr, SocketEvent::EXCEPTION );
-	++curr;
-      }
-      
-    } else {
-      if (icqclient.isConnected()) {
-	icqclient.Poll();
-      }
-    }	
   }
-
+  
   // never reached
   icqclient.setStatus(STATUS_OFFLINE);
 }
 
+/*
+ * this callback will be called when the library has a socket
+ * descriptor that needs select'ing on (or not selecting on any
+ * longer), we pass it up to the higher-level Select object which
+ * wraps all the select system call stuff nicely -- a graphical
+ * toolkit might be the other way to handle this for you (for
+ * example the way gtkmm does it)
+ */
 void SimpleClient::socket_cb(SocketEvent *ev) {
-  
+
   if (dynamic_cast<AddSocketHandleEvent*>(ev) != NULL) {
+    // the library requests we start selecting on a socket
+
     AddSocketHandleEvent *cev = dynamic_cast<AddSocketHandleEvent*>(ev);
     int fd = cev->getSocketHandle();
 
     cout << "connecting socket " << fd << endl;
 
-    if (cev->isRead()) rfdl.insert(fd);
-    if (cev->isWrite()) wfdl.insert(fd);
-    if (cev->isException()) efdl.insert(fd);
+    // register this socket with our Select object
+    input.connect( slot(this,&SimpleClient::select_socket_cb),
+		   // the slot that the Select object will callback
+		   fd,
+		   // the socket file descriptor to add
+		   (Select::SocketInputCondition) 
+		   ((cev->isRead() ? Select::Read : 0) |
+		    (cev->isWrite() ? Select::Write : 0) |
+		    (cev->isException() ? Select::Exception : 0))
+		   // the mode to select on it on
+		   );
 
   } else if (dynamic_cast<RemoveSocketHandleEvent*>(ev) != NULL) {
+    // the library requests we stop selecting on a socket
+
     RemoveSocketHandleEvent *cev = dynamic_cast<RemoveSocketHandleEvent*>(ev);
     int fd = cev->getSocketHandle();
 
     cout << "disconnecting socket " << fd << endl;
 
-    rfdl.erase(fd);
-    wfdl.erase(fd);
-    efdl.erase(fd);
   }
   
 }
 
+/*
+ * registered to receive the Select callbacks
+ */
+void SimpleClient::select_socket_cb(int fd, Select::SocketInputCondition cond)
+{
+  // inform the library (it is always only library sockets registered with
+  // the Select object)
+  icqclient.socket_cb(fd,
+		      (ICQ2000::SocketEvent::Mode)cond
+		      // dirty-hack, since they are binary compatible :-)
+		      );
+}
+
+/*
+ * called when the library has connected
+ */
 void SimpleClient::connected_cb(ConnectedEvent *c) {
   cout << "ickle-shell: Connected" << endl;
 }
 
+/*
+ * this callback is called when the library needs to indicated
+ * connecting failed or we've been disconnected for whatever
+ * reason.
+ */
 void SimpleClient::disconnected_cb(DisconnectedEvent *c) {
   if (c->getReason() == DisconnectedEvent::REQUESTED) {
     cout << "ickle-shell: Disconnected as requested" << endl;
@@ -286,6 +181,11 @@ void SimpleClient::disconnected_cb(DisconnectedEvent *c) {
   }
 }
 
+/*
+ * this callback is called when someone messages you. Here we do the
+ * fun part of this example, which is to pass the message to a shell
+ * command, and send them back the results.
+ */
 void SimpleClient::message_cb(MessageEvent *c) {
 
   if (c->getType() == MessageEvent::Normal) {
@@ -340,7 +240,17 @@ void SimpleClient::message_cb(MessageEvent *c) {
 
 }
 
+/*
+ * this callback is for debug information the library logs - it is
+ * generally very useful, although not immediately useful for any
+ * users of your program. It allows great flexibility, as the Client
+ * decides where the messages go and some of the formatting of them -
+ * so they could be displayed in a Dialog, for example. Here they're
+ * dumped out to stdout, with some pretty colours showing the level.
+ */
 void SimpleClient::logger_cb(LogEvent *c) {
+
+  cout << "libicq2000 message: ";
 
   switch(c->getType()) {
   case LogEvent::INFO:
@@ -360,6 +270,10 @@ void SimpleClient::logger_cb(LogEvent *c) {
   cout << "[39m";
 }
 
+/*
+ * this callback is called when a contact on your list changes their
+ * status
+ */
 void SimpleClient::contact_status_change_cb(StatusChangeEvent *ev)
 {
   cout << "ickle-shell: User " << ev->getUIN() << " went ";
@@ -391,133 +305,8 @@ void SimpleClient::contact_status_change_cb(StatusChangeEvent *ev)
   cout << endl;
 }
 
-// ------------------------------------------------------
-// Pipe Execution class
-// ------------------------------------------------------
-
-PipeExec::PipeExec() : fStdIn(NULL), fStdOut(NULL)
-{ }
-
-PipeExec::~PipeExec() { 
-  Close();
-}
-
-bool PipeExec::Open(const char *shellcmd) {
-  int pdes_out[2], pdes_in[2];
-
-  if (pipe(pdes_out) < 0) return false;
-  if (pipe(pdes_in) < 0) return false;
-
-  switch (pid = fork())
-  {
-    case -1:                        /* Error. */
-    {
-      close(pdes_out[0]);
-      close(pdes_out[1]);
-      close(pdes_in[0]);
-      close(pdes_in[1]);
-      return false;
-      /* NOTREACHED */
-    }
-  case 0:                         /* Child. */
-    {
-      if (pdes_out[1] != STDOUT_FILENO) {
-        dup2(pdes_out[1], STDOUT_FILENO);
-        close(pdes_out[1]);
-      }
-      
-      close(pdes_out[0]);
-      
-      if (pdes_in[0] != STDIN_FILENO) {
-        dup2(pdes_in[0], STDIN_FILENO);
-	close(pdes_in[0]);
-      }
-      close(pdes_in[1]);
-      system(shellcmd);
-      exit(0);
-      /* NOTREACHED */
-    }
-  }
-
-  /* Parent; assume fdopen can't fail. */
-  fStdOut = fdopen(pdes_out[0], "r");
-  close(pdes_out[1]);
-  fStdIn = fdopen(pdes_in[1], "w");
-  close(pdes_in[0]);
-
-  // Set both streams to line buffered
-#ifdef SETVBUF_REVERSED
-  setvbuf(fStdOut, _IOLBF, (char*)NULL, 0);
-  setvbuf(fStdIn, _IOLBF, (char*)NULL, 0);
-#else
-  setvbuf(fStdOut, (char*)NULL, _IOLBF, 0);
-  setvbuf(fStdIn, (char*)NULL, _IOLBF, 0);
-#endif
-
-  return true;
-}
-
-void PipeExec::Read(char *buf, int size) {
-  int pos = 0;
-  int c;
-  while (((c = fgetc(fStdOut)) != EOF) && (pos < size)) buf[pos++] = (unsigned char)c;
-  buf[pos] = '\0';
-}
-
-void PipeExec::Write(const char *buf) {
-  fprintf(fStdIn, "%s", buf);
-}
-
-void PipeExec::CloseInput() {
-  fclose(fStdIn);
-  fStdIn = NULL;
-}
-
-void PipeExec::Close() {
-   int r, pstat;
-   struct timeval tv = { 0, 200000 };
-
-   // Close the file descriptors
-   if (fStdOut != NULL) fclose(fStdOut);
-   if (fStdIn != NULL) fclose(fStdIn);
-   fStdOut = fStdIn = NULL;
-
-   if (pid == 0) return;
-
-   // See if the child is still there
-   r = waitpid(pid, &pstat, WNOHANG);
-
-   // Return if child has exited or there was an inor
-   if (r == pid || r == -1) return;
-     
-   // Give the process another .2 seconds to die
-   select(0, NULL, NULL, NULL, &tv);
-   
-   // Still there?
-   r = waitpid(pid, &pstat, WNOHANG);
-   if (r == pid || r == -1) return;
-     
-   // Try and kill the process
-   if (kill(pid, SIGTERM) == -1) return;
-   
-   // Give it 1 more second to die
-   tv.tv_sec = 1;
-   tv.tv_usec = 0;
-   select(0, NULL, NULL, NULL, &tv);
-   
-   // See if the child is still there
-   r = waitpid(pid, &pstat, WNOHANG);
-   if (r == pid || r == -1) return;
-
-   // Kill, kill, keeeiiiiilllllll!!
-   kill(pid, SIGKILL);
-   // Now he will die for sure
-   waitpid(pid, &pstat, 0);
-
-}
-
 // --------------------------------------------
-// main ---------------------------------------
+//  main
 // --------------------------------------------
 
 int main(int argc, char *argv[]) {
@@ -530,6 +319,9 @@ int main(int argc, char *argv[]) {
   cl.run();
 }
 
+/*
+ * display usage information
+ */
 void usage(const char *progname) {
   cerr << "Usage: " << progname << " [options] uin password shellcommand" << endl
        << " -h              This screen" << endl
@@ -537,12 +329,17 @@ void usage(const char *progname) {
   exit (1);
 }
 
+/*
+ * process the command line arguments with getopt, the values are
+ * stored in global variables for simplicity (not neatness :-)
+ */
 void processCommandLine( int argc, char *argv[] ) {
-
   int i = 0;
 
-  respond = true;
+  if (optind != argc-3) usage (argv[0]);
+  // too few arguments, show usage info
 
+  respond = true;
   while ( ( i = getopt( argc, argv, "hn" ) ) > 0) {
     switch(i) {
     case 'n':
@@ -554,11 +351,9 @@ void processCommandLine( int argc, char *argv[] ) {
     }
   }
 
-  if (optind != argc-3) usage (argv[0]);
-
   istringstream istr( argv[optind] );
-  istr >> uin;
+  istr >> uin; // read out the UIN as an int
+
   password = argv[optind+1];
   shellcmd = argv[optind+2];
-
 }
