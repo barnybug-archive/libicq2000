@@ -187,7 +187,7 @@ bool TCPSocket::Recv(Buffer& b) {
   unsigned char buffer[max_receive_size];
 
   int ret = recv(socketDescriptor, buffer, max_receive_size, 0);
-  if (ret < 0) {
+  if (ret <= 0) {
     if (ret == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) return false;
 
     m_state = NOT_CONNECTED;
