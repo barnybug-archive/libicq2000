@@ -1216,8 +1216,14 @@ namespace ICQ2000 {
 	      iur = updresults.begin();
 
 	      while(iur != updresults.end() && ic != cl.end()) {
-		if(*iur == ServerBasedContactEvent::Success)
+		if(*iur == ServerBasedContactEvent::Success) {
 		    (*ic)->setServerBased(ev->getType() == ServerBasedContactEvent::Upload);
+
+		    ContactRef ct = getContact((*ic)->getUIN());
+		    if(ct.get()) {
+		      ct->setServerBased(ev->getType() == ServerBasedContactEvent::Upload);
+		    }
+		}
 
 		++iur;
 		++ic;
@@ -2137,6 +2143,19 @@ namespace ICQ2000 {
   }
   
   void Client::SignalServerBasedContactList(const ContactList& l) {
+    ContactRef ct;
+    ContactList::const_iterator curr = l.begin();
+
+    while(curr != l.end()) {
+      ct = getContact((*curr)->getUIN());
+      if(ct.get()) {
+        ct->setServerBased(true);
+	ct->setServerSideInfo((*curr)->getServerSideGroupID(), (*curr)->getServerSideID());
+      }
+
+      ++curr;
+    }
+
     ServerBasedContactEvent ev(ServerBasedContactEvent::Fetch, l);
     server_based_contact_list.emit(&ev);
   }
