@@ -705,6 +705,8 @@ namespace ICQ2000 {
       << (unsigned int)0x00000000
       << (unsigned int)0x00000000;
     icqsubtype->setACK(true);
+    icqsubtype->setStatus(0); // quick fix until accept-statuses are implemented
+    
     icqsubtype->Output(b);
     Buffer c(m_translator);
     Encrypt(b,c);

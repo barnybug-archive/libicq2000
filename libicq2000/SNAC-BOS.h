@@ -39,6 +39,8 @@ namespace ICQ2000 {
   const unsigned short SNAC_BOS_Remove_Visible = 0x0006;
   const unsigned short SNAC_BOS_Add_Invisible = 0x0007;
   const unsigned short SNAC_BOS_Remove_Invisible = 0x0008;
+  const unsigned short SNAC_BOS_Add_Tmp_Visible = 0x000A;
+  const unsigned short SNAC_BOS_Remove_Tmp_Visible = 0x000B;
 
   // ----------------- Visible/invisible List (Family 0x0009) SNACs -----------
 
@@ -47,72 +49,72 @@ namespace ICQ2000 {
     unsigned short Family() const { return SNAC_FAM_BOS; }
   };
 
-  class AddVisibleSNAC : public BOSFamilySNAC, public OutSNAC {
-   private:
-    list<string> m_buddy_list;
-    
-   protected:
-    void OutputBody(Buffer& b) const;
+  class BOSListSNAC : virtual public BOSFamilySNAC, public OutSNAC {
+    protected:
+      list<string>m_buddy_list;
+      void OutputBody(Buffer& b) const;
 
-   public:
-    AddVisibleSNAC();
-    AddVisibleSNAC(const ContactList& l);
-    AddVisibleSNAC(const Contact& c);
-
-    void addVisible(const Contact& c);
-
-    unsigned short Subtype() const { return SNAC_BOS_Add_Visible; }
+    public:
+      BOSListSNAC();
+      BOSListSNAC(const ContactList& l);
+      BOSListSNAC(const Contact& c);
+      BOSListSNAC(const string& s);
+      void addContact(const Contact& c);
   };
 
-  class RemoveVisibleSNAC : public BOSFamilySNAC, public OutSNAC {
-   private:
-    list<string> m_buddy_list;
-    
-   protected:
-    void OutputBody(Buffer& b) const;
 
-   public:
-    RemoveVisibleSNAC();
-    RemoveVisibleSNAC(const ContactList& l);
-    RemoveVisibleSNAC(const string& s);
-
-    void removeVisible(const Contact& c);
-
-    unsigned short Subtype() const { return SNAC_BOS_Remove_Visible; }
-  };
-  
-  class AddInvisibleSNAC : public BOSFamilySNAC, public OutSNAC {
-   private:
-    list<string> m_buddy_list;
-    
-   protected:
-    void OutputBody(Buffer& b) const;
-
-   public:
-    AddInvisibleSNAC();
-    AddInvisibleSNAC(const ContactList& l);
-    AddInvisibleSNAC(const Contact& c);
-
-    void addInvisible(const Contact& c);
-
-    unsigned short Subtype() const { return SNAC_BOS_Add_Invisible; }
+  class AddVisibleSNAC : public BOSListSNAC {
+    public:
+      unsigned short Subtype() const { return SNAC_BOS_Add_Visible; }
+      AddVisibleSNAC();
+      AddVisibleSNAC(const ContactList& l);
+      AddVisibleSNAC(const Contact& c);
+      AddVisibleSNAC(const string& s);
   };
 
-  class RemoveInvisibleSNAC : public BOSFamilySNAC, public OutSNAC {
-   private:
-    list<string> m_buddy_list;
-    
-   protected:
-    void OutputBody(Buffer& b) const;
+  class AddInvisibleSNAC : public BOSListSNAC {
+    public:
+      unsigned short Subtype() const { return SNAC_BOS_Add_Invisible; }
+      AddInvisibleSNAC();
+      AddInvisibleSNAC(const ContactList& l);
+      AddInvisibleSNAC(const Contact& c);
+      AddInvisibleSNAC(const string& s);
+  };
 
-   public:
-    RemoveInvisibleSNAC();
-    RemoveInvisibleSNAC(const ContactList& l);
-    RemoveInvisibleSNAC(const string& s);
+  class AddTmpVisibleSNAC : public BOSListSNAC {
+    public:
+      unsigned short Subtype() const { return SNAC_BOS_Add_Tmp_Visible; }
+      AddTmpVisibleSNAC();
+      AddTmpVisibleSNAC(const ContactList& l);
+      AddTmpVisibleSNAC(const Contact& c);
+      AddTmpVisibleSNAC(const string& s);
+  };
 
-    void removeInvisible(const Contact& c);
+  class RemoveVisibleSNAC : public BOSListSNAC {
+    public:
+      unsigned short Subtype() const { return SNAC_BOS_Remove_Visible; }
+      RemoveVisibleSNAC();
+      RemoveVisibleSNAC(const ContactList& l);
+      RemoveVisibleSNAC(const Contact& c);
+      RemoveVisibleSNAC(const string& s);
+  };
 
-    unsigned short Subtype() const { return SNAC_BOS_Remove_Invisible; }
+  class RemoveInvisibleSNAC : public BOSListSNAC {
+    public:
+      unsigned short Subtype() const { return SNAC_BOS_Remove_Invisible; }
+      RemoveInvisibleSNAC();
+      RemoveInvisibleSNAC(const ContactList& l);
+      RemoveInvisibleSNAC(const Contact& c);
+      RemoveInvisibleSNAC(const string& s);
+  };
+
+  class RemoveTmpVisibleSNAC : public BOSListSNAC {
+    public:
+      unsigned short Subtype() const { return SNAC_BOS_Remove_Tmp_Visible; }
+      RemoveTmpVisibleSNAC();
+      RemoveTmpVisibleSNAC(const ContactList& l);
+      RemoveTmpVisibleSNAC(const Contact& c);
+      RemoveTmpVisibleSNAC(const string& s);
   };
   
 }

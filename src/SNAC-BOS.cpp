@@ -30,9 +30,9 @@ namespace ICQ2000 {
 
   // --------------- Visible/invisible List (Family 0x0009) SNACs --------------
 
-  AddVisibleSNAC::AddVisibleSNAC() { }
+  BOSListSNAC::BOSListSNAC() { }
 
-  AddVisibleSNAC::AddVisibleSNAC(const ContactList& l)
+  BOSListSNAC::BOSListSNAC(const ContactList& l)
     : m_buddy_list() { 
     ContactList::const_iterator curr = l.begin();
     while (curr != l.end()) {
@@ -42,42 +42,17 @@ namespace ICQ2000 {
     
   }
 
-  AddVisibleSNAC::AddVisibleSNAC(const Contact& c)
+  BOSListSNAC::BOSListSNAC(const Contact& c)
     : m_buddy_list(1, c.getStringUIN()) { }
 
-  void AddVisibleSNAC::addVisible(const Contact& c) {
-    m_buddy_list.push_back(c.getStringUIN());
-  }
-
-  void AddVisibleSNAC::OutputBody(Buffer& b) const {
-    list<string>::const_iterator curr = m_buddy_list.begin();
-    while (curr != m_buddy_list.end()) {
-      b << (unsigned char)(*curr).size();
-      b.Pack(*curr);
-      curr++;
-    }
-  }
-
-  RemoveVisibleSNAC::RemoveVisibleSNAC() { }
-
-  RemoveVisibleSNAC::RemoveVisibleSNAC(const ContactList& l)
-    : m_buddy_list() { 
-    ContactList::const_iterator curr = l.begin();
-    while (curr != l.end()) {
-      if ((*curr).isICQContact()) m_buddy_list.push_back((*curr).getStringUIN());
-      ++curr;
-    }
-    
-  }
-
-  RemoveVisibleSNAC::RemoveVisibleSNAC(const string& s)
+  BOSListSNAC::BOSListSNAC(const string& s)
     : m_buddy_list(1, s) { }
 
-  void RemoveVisibleSNAC::removeVisible(const Contact& c) {
+    void BOSListSNAC::addContact(const Contact& c) {
     m_buddy_list.push_back(c.getStringUIN());
   }
 
-  void RemoveVisibleSNAC::OutputBody(Buffer& b) const {
+  void BOSListSNAC::OutputBody(Buffer& b) const {
     list<string>::const_iterator curr = m_buddy_list.begin();
     while (curr != m_buddy_list.end()) {
       b << (unsigned char)(*curr).size();
@@ -86,60 +61,34 @@ namespace ICQ2000 {
     }
   }
 
-  AddInvisibleSNAC::AddInvisibleSNAC() { }
-
-  AddInvisibleSNAC::AddInvisibleSNAC(const ContactList& l)
-    : m_buddy_list() { 
-    ContactList::const_iterator curr = l.begin();
-    while (curr != l.end()) {
-      if ((*curr).isICQContact()) m_buddy_list.push_back((*curr).getStringUIN());
-      ++curr;
-    }
+    AddVisibleSNAC::AddVisibleSNAC() : BOSListSNAC() { }
+    AddVisibleSNAC::AddVisibleSNAC(const ContactList& l) : BOSListSNAC(l) { }
+    AddVisibleSNAC::AddVisibleSNAC(const Contact& c) : BOSListSNAC(c) { }
+    AddVisibleSNAC::AddVisibleSNAC(const string& s) : BOSListSNAC(s) { }
     
-  }
-
-  AddInvisibleSNAC::AddInvisibleSNAC(const Contact& c)
-    : m_buddy_list(1, c.getStringUIN()) { }
-
-  void AddInvisibleSNAC::addInvisible(const Contact& c) {
-    m_buddy_list.push_back(c.getStringUIN());
-  }
-
-  void AddInvisibleSNAC::OutputBody(Buffer& b) const {
-    list<string>::const_iterator curr = m_buddy_list.begin();
-    while (curr != m_buddy_list.end()) {
-      b << (unsigned char)(*curr).size();
-      b.Pack(*curr);
-      curr++;
-    }
-  }
-
-  RemoveInvisibleSNAC::RemoveInvisibleSNAC() { }
-
-  RemoveInvisibleSNAC::RemoveInvisibleSNAC(const ContactList& l)
-    : m_buddy_list() { 
-    ContactList::const_iterator curr = l.begin();
-    while (curr != l.end()) {
-      if ((*curr).isICQContact()) m_buddy_list.push_back((*curr).getStringUIN());
-      ++curr;
-    }
+    AddInvisibleSNAC::AddInvisibleSNAC() : BOSListSNAC() { }
+    AddInvisibleSNAC::AddInvisibleSNAC(const ContactList& l) : BOSListSNAC(l) { }
+    AddInvisibleSNAC::AddInvisibleSNAC(const Contact& c) : BOSListSNAC(c) { }
+    AddInvisibleSNAC::AddInvisibleSNAC(const string& s) : BOSListSNAC(s) { }
     
-  }
-
-  RemoveInvisibleSNAC::RemoveInvisibleSNAC(const string& s)
-    : m_buddy_list(1, s) { }
-
-  void RemoveInvisibleSNAC::removeInvisible(const Contact& c) {
-    m_buddy_list.push_back(c.getStringUIN());
-  }
-
-  void RemoveInvisibleSNAC::OutputBody(Buffer& b) const {
-    list<string>::const_iterator curr = m_buddy_list.begin();
-    while (curr != m_buddy_list.end()) {
-      b << (unsigned char)(*curr).size();
-      b.Pack(*curr);
-      curr++;
-    }
-  }
+    AddTmpVisibleSNAC::AddTmpVisibleSNAC() : BOSListSNAC() { }
+    AddTmpVisibleSNAC::AddTmpVisibleSNAC(const ContactList& l) : BOSListSNAC(l) { }
+    AddTmpVisibleSNAC::AddTmpVisibleSNAC(const Contact& c) : BOSListSNAC(c) { }
+    AddTmpVisibleSNAC::AddTmpVisibleSNAC(const string& s) : BOSListSNAC(s) { }
+    
+    RemoveVisibleSNAC::RemoveVisibleSNAC() : BOSListSNAC() { }
+    RemoveVisibleSNAC::RemoveVisibleSNAC(const ContactList& l) : BOSListSNAC(l) { }
+    RemoveVisibleSNAC::RemoveVisibleSNAC(const Contact& c) : BOSListSNAC(c) { }
+    RemoveVisibleSNAC::RemoveVisibleSNAC(const string& s) : BOSListSNAC(s) { }
+    
+    RemoveInvisibleSNAC::RemoveInvisibleSNAC() : BOSListSNAC() { }
+    RemoveInvisibleSNAC::RemoveInvisibleSNAC(const ContactList& l) : BOSListSNAC(l) { }
+    RemoveInvisibleSNAC::RemoveInvisibleSNAC(const Contact& c) : BOSListSNAC(c) { }
+    RemoveInvisibleSNAC::RemoveInvisibleSNAC(const string& s) : BOSListSNAC(s) { }
+    
+    RemoveTmpVisibleSNAC::RemoveTmpVisibleSNAC() : BOSListSNAC() { }
+    RemoveTmpVisibleSNAC::RemoveTmpVisibleSNAC(const ContactList& l) : BOSListSNAC(l) { }
+    RemoveTmpVisibleSNAC::RemoveTmpVisibleSNAC(const Contact& c) : BOSListSNAC(c) { }
+    RemoveTmpVisibleSNAC::RemoveTmpVisibleSNAC(const string& s) : BOSListSNAC(s) { }
 
 }

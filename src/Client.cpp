@@ -1046,6 +1046,7 @@ namespace ICQ2000 {
     ICQSubType *st = snac->getICQSubType();
     if (st == NULL || dynamic_cast<UINICQSubType*>(st) == NULL ) return;
     UINICQSubType *ust = dynamic_cast<UINICQSubType*>(snac->grabICQSubType());
+    ust->setStatus(0); // quick fix until accept-statuses are implemented
 
     SignalLog(LogEvent::INFO, "Sending Advanced Message ACK");
     FLAPwrapSNACandSend( MessageACKSNAC( snac->getICBMCookie(), ust ) );
