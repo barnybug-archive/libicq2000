@@ -18,17 +18,25 @@ AC_PROG_LIBTOOL
 
 # Checks for header files
 AC_HEADER_STDC
-AC_CHECK_HEADERS([fcntl.h unistd.h time.h ctype.h errno.h netdb.h sys/types.h sys/socket.h netinet/in.h arpa/inet.h])
+AC_CHECK_HEADERS([fcntl.h unistd.h time.h ctype.h errno.h netdb.h sys/types.h sys/wait.h sys/socket.h netinet/in.h arpa/inet.h],,
+  AC_MSG_ERROR([Required header not found]))
+dnl getopt is a gnu/linux thing, so not strictly required
+AC_CHECK_HEADERS([getopt.h])
 
 # Switch to C++ mode and check for needed C++ headers
 AC_LANG_SAVE
 AC_LANG_CPLUSPLUS
 
-AC_CHECK_HEADERS([vector iostream fstream string algorithm list memory iterator exception utility],,
+AC_CHECK_HEADERS([vector iostream fstream set string algorithm list memory iterator exception utility],,
   AC_MSG_ERROR([You need to have the libstdc++ headers installed]))
 
-AC_CHECK_HEADERS(ext/hash_map,,
-  AC_CHECK_HEADERS(hash_map,, AC_MSG_ERROR([Your libstdc++ installation does not have the extra hash classes])))
+
+hash_map=no
+AC_CHECK_HEADERS(ext/hash_map,hash_map=yes)
+AC_CHECK_HEADERS(hash_map,hash_map=yes)
+if test $hash_map != yes ; then
+  AC_MSG_ERROR([Your libstdc++ installation does not have the extra hash classes])
+fi
 
 AC_CHECK_HEADERS(sstream,,
   AC_CHECK_HEADERS(strstream,, AC_MSG_ERROR([Your libstdc++ doesn't have the sstream or strstream classes])))
@@ -50,10 +58,6 @@ AC_CHECK_LIB(socket, socket)
 AC_CHECK_FUNC(gethostbyname, ,
   AC_CHECK_LIB(nsl, gethostbyname,, AC_MSG_ERROR([You do not have gethostbyname - check you have libc installed properly])) )
 
-AC_FUNC_MKTIME
-AC_FUNC_STAT
-AC_FUNC_FORK
-AC_HEADER_SYS_WAIT
-AC_CHECK_FUNCS([dup2 select socket strerror],,AC_MSG_ERROR([You do not have one of the standard C functions required - check you have libc installed properly]))
+AC_CHECK_FUNCS([dup2 stat fork mktime select socket strerror],,AC_MSG_ERROR([You do not have one of the standard C functions required - check you have libc installed properly]))
 
-AC_OUTPUT([Makefile src/Makefile])
+AC_OUTPUT([Makefile src/Makefile examples/Makefile])
