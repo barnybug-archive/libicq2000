@@ -23,6 +23,8 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
+namespace ICQ2000 {
+  
 enum Status {
   STATUS_ONLINE,
   STATUS_AWAY,
@@ -44,5 +46,7 @@ static const char* Status_text[] = { "Online",
 static const unsigned int SMS_Max_Length = 160;
 
 static const unsigned int String_Limit = 16384; // A sensible limit
+
+}
 
 #endif
