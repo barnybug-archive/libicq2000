@@ -4,7 +4,7 @@
 
 SUBDIRS = src libicq2000 examples
 
-EXTRA_DIST = TODO THANKS NEWS doc libicq2000.pc.in doxyfile.conf
+EXTRA_DIST = TODO THANKS NEWS libicq2000.pc.in doxyfile.conf
 
 pkgconfigdir            = $(libdir)/pkgconfig
 pkgconfig_DATA          = libicq2000.pc
