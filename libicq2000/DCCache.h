@@ -60,8 +60,13 @@ namespace ICQ2000 {
       while ( curr != m_list.end() ) {
 	DirectClient *dc = (*curr).getValue();
 	++next;
-	if ( dc->getContact()->getUIN() == c->getUIN() ) {
-	  dc->setContact( ContactRef() ); // invalidate contact so the DC doesn't attempt to redeliver
+	if ( dc->getContact().get() != NULL
+	     /* Direct Connections won't have a contact associated
+	      * with them initially just after having been accepted as
+	      * an incoming connection (we don't know who they are
+	      * yet) - so Contact could be a NULL ref.
+	      */
+	     && dc->getContact()->getUIN() == c->getUIN() ) {
 	  removeItem(curr);
 	}
 	curr = next;

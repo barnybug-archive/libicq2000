@@ -118,15 +118,10 @@ namespace ICQ2000 {
   }
   
   void DirectClient::expired_cb(MessageEvent *ev) {
-    if ( m_contact.get() != NULL ) {
-      ev->setFinished(false);
-      ev->setDelivered(false);
-      ev->setDirect(true);
-      messageack.emit(ev);
-    } else {
-      // discard
-      delete ev;
-    }
+    ev->setFinished(false);
+    ev->setDelivered(false);
+    ev->setDirect(true);
+    messageack.emit(ev);
   }
 
   void DirectClient::Recv() {
