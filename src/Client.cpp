@@ -88,6 +88,9 @@ namespace ICQ2000 {
     m_self.setStatus(STATUS_OFFLINE);
     m_self.setInvisible(false);
 
+    m_status_wanted = STATUS_OFFLINE;
+    m_invisible_wanted = false;
+
     m_ext_ip = 0;
 
     m_cookiecache.setDefaultTimeout(30);
@@ -1860,7 +1863,11 @@ namespace ICQ2000 {
    * @param st the status
    * @param inv whether to be invisible or not
    */
-  void Client::setStatus(const Status st, bool inv) {
+  void Client::setStatus(const Status st, bool inv)
+  {
+    m_status_wanted = st;
+    m_invisible_wanted = inv;
+
     if (m_state == BOS_LOGGED_IN) {
       if (st == STATUS_OFFLINE) {
 	Disconnect(DisconnectedEvent::REQUESTED);
@@ -1900,6 +1907,28 @@ namespace ICQ2000 {
       if (st != STATUS_OFFLINE) Connect();
       if (m_state != NOT_CONNECTED && st == STATUS_OFFLINE) Disconnect(DisconnectedEvent::REQUESTED);
     }
+  }
+
+  /**
+   *  Set your status, without effecting invisibility (your last
+   *  requested invisible state will be used).
+   *
+   * @param st the status
+   */
+  void Client::setStatus(const Status st)
+  {
+    setStatus(st, m_invisible_wanted);
+  }
+
+  /**
+   *  Set your invisibility, without effecting status (your last
+   *  requested status will be used).
+   *
+   * @param inv invisibility
+   */
+  void Client::setInvisible(bool inv)
+  {
+    setStatus(m_status_wanted, inv);
   }
 
   /**

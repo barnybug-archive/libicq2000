@@ -82,6 +82,8 @@ namespace ICQ2000 {
 
     Contact m_self;
     string m_password;
+    Status m_status_wanted;
+    bool m_invisible_wanted;
 
     string m_authorizerHostname;
     unsigned short m_authorizerPort;
@@ -361,7 +363,10 @@ namespace ICQ2000 {
     void SendEvent(MessageEvent *ev);
 
     // -- Set Status --
-    void setStatus(const Status st, bool inv = false);
+    void setStatus(const Status st);
+    void setStatus(const Status st, bool inv);
+    void setInvisible(bool inv);
+    
     Status getStatus() const;
     bool getInvisible() const;
 
