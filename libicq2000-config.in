@@ -18,8 +18,8 @@ pkgincludedir=${includedir}/@PACKAGE@
 CFLAGS="-I${pkgincludedir}"
 LIBDIRS="-L${libdir}"
 
-libicq2000_libs="$LIBDIRS -licq2000 @SIGC_LIBS@"
-libicq2000_cflags="$CFLAGS @SIGC_CFLAGS@"
+libicq2000_libs="$LIBDIRS -licq2000"
+libicq2000_cflags="$CFLAGS"
 
 usage()
 {
