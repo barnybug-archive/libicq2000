@@ -53,25 +53,31 @@ namespace ICQ2000 {
             b.advance(6);
             unsigned short dataLength;
             b >> dataLength;
-            if (dataLength<2)
-                b.advance(dataLength);
-            else
+            while (dataLength>=2)
             {
-                unsigned short dataType;
-                b >> dataType;
-                if (dataType==0x0131)
+                unsigned short infoType;
+                unsigned short infoLength;
+                b >> infoType;
+                dataLength -= 2;
+                b >> infoLength;
+                dataLength -= 2;
+                if (infoType==0x0131)	// UIN
                 {
                     Contact c(Contact::StringtoUIN(name));
-                    unsigned short nicknameLength;
-                    b >> nicknameLength;
                     string nickname;
-                    b.Unpack(nickname, nicknameLength);
+                    b.Unpack(nickname, infoLength);
+                    dataLength -= infoLength;
                     c.setAlias(nickname);
                     m_contacts.add(c);
+                    break;
                 }
-                else
-                    b.advance(dataLength-2);
+                else			// other stuff we don't understand
+                {
+                    b.advance(infoLength);
+                    dataLength -= infoLength;
+                }
             }
+            b.advance(dataLength);
         }
         b.advance(4);
     }
