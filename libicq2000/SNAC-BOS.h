@@ -57,9 +57,9 @@ namespace ICQ2000 {
     public:
       BOSListSNAC();
       BOSListSNAC(const ContactList& l);
-      BOSListSNAC(const Contact& c);
+      BOSListSNAC(const ContactRef& c);
       BOSListSNAC(const string& s);
-      void addContact(const Contact& c);
+      void addContact(const ContactRef& c);
   };
 
 
@@ -68,7 +68,7 @@ namespace ICQ2000 {
       unsigned short Subtype() const { return SNAC_BOS_Add_Visible; }
       AddVisibleSNAC();
       AddVisibleSNAC(const ContactList& l);
-      AddVisibleSNAC(const Contact& c);
+      AddVisibleSNAC(const ContactRef& c);
       AddVisibleSNAC(const string& s);
   };
 
@@ -77,7 +77,7 @@ namespace ICQ2000 {
       unsigned short Subtype() const { return SNAC_BOS_Add_Invisible; }
       AddInvisibleSNAC();
       AddInvisibleSNAC(const ContactList& l);
-      AddInvisibleSNAC(const Contact& c);
+      AddInvisibleSNAC(const ContactRef& c);
       AddInvisibleSNAC(const string& s);
   };
 
@@ -86,7 +86,7 @@ namespace ICQ2000 {
       unsigned short Subtype() const { return SNAC_BOS_Add_Tmp_Visible; }
       AddTmpVisibleSNAC();
       AddTmpVisibleSNAC(const ContactList& l);
-      AddTmpVisibleSNAC(const Contact& c);
+      AddTmpVisibleSNAC(const ContactRef& c);
       AddTmpVisibleSNAC(const string& s);
   };
 
@@ -95,7 +95,7 @@ namespace ICQ2000 {
       unsigned short Subtype() const { return SNAC_BOS_Remove_Visible; }
       RemoveVisibleSNAC();
       RemoveVisibleSNAC(const ContactList& l);
-      RemoveVisibleSNAC(const Contact& c);
+      RemoveVisibleSNAC(const ContactRef& c);
       RemoveVisibleSNAC(const string& s);
   };
 
@@ -104,7 +104,7 @@ namespace ICQ2000 {
       unsigned short Subtype() const { return SNAC_BOS_Remove_Invisible; }
       RemoveInvisibleSNAC();
       RemoveInvisibleSNAC(const ContactList& l);
-      RemoveInvisibleSNAC(const Contact& c);
+      RemoveInvisibleSNAC(const ContactRef& c);
       RemoveInvisibleSNAC(const string& s);
   };
 
@@ -113,7 +113,7 @@ namespace ICQ2000 {
       unsigned short Subtype() const { return SNAC_BOS_Remove_Tmp_Visible; }
       RemoveTmpVisibleSNAC();
       RemoveTmpVisibleSNAC(const ContactList& l);
-      RemoveTmpVisibleSNAC(const Contact& c);
+      RemoveTmpVisibleSNAC(const ContactRef& c);
       RemoveTmpVisibleSNAC(const string& s);
   };
   

@@ -100,6 +100,9 @@ namespace ICQ2000 {
     Translator m_translator;
 
     ContactList m_contact_list;
+    
+    ContactList m_visible_list;
+    ContactList m_invisible_list;
 
     MessageHandler m_message_handler;
 
@@ -158,6 +161,10 @@ namespace ICQ2000 {
 
     // -------------- Callbacks from ContactList -------------
     void contactlist_cb(ContactListEvent *ev);
+
+    // ------- Callbacks from visible, invisible lists -------
+    void visiblelist_cb(ContactListEvent *ev);
+    void invisiblelist_cb(ContactListEvent *ev);
 
     // -------------- Callbacks from Contacts ----------------
 
@@ -382,6 +389,10 @@ namespace ICQ2000 {
     // -- Contact List --
     void addContact(ContactRef c);
     void removeContact(const unsigned int uin);
+    void addVisible(ContactRef c);
+    void removeVisible(const unsigned int uin);
+    void addInvisible(ContactRef c);
+    void removeInvisible(const unsigned int uin);
     ContactRef getContact(const unsigned int uin);
 
     ContactList& getContactList();

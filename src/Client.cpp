@@ -111,6 +111,10 @@ namespace ICQ2000 {
 
     /* contact list callbacks */
     m_contact_list.contactlist_signal.connect( slot(this, &Client::contactlist_cb) );
+    
+    /* visible, invisible lists callbacks */
+    m_visible_list.contactlist_signal.connect( slot(this, &Client::visiblelist_cb) );
+    m_invisible_list.contactlist_signal.connect( slot(this, &Client::invisiblelist_cb) );
 
     /* self contact callbacks */
     m_self->status_change_signal.connect( self_contact_status_change_signal.slot() );
@@ -952,7 +956,7 @@ namespace ICQ2000 {
       FLAPwrapSNAC(b, AddBuddySNAC(m_contact_list) );
 
     if (m_invisible_wanted)
-      FLAPwrapSNAC(b, AddVisibleSNAC() );
+      FLAPwrapSNAC(b, AddVisibleSNAC(m_visible_list) );
         
     SetStatusSNAC sss(Contact::MapStatusToICQStatus(m_status_wanted, m_invisible_wanted));
 
@@ -960,6 +964,9 @@ namespace ICQ2000 {
     sss.setIP( m_serverSocket.getLocalIP() );
     sss.setPort( (m_in_dc ? m_listenServer.getPort() : 0) );
     FLAPwrapSNAC( b, sss );
+
+    if (!m_invisible_wanted)
+      FLAPwrapSNAC(b, AddInvisibleSNAC(m_invisible_list) );
 
     FLAPwrapSNAC( b, ClientReadySNAC() );
 
@@ -1813,14 +1820,14 @@ namespace ICQ2000 {
 
       if (!m_self->isInvisible() && inv) {
 	// visible -> invisible
-	FLAPwrapSNAC( b, AddVisibleSNAC() );
+	FLAPwrapSNAC( b, AddVisibleSNAC(m_visible_list) );
       }
 	
       FLAPwrapSNAC( b, SetStatusSNAC(Contact::MapStatusToICQStatus(st, inv)) );
       
       if (m_self->isInvisible() && !inv) {
 	// invisible -> visible
-	FLAPwrapSNAC( b, AddInvisibleSNAC() );
+	FLAPwrapSNAC( b, AddInvisibleSNAC(m_invisible_list) );
       }
       
       Send(b);
@@ -1906,6 +1913,50 @@ namespace ICQ2000 {
   }
   
 
+  void Client::visiblelist_cb(ContactListEvent *ev)
+  {
+    ContactRef c = ev->getContact();
+    
+    if (ev->getType() == ContactListEvent::UserAdded) {
+      
+      if (c->isICQContact() && m_state == BOS_LOGGED_IN && m_self->isInvisible()) {
+	FLAPwrapSNACandSend( AddVisibleSNAC(c) );
+
+      }
+
+    } else {
+
+      if (c->isICQContact() && m_state == BOS_LOGGED_IN && m_self->isInvisible()) {
+	FLAPwrapSNACandSend( RemoveVisibleSNAC(c) );
+      }
+
+    }
+    
+  }
+  
+
+  void Client::invisiblelist_cb(ContactListEvent *ev)
+  {
+    ContactRef c = ev->getContact();
+    
+    if (ev->getType() == ContactListEvent::UserAdded) {
+      
+      if (c->isICQContact() && m_state == BOS_LOGGED_IN && !m_self->isInvisible()) {
+	FLAPwrapSNACandSend( AddInvisibleSNAC(c) );
+
+      }
+
+    } else {
+
+      if (c->isICQContact() && m_state == BOS_LOGGED_IN && !m_self->isInvisible()) {
+	FLAPwrapSNACandSend( RemoveInvisibleSNAC(c) );
+      }
+
+    }
+    
+  }
+  
+
   /**
    *  Add a contact to your list.
    *
@@ -1929,6 +1980,54 @@ namespace ICQ2000 {
   void Client::removeContact(const unsigned int uin) {
     if (m_contact_list.exists(uin)) {
       m_contact_list.remove(uin);
+    }
+  }
+  
+  /**
+   *  Add a contact to your visible list.
+   *
+   * @param c the contact passed as a reference counted object (ref_ptr<Contact> or ContactRef).
+   */
+  void Client::addVisible(ContactRef c) {
+
+    if (!m_visible_list.exists(c->getUIN())) {
+      m_visible_list.add(c);
+    }
+
+  }
+
+  /**
+   *  Remove a contact from your visible list.
+   *
+   * @param uin the uin of the contact to be removed
+   */
+  void Client::removeVisible(const unsigned int uin) {
+    if (m_visible_list.exists(uin)) {
+      m_visible_list.remove(uin);
+    }
+  }
+  
+  /**
+   *  Add a contact to your invisible list.
+   *
+   * @param c the contact passed as a reference counted object (ref_ptr<Contact> or ContactRef).
+   */
+  void Client::addInvisible(ContactRef c) {
+
+    if (!m_invisible_list.exists(c->getUIN())) {
+      m_invisible_list.add(c);
+    }
+
+  }
+
+  /**
+   *  Remove a contact from your invisible list.
+   *
+   * @param uin the uin of the contact to be removed
+   */
+  void Client::removeInvisible(const unsigned int uin) {
+    if (m_invisible_list.exists(uin)) {
+      m_invisible_list.remove(uin);
     }
   }
   
