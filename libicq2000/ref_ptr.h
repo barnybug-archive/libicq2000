@@ -60,23 +60,38 @@ namespace ICQ2000 {
 	delete m_instance;
     }
     
-    Object* get() const
+    Object* get()
     {
       return m_instance;
     }
     
-    Object* operator->() const
+    const Object* get() const
+    {
+      return m_instance;
+    }
+    
+    Object* operator->()
     {
       return m_instance;
     }
 
-    Object& operator*() const
+    const Object* operator->() const
+    {
+      return m_instance;
+    }
+
+    Object& operator*()
+    {
+      return *m_instance;
+    }
+
+    const Object& operator*() const
     {
       return *m_instance;
     }
 
     // for debugging
-    unsigned int count()
+    unsigned int count() const
     {
       return m_instance->count;
     }
