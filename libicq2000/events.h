@@ -392,7 +392,7 @@ namespace ICQ2000 {
    */
   class ICQMessageEvent : public MessageEvent {
    private:
-    bool m_urgent, m_tocontactlist;
+    bool m_urgent, m_tocontactlist, m_offline;
     std::string m_away_message;
     
    public:
@@ -402,6 +402,8 @@ namespace ICQ2000 {
     void setUrgent(bool b);
     bool isToContactList() const;
     void setToContactList(bool b);
+    bool isOfflineMessage() const;
+    void setOfflineMessage(bool b);
     unsigned int getSenderUIN() const;
     std::string getAwayMessage() const;
     void setAwayMessage(const std::string& msg);
@@ -423,7 +425,6 @@ namespace ICQ2000 {
 
     string getMessage() const;
     MessageType getType() const;
-    bool isOfflineMessage() const;
     bool isMultiParty() const;
     unsigned int getForeground() const;
     unsigned int getBackground() const;
@@ -446,7 +447,6 @@ namespace ICQ2000 {
     string getMessage() const;
     string getURL() const;
     MessageType getType() const;
-    bool isOfflineMessage() const;
   };
   
   /**
@@ -529,7 +529,6 @@ namespace ICQ2000 {
 
     string getMessage() const;
     MessageType getType() const;
-    bool isOfflineMessage() const;
   };
   
   /**
@@ -549,7 +548,6 @@ namespace ICQ2000 {
 
     string getMessage() const;
     MessageType getType() const;
-    bool isOfflineMessage() const;
     bool isGranted() const;
   };
 

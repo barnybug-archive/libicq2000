@@ -142,9 +142,18 @@ namespace ICQ2000 {
        * - sockets not being created
        * - DNS lookup failures
        */
+
+      {
+	ostringstream ostr;
+	ostr << "Looking up host name of authorizer: " << m_authorizerHostname.c_str();
+	SignalLog(LogEvent::INFO, ostr.str());
+      }
       m_serverSocket.setRemoteHost(m_authorizerHostname.c_str());
       m_serverSocket.setRemotePort(m_authorizerPort);
+
       m_serverSocket.setBlocking(false);
+
+      SignalLog(LogEvent::INFO, "Establishing TCP connection to authorizer");
       m_serverSocket.Connect();
     } catch(SocketException e) {
       // signal connection failure
@@ -175,6 +184,8 @@ namespace ICQ2000 {
     try {
       m_serverSocket.setRemoteHost(m_bosHostname.c_str());
       m_serverSocket.setRemotePort(m_bosPort);
+
+      SignalLog(LogEvent::INFO, "Establishing TCP Connection to BOS Server");
       m_serverSocket.setBlocking(false);
       m_serverSocket.Connect();
     } catch(SocketException e) {
@@ -940,16 +951,10 @@ namespace ICQ2000 {
     if (!m_contact_list.empty())
       FLAPwrapSNAC(b, AddBuddySNAC(m_contact_list) );
 
-    if (m_self->isInvisible())
+    if (m_invisible_wanted)
       FLAPwrapSNAC(b, AddVisibleSNAC() );
         
     SetStatusSNAC sss(Contact::MapStatusToICQStatus(m_status_wanted, m_invisible_wanted));
-
-    // explicitly set status to offline. If the user set the status
-    // before calling Connect and we don't do this, we'll miss the
-    // status change upon the user info reception and will not emit
-    // the statuschanged signal correctly
-    m_self->setStatus(STATUS_OFFLINE);
 
     sss.setSendExtra(true);
     sss.setIP( m_serverSocket.getLocalIP() );
@@ -1429,6 +1434,8 @@ namespace ICQ2000 {
 	  Disconnect(DisconnectedEvent::FAILED_LOWLEVEL);
 	  return;
 	}
+
+	SignalLog(LogEvent::INFO, "Connection established");
 
 	SignalRemoveSocket(fd);
 	// no longer select on write

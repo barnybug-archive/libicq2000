@@ -449,7 +449,8 @@ namespace ICQ2000 {
    * @param c the contact related to this event
    */
   ICQMessageEvent::ICQMessageEvent(ContactRef c)
-    : MessageEvent(c), m_urgent(false), m_tocontactlist(false) { }
+    : MessageEvent(c), m_urgent(false), m_tocontactlist(false), m_offline(false)
+  { }
 
   /**
    *  get whether the message was sent marked as urgent
@@ -489,6 +490,18 @@ namespace ICQ2000 {
   }
 
   /**
+   *  get if this was an offline message
+   *
+   * @return if this was an offline message
+   */
+  bool ICQMessageEvent::isOfflineMessage() const { return m_offline; }
+    
+  /**
+   *  set whether this was an offline message
+   */
+  void ICQMessageEvent::setOfflineMessage(bool b) { m_offline = b; }
+    
+  /**
    *  get the uin of the sender.  This is really miss-named, if you
    *  were sending the message, this would be the UIN of the recipient.
    *
@@ -522,7 +535,7 @@ namespace ICQ2000 {
    * @param multi tag message as a multireceipt message
    */
   NormalMessageEvent::NormalMessageEvent(ContactRef c, const string& msg, bool multi)
-    : ICQMessageEvent(c), m_message(msg), m_offline(false), m_multi(multi),
+    : ICQMessageEvent(c), m_message(msg), m_multi(multi),
       m_foreground(0x00000000), m_background(0x00ffffff) {
     setDirect(false);
   }
@@ -536,9 +549,10 @@ namespace ICQ2000 {
    * @param t the time the message was sent
    */
   NormalMessageEvent::NormalMessageEvent(ContactRef c, const string& msg, time_t t, bool multi)
-    : ICQMessageEvent(c), m_message(msg), m_offline(true), m_multi(multi),
+    : ICQMessageEvent(c), m_message(msg), m_multi(multi),
       m_foreground(0x00000000), m_background(0x00ffffff) {
     setDirect(false);
+    setOfflineMessage(true);
     m_time = t;
   }
 
@@ -551,7 +565,7 @@ namespace ICQ2000 {
    * @param bg background colour for the message
    */
   NormalMessageEvent::NormalMessageEvent(ContactRef c, const string& msg, unsigned int fg, unsigned int bg)
-    : ICQMessageEvent(c), m_message(msg), m_offline(false), m_multi(false) /* todo */,
+    : ICQMessageEvent(c), m_message(msg), m_multi(false) /* todo */,
       m_foreground(fg), m_background(bg) {
     setDirect(true);
   }
@@ -564,13 +578,6 @@ namespace ICQ2000 {
    * @return the message
    */
   string NormalMessageEvent::getMessage() const { return m_message; }
-
-  /**
-   *  get if the message was an offline message
-   *
-   * @return if the message was an offline message
-   */
-  bool NormalMessageEvent::isOfflineMessage() const { return m_offline; }
 
   /**
    *  get if the message is a multiparty message
@@ -619,7 +626,7 @@ namespace ICQ2000 {
    * @param url the url
    */
   URLMessageEvent::URLMessageEvent(ContactRef c, const string& msg, const string& url)
-    : ICQMessageEvent(c), m_message(msg), m_url(url), m_offline(false) { }
+    : ICQMessageEvent(c), m_message(msg), m_url(url) { }
 
   /**
    *  Construct an URLMessageEvent. This constructor is only used by the library.
@@ -630,7 +637,8 @@ namespace ICQ2000 {
    * @param t time of sending
    */
   URLMessageEvent::URLMessageEvent(ContactRef c, const string& msg, const string& url, time_t t)
-    : ICQMessageEvent(c), m_message(msg), m_url(url), m_offline(true) {
+    : ICQMessageEvent(c), m_message(msg), m_url(url) {
+    setOfflineMessage(true);
     m_time = t;
   }
 
@@ -649,13 +657,6 @@ namespace ICQ2000 {
    * @return the url
    */
   string URLMessageEvent::getURL() const { return m_url; }
-
-  /**
-   *  get if the message was an offline message
-   *
-   * @return if the message was an offline message
-   */
-  bool URLMessageEvent::isOfflineMessage() const { return m_offline; }
 
   // ============================================================================
   //  SMS Message
@@ -837,8 +838,9 @@ namespace ICQ2000 {
    * @param msg authorisation message
    */
   AuthReqEvent::AuthReqEvent(ContactRef c, const string& msg, time_t t)
-    : ICQMessageEvent(c), m_message(msg), m_offline(true) {
-    m_time=t;  
+    : ICQMessageEvent(c), m_message(msg) {
+    setOfflineMessage(true);
+    m_time = t;  
   }
 
   MessageEvent::MessageType AuthReqEvent::getType() const { 
@@ -852,13 +854,6 @@ namespace ICQ2000 {
    */
   string AuthReqEvent::getMessage() const { return m_message; }
 
-  /**
-   *  get if this was an offline message
-   *
-   * @return if this was an offline message
-   */
-  bool AuthReqEvent::isOfflineMessage() const { return m_offline; }
-    
   // ============================================================================
   //  Authorisation Acknowledgement
   // ============================================================================
@@ -870,7 +865,7 @@ namespace ICQ2000 {
    * @param granted if authorisation was granted
    */
   AuthAckEvent::AuthAckEvent(ContactRef c, bool granted)
-    : ICQMessageEvent(c), m_offline(false), m_granted(granted) {}
+    : ICQMessageEvent(c), m_granted(granted) {}
       
   /**
    *  Constructor for the Authorisation Acknowledgement
@@ -880,8 +875,7 @@ namespace ICQ2000 {
    * @param granted if authorisation was granted
    */
   AuthAckEvent::AuthAckEvent(ContactRef c, const string& msg, bool granted)
-    : ICQMessageEvent(c),  m_message(msg), m_offline(false), 
-      m_granted(granted) {}
+    : ICQMessageEvent(c),  m_message(msg), m_granted(granted) {}
       
   /**
    *  Constructor for the Authorisation Acknowledgement
@@ -891,8 +885,9 @@ namespace ICQ2000 {
    * @param t time the message was sent
    */
   AuthAckEvent::AuthAckEvent(ContactRef c, bool granted, time_t t)
-    : ICQMessageEvent(c), m_offline(true), m_granted(granted) {
-    m_time=t;  
+    : ICQMessageEvent(c), m_granted(granted) {
+    setOfflineMessage(true);
+    m_time = t;
   }
 
   /**
@@ -905,8 +900,9 @@ namespace ICQ2000 {
    */
   AuthAckEvent::AuthAckEvent(ContactRef c, const string& msg,
                              bool granted, time_t t)
-    : ICQMessageEvent(c), m_message(msg), m_offline(true), m_granted(granted) {
-    m_time=t;  
+    : ICQMessageEvent(c), m_message(msg), m_granted(granted) {
+    setOfflineMessage(true);
+    m_time = t;
   }
   
   MessageEvent::MessageType AuthAckEvent::getType() const { 
@@ -928,13 +924,6 @@ namespace ICQ2000 {
    * @return the authorisation message
    */
   string AuthAckEvent::getMessage() const { return m_message; }
-
-  /**
-   *  get if the message was sent offline
-   *
-   * @return if the message was sent offline
-   */
-  bool AuthAckEvent::isOfflineMessage() const { return m_offline; }
 
   // ============================================================================
   //  E-mail Express message
