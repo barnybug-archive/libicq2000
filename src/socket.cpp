@@ -345,6 +345,7 @@ namespace ICQ2000
   void TCPServer::Disconnect() {
     if (m_socketDescriptor_valid) {
       close(m_socketDescriptor);
+      m_socketDescriptor = 0;
       m_socketDescriptor_valid = false;
     }
   }
