@@ -80,7 +80,7 @@ namespace ICQ2000 {
     b << (unsigned short)2000;
 
     // think this is a request id of sorts
-    b << (unsigned short)0x0001;
+    b << (unsigned short)m_requestID; /* low word of the request ID */
 
     b.setBigEndian();
 
@@ -112,7 +112,7 @@ namespace ICQ2000 {
     // message type
     b << (unsigned short)60;
     // a request id
-    b << (unsigned short)0x0000;
+    b << (unsigned short)m_requestID; /* low word of the request ID */
 
   }
 
@@ -131,7 +131,7 @@ namespace ICQ2000 {
     // message type
     b << (unsigned short)62;
     // a request id
-    b << (unsigned short)0x0000;
+    b << (unsigned short)m_requestID; /* low word of the request ID */
 
   }
 
@@ -147,7 +147,7 @@ namespace ICQ2000 {
     b << m_my_uin;
 
     b << (unsigned short)2000	/* type 9808 */
-      << (unsigned short)0x0000
+      << (unsigned short)m_requestID /* low word of the request ID */
       << (unsigned short)1311	/* subtype (unsigned short)1311 */
       << m_user_uin;
     
@@ -173,7 +173,7 @@ namespace ICQ2000 {
     b << m_my_uin;
 
     b << (unsigned short)2000	/* type 9808 */
-      << (unsigned short)0x0000
+      << (unsigned short)m_requestID /* low word of the request ID */
       << (unsigned short)0x0515;	/* subtype wp-short-request */
     b.PackUint16TranslatedNull(m_firstname);
     b.PackUint16TranslatedNull(m_lastname);
@@ -212,7 +212,7 @@ namespace ICQ2000 {
     b << m_my_uin;
 
     b << (unsigned short)2000	/* type 9808 */
-      << (unsigned short)0x0000
+      << (unsigned short)m_requestID /* low word of the request ID */
       << (unsigned short)0x0533;	/* subtype wp-full-request */
     b.PackUint16TranslatedNull(m_firstname);
     b.PackUint16TranslatedNull(m_lastname);
@@ -255,7 +255,7 @@ namespace ICQ2000 {
     b << m_my_uin;
 
     b << (unsigned short)2000   /* type 9808 */
-      << (unsigned short)0x0000
+      << (unsigned short)m_requestID /* low word of the request ID */
       << (unsigned short)0x04b2 /* subtype (unsigned short)1311 */
       << m_user_uin;
    
@@ -275,7 +275,7 @@ namespace ICQ2000 {
         b << m_my_uin;
 
         b << (unsigned short)2000   /* type 9808 */
-            << (unsigned short)0x0000
+            << (unsigned short)m_requestID /* low word of the request ID */
             << (unsigned short)0x03ea; /* subtype */
         b.PackUint16TranslatedNull(m_main_home_info.alias);     // alias
         b.PackUint16TranslatedNull(m_main_home_info.firstname); // first name
@@ -310,7 +310,7 @@ namespace ICQ2000 {
         b << m_my_uin;
 
         b << (unsigned short)2000   /* type 9808 */
-            << (unsigned short)0x0000
+            << (unsigned short)m_requestID /* low word of the request ID */
             << (unsigned short)0x03f3; /* subtype */
         b.PackUint16TranslatedNull(m_work_info.city);     	    // city
         b.PackUint16TranslatedNull(m_work_info.state);     	    // state
@@ -342,7 +342,7 @@ namespace ICQ2000 {
         b << m_my_uin;
 
         b << (unsigned short)2000   /* type 9808 */
-            << (unsigned short)0x0000
+            << (unsigned short)m_requestID /* low word of the request ID */
             << (unsigned short)0x03fd; /* subtype */
         b << (unsigned char)m_homepage_info.age;	    // age
         b << (unsigned char)0x00;
@@ -372,7 +372,7 @@ namespace ICQ2000 {
         b << m_my_uin;
 
         b << (unsigned short)2000   /* type 9808 */
-            << (unsigned short)0x0000
+            << (unsigned short)m_requestID /* low word of the request ID */
             << (unsigned short)0x0406; /* subtype */
         b.PackUint16TranslatedNull(m_about_info);
         b.setAutoSizeMarker(m1);
