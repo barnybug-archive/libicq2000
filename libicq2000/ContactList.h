@@ -86,7 +86,10 @@ namespace ICQ2000 {
     ContactList();
 
     Contact& operator[](unsigned int uin);
-    Contact& operator[](const string& m);
+    Contact& lookup_uin(unsigned int uin);
+    Contact& lookup_mobile(const std::string& m);
+    Contact& lookup_email(const std::string& em);
+
     Contact& add(const Contact& ct);
     void remove(unsigned int uin);
 
@@ -94,8 +97,8 @@ namespace ICQ2000 {
     bool empty() const;
 
     bool exists(unsigned int uin);
-    bool exists(const string& m);
-    bool email_exists(const string& m);
+    bool mobile_exists(const string& m);
+    bool email_exists(const string& em);
 
     iterator begin();
     const_iterator begin() const;

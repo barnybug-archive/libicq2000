@@ -26,18 +26,36 @@ namespace ICQ2000 {
   ContactList::ContactList() { }
 
   Contact& ContactList::operator[](unsigned int uin) {
+    return lookup_uin(uin);
+  }
+
+  Contact& ContactList::lookup_uin(unsigned int uin) {
     return m_cmap[uin];
   }
 
-  Contact& ContactList::operator[](const string& m) {
+  Contact& ContactList::lookup_mobile(const string& m)
+  {
     iterator curr = begin();
     while (curr != end()) {
       if ((*curr).getNormalisedMobileNo() == m) return (*curr);
       ++curr;
     }
 
-    // really shouldn't reach here
     Contact c(m,m);
+    add(c);
+    return m_cmap[c.getUIN()];
+  }
+
+  Contact& ContactList::lookup_email(const string& em)
+  {
+    iterator curr = begin();
+    while (curr != end()) {
+      if ((*curr).getEmail() == em) return (*curr);
+      ++curr;
+    }
+
+    Contact c(em);
+    c.setEmail(em);
     add(c);
     return m_cmap[c.getUIN()];
   }
@@ -63,7 +81,7 @@ namespace ICQ2000 {
     return (m_cmap.count(uin) != 0);
   }
   
-  bool ContactList::exists(const string& m) {
+  bool ContactList::mobile_exists(const string& m) {
     iterator curr = begin();
     while (curr != end()) {
       if ((*curr).getNormalisedMobileNo() == m) return true;
@@ -72,10 +90,10 @@ namespace ICQ2000 {
     return false;
   }
 
-  bool ContactList::email_exists(const string& m) {
+  bool ContactList::email_exists(const string& em) {
     iterator curr = begin();
     while (curr != end()) {
-      if ((*curr).getEmail() == m) return true;
+      if ((*curr).getEmail() == em) return true;
       ++curr;
     }
     return false;

@@ -2008,24 +2008,24 @@ namespace ICQ2000 {
       Contact c(uin);
       addContact(c);
     }
-    return &(m_contact_list[uin]);
+    return &(m_contact_list.lookup_uin(uin));
   }
 
   Contact* Client::lookupMobile(const string& m) {
-    if (!m_contact_list.exists(m)) {
+    if (!m_contact_list.mobile_exists(m)) {
       Contact c(m,m);
       addContact(c);
     }
-    return &(m_contact_list[m]);
+    return &(m_contact_list.lookup_mobile(m));
   }
 
-  Contact* Client::lookupEmail(const string& m) {
-    if (!m_contact_list.email_exists(m)) {
-      Contact c(m);
-      c.setEmail(m);
+  Contact* Client::lookupEmail(const string& em) {
+    if (!m_contact_list.email_exists(em)) {
+      Contact c(em);
+      c.setEmail(em);
       addContact(c);
     }
-    return &(m_contact_list[m]);
+    return &(m_contact_list.lookup_email(em));
   }
 
   void Client::SignalServerBasedContactList(const ContactList& l) {
