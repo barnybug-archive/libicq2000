@@ -46,7 +46,8 @@ static const char* const Status_text[] = { "Online",
 static const unsigned int SMS_Max_Length = 160;
 
 static const unsigned int String_Limit = 16384; // A sensible limit
-
+static const unsigned int Incoming_Packet_Limit = 65535;
+ 
 }
 
 #endif

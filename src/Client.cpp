@@ -1055,9 +1055,6 @@ namespace ICQ2000 {
     try {
       while (m_serverSocket.connected()) {
 	if (!m_serverSocket.Recv(m_recv)) break;
-	ostringstream ostr;
-	ostr << "Received packet from Server" << endl << m_recv;
-	SignalLog(LogEvent::PACKET, ostr.str());
 	Parse();
       }
     } catch(SocketException e) {
@@ -1106,6 +1103,13 @@ namespace ICQ2000 {
        */
       Buffer sb(&m_translator);
       m_recv.chopOffBuffer( sb, data_len+6 );
+
+      {
+	ostringstream ostr;
+	ostr << "Received packet from Server" << endl << sb;
+	SignalLog(LogEvent::PACKET, ostr.str());
+      }
+
       sb.advance(6);
 
       // -- FLAP body --

@@ -22,6 +22,7 @@
 #include <libicq2000/DirectClient.h>
 
 #include <libicq2000/ICQ.h>
+#include <libicq2000/constants.h>
 
 #include "sstream_fix.h"
 
@@ -141,9 +142,6 @@ namespace ICQ2000 {
     try {
       while ( m_socket->connected() ) {
 	if ( !m_socket->Recv(m_recv) ) break;
-	ostringstream ostr;
-	ostr << "Received packet from " << IPtoString( m_socket->getRemoteIP() ) << ":" << m_socket->getRemotePort() << endl << m_recv;
-	SignalLog(LogEvent::DIRECTPACKET, ostr.str());
 	Parse();
       }
     } catch(SocketException e) {
@@ -176,10 +174,16 @@ namespace ICQ2000 {
 
       m_recv.setLittleEndian();
       m_recv >> length;
+      if (length > Incoming_Packet_Limit) throw ParseException("Received too long incoming packet");
       if (m_recv.remains() < length) return; // waiting for more of the packet
+
 
       Buffer sb(m_translator);
       m_recv.chopOffBuffer( sb, length+2 );
+
+      ostringstream ostr;
+      ostr << "Received packet from " << IPtoString( m_socket->getRemoteIP() ) << ":" << m_socket->getRemotePort() << endl << sb;
+      SignalLog(LogEvent::DIRECTPACKET, ostr.str());
 
       if (m_state == WAITING_FOR_INIT) {
 	ParseInitPacket(sb);
