@@ -34,6 +34,7 @@ SigC::Connection Select::connect(const SlotType &s,
   SigC::SlotData* sd=(SigC::SlotData*)(s.obj());
 
   // add to map
+  using std::make_pair;
   if (condition & Read) rfdl.insert( make_pair(source, (Callback*)&(sd->data_)) );
   if (condition & Write) wfdl.insert( make_pair(source, (Callback*)&(sd->data_)) );
   if (condition & Exception) efdl.insert( make_pair(source, (Callback*)&(sd->data_)) );
@@ -136,7 +137,6 @@ bool Select::run(unsigned int interval)
 
 void Select::_disconnect(int fd)
 {
-  cout << "_disconnect" << endl;
   // unmap this file descriptor
   if (rfdl.count(fd) != 0) {
     rfdl.erase(fd);
