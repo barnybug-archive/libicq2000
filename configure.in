@@ -1,8 +1,39 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT([src/Client.cpp])
-AM_INIT_AUTOMAKE(libicq2000,0.3.0)
 
-AM_CONFIG_HEADER(config.h)
+AC_INIT([src/Client.cpp])
+
+#
+# Version information
+#
+LIBICQ2000_MAJOR_VERSION=0
+LIBICQ2000_MINOR_VERSION=3
+LIBICQ2000_MICRO_VERSION=0
+
+#
+# +1 : ? : +1  == new interface that does not break old one
+# +1 : ? : 0   == new interface that breaks old one
+#  ? : ? : 0   == no new interfaces, but breaks apps
+#  ? :+1 : ?   == just some internal changes, nothing breaks but might work 
+#                 better
+# Remember - change before a release!
+# CURRENT : REVISION : AGE
+LIBICQ2000_SO_VERSION=3:0:0
+
+LIBICQ2000_VERSION=$LIBICQ2000_MAJOR_VERSION.$LIBICQ2000_MINOR_VERSION.$LIBICQ2000_MICRO_VERSION
+
+AC_DEFINE_UNQUOTED(LIBICQ2000_MAJOR_VERSION, $LIBICQ2000_MAJOR_VERSION)
+AC_DEFINE_UNQUOTED(LIBICQ2000_MINOR_VERSION, $LIBICQ2000_MINOR_VERSION)
+AC_DEFINE_UNQUOTED(LIBICQ2000_MICRO_VERSION, $LIBICQ2000_MICRO_VERSION)
+AC_SUBST(LIBICQ2000_VERSION)
+AC_SUBST(LIBICQ2000_SO_VERSION)
+
+dnl For automake.
+VERSION=$LIBICQ2000_VERSION
+PACKAGE=libicq2000
+
+AM_INIT_AUTOMAKE($PACKAGE,$VERSION)
+
+AM_CONFIG_HEADER(config.h libicq2000/version.h)
 
 # Checks for programs.
 AC_PROG_CC
