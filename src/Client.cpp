@@ -1731,7 +1731,7 @@ namespace ICQ2000 {
        *
        */
       SMSMessageEvent *sv = static_cast<SMSMessageEvent*>(ev);
-      SrvSendSNAC ssnac(sv->getMessage(), c->getMobileNo(), m_self.getUIN(), "", sv->getRcpt());
+      SrvSendSNAC ssnac(sv->getMessage(), c->getNormalisedMobileNo(), m_self.getUIN(), "", sv->getRcpt());
 
       unsigned int reqid = NextRequestID();
       m_reqidcache.insert( reqid, new SMSEventCacheValue( sv ) );
@@ -1789,16 +1789,16 @@ namespace ICQ2000 {
   }
 
 
-    void Client::uploadSelfDetails()
+  void Client::uploadSelfDetails()
   {
-        Buffer b(&m_translator);
-        
-        FLAPwrapSNAC( b, SrvUpdateMainHomeInfo(m_self.getUIN(), m_self.getMainHomeInfo()) );
-        FLAPwrapSNAC( b, SrvUpdateWorkInfo(m_self.getUIN(), m_self.getWorkInfo()) );
-        FLAPwrapSNAC( b, SrvUpdateHomepageInfo(m_self.getUIN(), m_self.getHomepageInfo()) );
-        FLAPwrapSNAC( b, SrvUpdateAboutInfo(m_self.getUIN(), m_self.getAboutInfo()) );
-
-        Send(b);
+    Buffer b(&m_translator);
+    
+    FLAPwrapSNAC( b, SrvUpdateMainHomeInfo(m_self.getUIN(), m_self.getMainHomeInfo()) );
+    FLAPwrapSNAC( b, SrvUpdateWorkInfo(m_self.getUIN(), m_self.getWorkInfo()) );
+    FLAPwrapSNAC( b, SrvUpdateHomepageInfo(m_self.getUIN(), m_self.getHomepageInfo()) );
+    FLAPwrapSNAC( b, SrvUpdateAboutInfo(m_self.getUIN(), m_self.getAboutInfo()) );
+    
+    Send(b);
   }
     
   /**
