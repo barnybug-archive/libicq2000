@@ -670,11 +670,12 @@ namespace ICQ2000 {
       c->setDirect(true); // reset flags when a user goes online
       c->setStatus( Contact::MapICQStatusToStatus(userinfo.getStatus()),
 		    Contact::MapICQStatusToInvisible(userinfo.getStatus()) );
-      c->setExtIP( userinfo.getExtIP() );
-      c->setLanIP( userinfo.getLanIP() );
-      c->setExtPort( userinfo.getExtPort() );
-      c->setLanPort( userinfo.getLanPort() );
-      c->setTCPVersion( userinfo.getTCPVersion() );
+
+      if ( userinfo.getExtIP() != 0 ) c->setExtIP( userinfo.getExtIP() );
+      if ( userinfo.getLanIP() != 0 ) c->setLanIP( userinfo.getLanIP() );
+      if ( userinfo.getLanPort() != 0 ) c->setLanPort( userinfo.getLanPort() );
+      if ( userinfo.getTCPVersion() != 0 ) c->setTCPVersion( userinfo.getTCPVersion() );
+
       c->set_signon_time( userinfo.getSignonDate() );
       if (userinfo.contains_capabilities())
 	c->set_capabilities( userinfo.get_capabilities() );
