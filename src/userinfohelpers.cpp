@@ -115,6 +115,32 @@ namespace ICQ2000
       return ret;
     }
     
+    string getTimezonetoLocaltime(signed char id)
+    {
+      string r;
+
+      if(id <= 24 && id >= -24) {
+	time_t rt = time(0) + getSystemTimezone()*1800;
+	rt -= id*1800;
+	r = ctime(&rt);
+      }
+
+      return r;
+    }
+
+    signed char getSystemTimezone()
+    {
+      time_t t = time(NULL);
+      struct tm *tzone = localtime(&t);
+      int nTimezone = 0;
+
+      nTimezone = timezone + (tzone->tm_isdst == 1 ? 3600 : 0);
+      nTimezone /= 1800;
+      if(nTimezone > 23) return 23-nTimezone;
+
+      return (signed char) nTimezone;
+    }
+    
     string getLanguageIDtoString(unsigned char id)
     {
       if (id >= Language_table_size) {

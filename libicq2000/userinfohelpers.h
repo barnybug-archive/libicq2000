@@ -27,6 +27,8 @@
 #include <string>
 #include <vector>
 
+#include <time.h>
+
 namespace ICQ2000
 {
 
@@ -39,6 +41,8 @@ namespace ICQ2000
     std::string getTimezoneIDtoString(signed char id);
     signed char getTimezoneStringtoID(const std::string& s);
     std::vector<std::string> getTimezoneAllStrings();
+    std::string getTimezonetoLocaltime(signed char id);
+    signed char getSystemTimezone();
 
     std::string getLanguageIDtoString(unsigned char id);
     unsigned char getLanguageStringtoID(const std::string& s);
