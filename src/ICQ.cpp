@@ -728,7 +728,7 @@ namespace ICQ2000 {
     string::size_type lpos = 0, pos = 0;
     while (lpos != in.size()) {
       pos = in.find(sep, lpos);
-      fields.push_back(in.substr(lpos, pos));
+      fields.push_back(in.substr(lpos, pos-lpos));
       if (pos == string::npos) {
 	lpos = in.size();
       } else {
