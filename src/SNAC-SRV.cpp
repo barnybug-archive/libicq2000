@@ -289,7 +289,7 @@ namespace ICQ2000 {
         b.PackUint16TranslatedNull(m_main_home_info.cellular);  // cellular
         b.PackUint16TranslatedNull(m_main_home_info.zip);       // zip
         b << m_main_home_info.country;
-        b << m_main_home_info.gmt;
+        b << m_main_home_info.timezone;
         unsigned char publish_email = 0;
         b << publish_email;
         b.setAutoSizeMarker(m1);
@@ -635,7 +635,7 @@ namespace ICQ2000 {
       b.UnpackUint16TranslatedNull(m_main_home_info.zip);       // zip
       b >> m_main_home_info.country;
       unsigned char unk;
-      b >> m_main_home_info.gmt;
+      b >> m_main_home_info.timezone;
       b >> unk;
 
       // some end marker?

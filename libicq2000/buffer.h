@@ -95,6 +95,9 @@ class Buffer {
   Buffer& operator>>(unsigned char&);
   Buffer& operator>>(unsigned short&);
   Buffer& operator>>(unsigned int&);
+  Buffer& operator>>(signed char& l) { return (*this) >> (unsigned char&)l; }
+  Buffer& operator>>(signed short& l) { return (*this) >> (unsigned short&)l; }
+  Buffer& operator>>(signed int& l) { return (*this) >> (unsigned int&)l; }
   Buffer& operator>>(string&);
 
   void Pack(const unsigned char *d, int size);

@@ -43,7 +43,7 @@ namespace ICQ2000 {
 
     string alias, firstname, lastname, email, city, state, phone, fax, street, cellular, zip;
     unsigned short country;
-    unsigned char gmt;
+    signed char timezone;
 
     string getCountry() const;
   };

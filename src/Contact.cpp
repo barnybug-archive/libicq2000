@@ -225,7 +225,7 @@ namespace ICQ2000 {
   // Extra Detailed info class implementations;
 
   MainHomeInfo::MainHomeInfo()
-    : country(0), gmt(0) { }
+    : country(0), timezone(Timezone_unknown) { }
 
   string MainHomeInfo::getCountry() const {
     for(unsigned short a = 0; a < Country_table_size; a++) {

@@ -32,6 +32,8 @@ enum Sex {
   SEX_MALE        = 2
 };
 
+static const signed char Timezone_unknown = -100;
+
 static const unsigned char Language_table_size = 60;
 
 static const char* Language_table[Language_table_size] = {
