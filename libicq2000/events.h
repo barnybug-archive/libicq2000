@@ -313,7 +313,9 @@ namespace ICQ2000 {
       SMS_Receipt,
       AuthReq,
       AuthAck,
-      AwayMessage
+      AwayMessage,
+      EmailEx,
+      UserAdd
     };
 
     MessageEvent(Contact* c);
@@ -490,6 +492,35 @@ namespace ICQ2000 {
     MessageType getType() const;
     bool isOfflineMessage() const;
     bool isGranted() const;
+  };
+
+  /**
+   *  An E-mail Express message
+   */
+  class EmailExEvent : public MessageEvent {
+   private:
+    string m_email, m_sender, m_message;
+
+   public:
+    EmailExEvent(Contact* c, const string &email, const string &sender, const string &msg);
+
+    string getMessage() const;
+    string getEmail() const;
+    string getSender() const;
+
+    MessageType getType() const;
+    unsigned int getSenderUIN() const;
+  };
+
+  /**
+   *  A "You were added" message
+   */
+  class UserAddEvent : public MessageEvent {
+   public:
+    UserAddEvent(Contact* c);
+
+    MessageType getType() const;
+    unsigned int getSenderUIN() const;
   };
 
   // --------------------- Self Events ----------------------

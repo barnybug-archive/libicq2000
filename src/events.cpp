@@ -835,6 +835,32 @@ namespace ICQ2000 {
    */
   bool AuthAckEvent::isOfflineMessage() const { return m_offline; }
 
+  // ---------------- E-mail express -------------------
+
+  EmailExEvent::EmailExEvent(Contact* c, const string &email,
+			     const string &sender, const string &msg)
+  : MessageEvent(c), m_message(msg), m_email(email), m_sender(sender) {
+  }
+
+  string EmailExEvent::getMessage() const { return m_message; }
+
+  string EmailExEvent::getEmail() const { return m_email; }
+
+  string EmailExEvent::getSender() const { return m_sender; }
+
+  MessageEvent::MessageType EmailExEvent::getType() const { return MessageEvent::EmailEx; }
+
+  unsigned int EmailExEvent::getSenderUIN() const { return m_contact->getUIN(); }
+
+  // ---------------- "You were added" message -------------------
+
+  UserAddEvent::UserAddEvent(Contact* c) : MessageEvent(c) { }
+
+  MessageEvent::MessageType UserAddEvent::getType() const { return MessageEvent::UserAdd; }
+
+  unsigned int UserAddEvent::getSenderUIN() const { return m_contact->getUIN(); }
+
+
   // ---------------- Self Event -------------------------
 
   SelfEvent::SelfEvent(Contact *self)

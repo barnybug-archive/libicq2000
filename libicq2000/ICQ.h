@@ -287,6 +287,34 @@ namespace ICQ2000 {
 
   };
 
+  class EmailExICQSubType : public ICQSubType {
+   private:
+    string m_message, m_email, m_sender;
+
+   public:
+    EmailExICQSubType();
+
+    void ParseBody(Buffer& b);
+    void OutputBody(Buffer& b) const;
+    unsigned short Length() const;
+    unsigned char getType() const;
+
+    string getMessage() const;
+    string getEmail() const;
+    string getSender() const;
+  };
+
+  class UserAddICQSubType : public UINICQSubType {
+   public:
+    UserAddICQSubType();
+    UserAddICQSubType(unsigned int source, unsigned int destination);
+
+    void ParseBodyUIN(Buffer& b);
+    void OutputBodyUIN(Buffer& b) const;
+    unsigned short Length() const;
+    unsigned char getType() const;
+  };
+
   // helper
 
   UINICQSubType* EventToUINICQSubType(MessageEvent *ev);

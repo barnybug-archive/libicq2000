@@ -426,6 +426,14 @@ namespace ICQ2000 {
 				ust->getMessage(),
 				ust->getURL(),
 				snac->getTime());
+      } else if (st->getType() == MSG_Type_EmailEx) {
+	EmailExICQSubType *ust = static_cast<EmailExICQSubType*>(st);
+	contact = lookupEmail( ust->getEmail() );
+	e = new EmailExEvent(contact, ust->getEmail(), ust->getSender(), ust->getMessage());
+      } else if (st->getType() == MSG_Type_UserAdd) {
+	UserAddICQSubType *ust = static_cast<UserAddICQSubType*>(st);
+	contact = lookupICQ( ust->getSource() );
+	e = new UserAddEvent(contact);
       } else if (st->getType() == MSG_Type_AuthReq) {
         AuthReqICQSubType *ust = static_cast<AuthReqICQSubType*>(st);
 	e = new AuthReqEvent(contact, ust->getMessage(), snac->getTime());
@@ -1937,6 +1945,15 @@ namespace ICQ2000 {
     return &(m_contact_list[m]);
   }
 
+  Contact* Client::lookupEmail(const string& m) {
+    if (!m_contact_list.email_exists(m)) {
+      Contact c;
+      c.setEmail(m);
+      c.setAlias(m);
+      addContact(c);
+    }
+    return &(m_contact_list[m]);
+  }
   
 
   void Client::SignalServerBasedContact(Contact *c) {

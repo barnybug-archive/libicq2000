@@ -95,6 +95,7 @@ namespace ICQ2000 {
 
     bool exists(unsigned int uin);
     bool exists(const string& m);
+    bool email_exists(const string& m);
 
     iterator begin();
     const_iterator begin() const;

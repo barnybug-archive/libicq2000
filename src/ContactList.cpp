@@ -72,6 +72,15 @@ namespace ICQ2000 {
     return false;
   }
 
+  bool ContactList::email_exists(const string& m) {
+    iterator curr = begin();
+    while (curr != end()) {
+      if ((*curr).getEmail() == m) return true;
+      ++curr;
+    }
+    return false;
+  }
+
   ContactList::iterator ContactList::begin() {
     return iterator(m_cmap.begin());
   }

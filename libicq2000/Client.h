@@ -195,6 +195,7 @@ namespace ICQ2000 {
 
     Contact* lookupICQ(unsigned int uin);
     Contact* lookupMobile(const string& m);
+    Contact* lookupEmail(const string& m);
 
     Contact* getUserInfoCacheContact(unsigned int reqid);
 
