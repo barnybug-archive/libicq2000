@@ -887,6 +887,14 @@ namespace ICQ2000 {
    */
   bool MyStatusChangeEvent::getInvisible() const { return m_invisible; }
 
+  // ---------------- My Details Change -------------------
+
+  /**
+   *  Constructor for MyDetailsChangeEvent
+   *
+   */
+  MyDetailsChangeEvent::MyDetailsChangeEvent() : Event() { }
+
   // ---------------- New UIN ----------------------------
 
   /**

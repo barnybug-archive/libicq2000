@@ -89,6 +89,7 @@ namespace ICQ2000 {
     } m_state;
 
     unsigned int m_uin;
+    Contact m_self;
     string m_password;
 
     string m_authorizerHostname;
@@ -265,6 +266,10 @@ namespace ICQ2000 {
      */
     string getPassword() const { return m_password; }
 
+    Contact* getSelfContact();
+
+    void fetchSelfDetails();
+    
     bool setTranslationMap(const string& szMapFileName);
     const string& getTranslationMapFileName() const;
     const string& getTranslationMapName() const;
@@ -364,6 +369,11 @@ namespace ICQ2000 {
     Signal1<void,MyStatusChangeEvent*> statuschanged;
 
     /**
+     * TBD
+     */
+    Signal1<void,MyDetailsChangeEvent*> detailschanged;
+    
+    /**
      *  Signal when someone requests your away message. The client
      *  should setMessage in the AutoMessageEvent to what your away
      *  message is. This allows dynamic away messages for different
@@ -393,6 +403,8 @@ namespace ICQ2000 {
     Status getStatus() const;
     bool getInvisible() const;
 
+    void uploadSelfDetails();
+    
     // -- Contact List --
     void addContact(Contact& c);
     void removeContact(const unsigned int uin);

@@ -125,6 +125,12 @@ namespace ICQ2000 {
       szString[i]=serverToClientTab[(unsigned char)szString[i]];
   }
 
+  string Translator::ServerToClientCC(const string& s)
+  {
+    string cc = s;
+    ServerToClient(cc);
+    return cc;
+  }
 
   //============ translateToServer ============//
 
@@ -137,6 +143,12 @@ namespace ICQ2000 {
       szString[i]=clientToServerTab[(unsigned char)szString[i]];
   }
 
+  string Translator::ClientToServerCC(const string& s)
+  {
+    string cc = s;
+    ClientToServer(cc);
+    return cc;
+  }
 
   //-----translateToClient (char)-------------------------------------------------
   void Translator::ServerToClient(char &_cChar){

@@ -53,6 +53,8 @@ namespace ICQ2000 {
     void setTranslationMap(const string& szMapFileName);
     void ServerToClient(string& szString);
     void ClientToServer(string& szString);
+    string ServerToClientCC(const string& szString);
+    string ClientToServerCC(const string& szString);
     void ServerToClient(char &_cChar);
     void ClientToServer(char &_cChar);
     static void CRLFtoLF(string& s);

@@ -509,6 +509,16 @@ namespace ICQ2000 {
     bool getInvisible() const;
   };
 
+  // --------------------- My Details Change Event ----------------------
+
+  /**
+   *  Your details fetched from the server
+   */
+  class MyDetailsChangeEvent : public Event {
+   public:
+    MyDetailsChangeEvent();
+  };
+
   // --------------------- Search Events ----------------------------
 
   /**

@@ -63,6 +63,10 @@ void Buffer::PackUint16StringNull(const string& s) {
   (*this) << (unsigned char)0x00;
 }
 
+void Buffer::PackUint16TranslatedNull(const string& s) {
+  PackUint16StringNull( m_translator->ClientToServerCC( s ) );
+}
+
 void Buffer::PackByteString(const string& s) {
   (*this) << (unsigned char)(s.size());
   Pack(s);
@@ -88,6 +92,11 @@ void Buffer::UnpackUint16StringNull(string& s) {
   (*this) >> sh;
   Unpack(s, sh-1);
   (*this).advance(1);
+}
+
+void Buffer::UnpackUint16TranslatedNull(string& s) {
+  UnpackUint16StringNull( s );
+  ServerToClient(s);
 }
 
 void Buffer::UnpackByteString(string& s) {

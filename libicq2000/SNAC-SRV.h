@@ -150,8 +150,63 @@ namespace ICQ2000 {
     unsigned short Subtype() const { return SNAC_SRV_Send; }
   };
 
+  class SrvUpdateMainHomeInfo : public SrvFamilySNAC, public OutSNAC {
+    private:
+      unsigned int m_my_uin;
+      const MainHomeInfo& m_main_home_info;
+
+    protected:
+      void OutputBody(Buffer& b) const;
+
+    public:
+      SrvUpdateMainHomeInfo(unsigned int my_uin, const MainHomeInfo& main_home_info);
+      unsigned short Subtype() const { return SNAC_SRV_Send; }
+ };
+  
+  class SrvUpdateWorkInfo : public SrvFamilySNAC, public OutSNAC {
+    private:
+      unsigned int m_my_uin;
+      const WorkInfo& m_work_info;
+
+    protected:
+      void OutputBody(Buffer& b) const;
+
+    public:
+      SrvUpdateWorkInfo(unsigned int my_uin, const WorkInfo& work_info);
+      unsigned short Subtype() const { return SNAC_SRV_Send; }
+ };
+  
+  class SrvUpdateHomepageInfo : public SrvFamilySNAC, public OutSNAC {
+    private:
+      unsigned int m_my_uin;
+      const HomepageInfo& m_homepage_info;
+
+    protected:
+      void OutputBody(Buffer& b) const;
+
+    public:
+      SrvUpdateHomepageInfo(unsigned int my_uin, const HomepageInfo& homepage_info);
+      unsigned short Subtype() const { return SNAC_SRV_Send; }
+ };
+  
+  class SrvUpdateAboutInfo : public SrvFamilySNAC, public OutSNAC {
+    private:
+      unsigned int m_my_uin;
+      const string& m_about_info;
+
+    protected:
+      void OutputBody(Buffer& b) const;
+
+    public:
+      SrvUpdateAboutInfo(unsigned int my_uin, const string& about_info);
+      unsigned short Subtype() const { return SNAC_SRV_Send; }
+ };
+  
   const unsigned short SrvResponse_Error          = 0x0001;
-  const unsigned short SrvResponse_SMS            = 0x0064;
+  const unsigned short SrvResponse_AckMainHomeInfoChange = 0x0064; // used to be SrvResponse_SMS
+  const unsigned short SrvResponse_AckWorkInfoChange	 = 0x006E;
+  const unsigned short SrvResponse_AckHomepageInfoChange = 0x0078;
+  const unsigned short SrvResponse_AckAboutInfoChange	 = 0x0082;
   const unsigned short SrvResponse_SMS_Done       = 0x0096;
   const unsigned short SrvResponse_SimpleUI       = 0x0190;
   const unsigned short SrvResponse_SimpleUI_Done  = 0x019a;
@@ -182,7 +237,11 @@ namespace ICQ2000 {
       RWorkInfo,
       RAboutInfo,
       RInterestInfo,
-      RBackgroundInfo
+      RBackgroundInfo,
+      AckMainHomeInfoChange,
+      AckHomepageInfoChange,
+      AckWorkInfoChange,
+      AckAboutInfoChange
     };
 
    protected:
@@ -221,6 +280,7 @@ namespace ICQ2000 {
     void ParseBody(Buffer& b);
     void ParseICQResponse(Buffer& b);
     void ParseOfflineMessage(Buffer& b);
+    void ParseInfoChangeAck(Buffer &b, unsigned short subtype);
     void ParseSMSError(Buffer& b);
     void ParseSMSResponse(Buffer& b);
     void ParseSimpleUserInfo(Buffer &b, unsigned short subtype);

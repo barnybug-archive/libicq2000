@@ -100,6 +100,7 @@ class Buffer {
   void Pack(const unsigned char *d, int size);
   void Pack(const string& s);
   void PackUint16StringNull(const string& s);
+  void PackUint16TranslatedNull(const string& s);
   void PackByteString(const string& s);
 
   void Unpack(string& s, int size);
@@ -107,6 +108,7 @@ class Buffer {
   unsigned char UnpackChar();
   void UnpackUint32String(string& s);
   void UnpackUint16StringNull(string& s);
+  void UnpackUint16TranslatedNull(string& s);
   void UnpackByteString(string& s);
 
   unsigned char& operator[](unsigned int p);

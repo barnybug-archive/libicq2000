@@ -51,7 +51,7 @@ namespace ICQ2000 {
    *  @param uin the owner's uin
    *  @param password the owner's password
    */
-  Client::Client(const unsigned int uin, const string& password) : m_uin(uin), m_password(password), m_recv(&m_translator) {
+  Client::Client(const unsigned int uin, const string& password) : m_uin(uin), m_password(password), m_recv(&m_translator), m_self(uin) {
     Init();
   }
 
@@ -614,8 +614,16 @@ namespace ICQ2000 {
       try {
 	Contact* c = getUserInfoCacheContact( snac->RequestID() );
 	c->setMainHomeInfo( snac->getMainHomeInfo() );
-	UserInfoChangeEvent ev(c);
-	contactlist.emit(&ev);
+        if (c == &m_self)
+        {
+          MyDetailsChangeEvent ev;
+          detailschanged.emit(&ev);
+        }
+        else
+        {
+	  UserInfoChangeEvent ev(c);
+	  contactlist.emit(&ev);
+        }
       } catch(ParseException e) {
 	SignalLog(LogEvent::WARN, e.what());
       }
@@ -625,8 +633,16 @@ namespace ICQ2000 {
       try {
 	Contact* c = getUserInfoCacheContact( snac->RequestID() );
 	c->setHomepageInfo( snac->getHomepageInfo() );
-	UserInfoChangeEvent ev(c);
-	contactlist.emit(&ev);
+        if (c == &m_self)
+        {
+            MyDetailsChangeEvent ev;
+            detailschanged.emit(&ev);
+        }
+        else
+        {
+            UserInfoChangeEvent ev(c);
+            contactlist.emit(&ev);
+        }
       } catch(ParseException e) {
 	SignalLog(LogEvent::WARN, e.what());
       }
@@ -636,8 +652,16 @@ namespace ICQ2000 {
       try {
 	Contact* c = getUserInfoCacheContact( snac->RequestID() );
 	c->setWorkInfo( snac->getWorkInfo() );
-	UserInfoChangeEvent ev(c);
-	contactlist.emit(&ev);
+        if (c == &m_self)
+        {
+            MyDetailsChangeEvent ev;
+            detailschanged.emit(&ev);
+        }
+        else
+        {
+            UserInfoChangeEvent ev(c);
+            contactlist.emit(&ev);
+        }
       } catch(ParseException e) {
 	SignalLog(LogEvent::WARN, e.what());
       }
@@ -647,8 +671,16 @@ namespace ICQ2000 {
       try {
 	Contact* c = getUserInfoCacheContact( snac->RequestID() );
 	c->setBackgroundInfo( snac->getBackgroundInfo() );
-	UserInfoChangeEvent ev(c);
-	contactlist.emit(&ev);
+        if (c == &m_self)
+        {
+            MyDetailsChangeEvent ev;
+            detailschanged.emit(&ev);
+        }
+        else
+        {
+            UserInfoChangeEvent ev(c);
+            contactlist.emit(&ev);
+        }
       } catch(ParseException e) {
 	SignalLog(LogEvent::WARN, e.what());
       }
@@ -658,8 +690,16 @@ namespace ICQ2000 {
       try {
 	Contact* c = getUserInfoCacheContact( snac->RequestID() );
 	c->setInterestInfo( snac->getPersonalInterestInfo() );
-	UserInfoChangeEvent ev(c);
-	contactlist.emit(&ev);
+        if (c == &m_self)
+        {
+            MyDetailsChangeEvent ev;
+            detailschanged.emit(&ev);
+        }
+        else
+        {
+            UserInfoChangeEvent ev(c);
+            contactlist.emit(&ev);
+        }
       } catch(ParseException e) {
 	SignalLog(LogEvent::WARN, e.what());
       }
@@ -669,8 +709,16 @@ namespace ICQ2000 {
       try {
 	Contact* c = getUserInfoCacheContact( snac->RequestID() );
 	c->setEmailInfo( snac->getEmailInfo() );
-	UserInfoChangeEvent ev(c);
-	contactlist.emit(&ev);
+        if (c == &m_self)
+        {
+            MyDetailsChangeEvent ev;
+            detailschanged.emit(&ev);
+        }
+        else
+        {
+            UserInfoChangeEvent ev(c);
+            contactlist.emit(&ev);
+        }
       } catch(ParseException e) {
 	SignalLog(LogEvent::WARN, e.what());
       }
@@ -680,8 +728,16 @@ namespace ICQ2000 {
       try {
 	Contact* c = getUserInfoCacheContact( snac->RequestID() );
 	c->setAboutInfo( snac->getAboutInfo() );
-	UserInfoChangeEvent ev(c);
-	contactlist.emit(&ev);
+        if (c == &m_self)
+        {
+            MyDetailsChangeEvent ev;
+            detailschanged.emit(&ev);
+        }
+        else
+        {
+            UserInfoChangeEvent ev(c);
+            contactlist.emit(&ev);
+        }
       } catch(ParseException e) {
 	SignalLog(LogEvent::WARN, e.what());
       }
@@ -1794,6 +1850,19 @@ namespace ICQ2000 {
     Send(b);
   }
 
+
+    void Client::uploadSelfDetails()
+  {
+        Buffer b(&m_translator);
+        
+        FLAPwrapSNAC( b, SrvUpdateMainHomeInfo(m_uin, m_self.getMainHomeInfo()) );
+        FLAPwrapSNAC( b, SrvUpdateWorkInfo(m_uin, m_self.getWorkInfo()) );
+        FLAPwrapSNAC( b, SrvUpdateHomepageInfo(m_uin, m_self.getHomepageInfo()) );
+        FLAPwrapSNAC( b, SrvUpdateAboutInfo(m_uin, m_self.getAboutInfo()) );
+
+        Send(b);
+  }
+    
   /**
    *  Set your status. This is used to set your status, as well as to
    *  connect and disconnect from the network. When you wish to
@@ -1976,6 +2045,8 @@ namespace ICQ2000 {
     contactlist.emit(&ev);
   }
 
+  Contact* Client::getSelfContact() { return &m_self; }
+
   /**
    *  Get the Contact object for a given uin.
    *
@@ -2027,6 +2098,11 @@ namespace ICQ2000 {
     SrvRequestDetailUserInfo ssnac( m_uin, c->getUIN() );
     ssnac.setRequestID( reqid );
     FLAPwrapSNACandSend( ssnac );
+  }
+
+  void Client::fetchSelfDetails()
+  {
+    fetchDetailContactInfo(&m_self);
   }
 
   void Client::fetchServerBasedContactList() {
